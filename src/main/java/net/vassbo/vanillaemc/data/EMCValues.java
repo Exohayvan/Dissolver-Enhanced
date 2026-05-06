@@ -25,6 +25,7 @@ public class EMCValues {
     protected static final HashMap<String, Integer> EMC_VALUES = new HashMap<String, Integer>();
     private static final HashMap<String, String> EMC_SOURCES = new HashMap<String, String>();
     public static final HashMap<String, Integer> EMC_TAG_VALUES = new HashMap<String, Integer>();
+    private static final HashMap<String, List<String>> TAG_ITEMS = new HashMap<String, List<String>>();
 
     public static Integer get(String key) {
         return EMC_VALUES.getOrDefault(key, 0);
@@ -348,9 +349,12 @@ public class EMCValues {
         EMC_TAG_VALUES.put("minecraft:dirt", DIRT);
         EMC_TAG_VALUES.put("minecraft:sand", SAND);
         EMC_TAG_VALUES.put("minecraft:saplings", 3);
+        EMC_TAG_VALUES.put("minecraft:chicken_food", 8);
         EMC_TAG_VALUES.put("minecraft:flowers", FLOWERS);
         EMC_TAG_VALUES.put("minecraft:leaves", LEAVES);
         EMC_TAG_VALUES.put("minecraft:arrow", 10);
+        EMC_TAG_VALUES.put("cobblemon:apricorns", 30);
+        EMC_TAG_VALUES.put("simplehats:all_hats", 254);
         // materials
         int COAL = 40;
         EMC_TAG_VALUES.put("minecraft:coal_ores", COAL);
@@ -558,6 +562,17 @@ public class EMCValues {
         if (tags_loaded && !RECIPES.isEmpty()) {startQuery();}
     }
 
+    public static void tagsLoaded(
+        HashMap<String, Integer> NEW_EMC_VALUES,
+        HashMap<String, List<String>> newTagItems
+    ) {
+        if (newTagItems != null && !newTagItems.isEmpty()) {
+            TAG_ITEMS.putAll(newTagItems);
+        }
+
+        tagsLoaded(NEW_EMC_VALUES);
+    }
+
     private static HashMap<String, List<String>> RECIPES = new HashMap<String, List<String>>();
     private static List<String> STONE_CUTTER_LIST = new ArrayList<>();
 
@@ -621,6 +636,9 @@ public class EMCValues {
                     setEMC(resultId.substring(0, resultId.indexOf("_powder")), emcValue + 20, "Recipe");
                 }
             });
+
+            inferEquivalentTagValues();
+
             // if (HAS_MULTIPLE.size() > 0) VanillaEMC.LOGGER.info("FOUND " + (HAS_MULTIPLE.size()) + " ITEMS WITH MULTIPLE DIFFERENT VALUES!");
 
             // LOG ITEMS WITH MISSING EMC - that does not have a crafting recipe!
@@ -682,6 +700,34 @@ public class EMCValues {
             .average();
 
         return (int) (average.isPresent() ? average.getAsDouble() : 0);
+    }
+
+    private static void inferEquivalentTagValues() {
+        for (Map.Entry<String, List<String>> tag : TAG_ITEMS.entrySet()) {
+            String tagId = tag.getKey();
+
+            Set<Integer> knownValues = new HashSet<>();
+            for (String itemId : tag.getValue()) {
+                int emc = get(itemId);
+                if (emc > 0) {
+                    knownValues.add(emc);
+                }
+            }
+
+            if (knownValues.size() != 1) {
+                if (knownValues.size() > 1) {
+                    VanillaEMC.LOGGER.debug("Skipping equivalent EMC tag #{} because it has mixed values: {}", tagId, knownValues);
+                }
+                continue;
+            }
+
+            int equivalentEMC = knownValues.iterator().next();
+            for (String itemId : tag.getValue()) {
+                if (get(itemId) == 0) {
+                    setEMC(itemId, equivalentEMC, "Equivalent Tag #" + tagId);
+                }
+            }
+        }
     }
 
     private static final List<String> COMPLETED = new ArrayList<String>();
