@@ -23,6 +23,7 @@ import net.vassbo.vanillaemc.data.EMCValues;
 @Mixin(TagManagerLoader.class)
 public abstract class TagManagerLoaderMixin {
     private static final HashMap<String, Integer> NEW_EMC_VALUES = new HashMap<String, Integer>();
+    private static final HashMap<String, List<String>> TAG_ITEMS = new HashMap<String, List<String>>();
     @Shadow private List<RegistryTags<?>> registryTags = List.of();
 
 	@Inject(method = "getRegistryTags", at = @At("HEAD"), cancellable = true)
@@ -55,7 +56,7 @@ public abstract class TagManagerLoaderMixin {
             }
         });
 
-        EMCValues.tagsLoaded(NEW_EMC_VALUES);
+        EMCValues.tagsLoaded(NEW_EMC_VALUES, TAG_ITEMS);
 
         // VanillaEMC.LOGGER.info("TAG TYPE LIST: " + tagTypeList);
         return this.registryTags;
@@ -63,6 +64,7 @@ public abstract class TagManagerLoaderMixin {
 
     private void checkTagForEMC(Identifier tagId, List<String> itemIds) {
         String tagIdString = tagId.toString();
+        TAG_ITEMS.put(tagIdString, itemIds);
 
         if (!EMCValues.EMC_TAG_VALUES.containsKey(tagIdString)) {
             // this will also log tags unrelated to crafting
