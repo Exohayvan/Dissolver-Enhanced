@@ -23,10 +23,19 @@ public class EMCValues {
     protected static final Set<String> CONFIG_OVERRIDDEN = new HashSet<>();
 
     protected static final HashMap<String, Integer> EMC_VALUES = new HashMap<String, Integer>();
+    private static final HashMap<String, String> EMC_SOURCES = new HashMap<String, String>();
     public static final HashMap<String, Integer> EMC_TAG_VALUES = new HashMap<String, Integer>();
 
     public static Integer get(String key) {
         return EMC_VALUES.getOrDefault(key, 0);
+    }
+
+    public static String getSource(String key) {
+        return EMC_SOURCES.getOrDefault(key, "None");
+    }
+
+    public static boolean isConfigOverridden(String key) {
+        return CONFIG_OVERRIDDEN.contains(key);
     }
 
     public static Set<String> getList() {
@@ -334,7 +343,11 @@ public class EMCValues {
         int FLOWERS = 8; // at least 8 so dyed glass is more expensive
         EMC_TAG_VALUES.put("minecraft:stone", COBBLESTONE * 2);
         EMC_TAG_VALUES.put("minecraft:logs", LOGS); // dividable by 4
+        EMC_TAG_VALUES.put("minecraft:planks", 4);
+        EMC_TAG_VALUES.put("minecraft:nylium", 2);
+        EMC_TAG_VALUES.put("minecraft:dirt", DIRT);
         EMC_TAG_VALUES.put("minecraft:sand", SAND);
+        EMC_TAG_VALUES.put("minecraft:saplings", 3);
         EMC_TAG_VALUES.put("minecraft:flowers", FLOWERS);
         EMC_TAG_VALUES.put("minecraft:leaves", LEAVES);
         EMC_TAG_VALUES.put("minecraft:arrow", 10);
@@ -467,7 +480,7 @@ public class EMCValues {
                 CONFIG_OVERRIDDEN.add(blockName);
                 if (value > 0) {
                     VanillaEMC.LOGGER.debug("Setting EMC of {} to {}", blockName, value);
-                    setEMCUnchecked(blockName, value);
+                    setEMCUnchecked(blockName, value, "Config Override");
                 } else {
                     removeEMC(blockName);
                 }
@@ -481,14 +494,24 @@ public class EMCValues {
         if (rez != null) {
             VanillaEMC.LOGGER.info("Removing EMC value from {}", blockName);
         }
+        EMC_SOURCES.remove(blockName);
     }
 
     private static void setEMCUnchecked(
         String blockName,
         Integer value
     ) {
+        setEMCUnchecked(blockName, value, "Base Value");
+    }
+
+    private static void setEMCUnchecked(
+        String blockName,
+        Integer value,
+        String source
+    ) {
         //has value
         EMC_VALUES.put(blockName, value);
+        EMC_SOURCES.put(blockName, source);
     }
 
     protected static void setEMC(
@@ -501,7 +524,20 @@ public class EMCValues {
         }
 
         //TODO allow no overrides
-        setEMCUnchecked(blockName, emcValue);
+        setEMCUnchecked(blockName, emcValue, "Generated Value");
+    }
+
+    protected static void setEMC(
+        String blockName,
+        int emcValue,
+        String source
+    ) {
+        if(CONFIG_OVERRIDDEN != null && CONFIG_OVERRIDDEN.contains(blockName)) {
+            //config is locked
+            return;
+        }
+
+        setEMCUnchecked(blockName, emcValue, source);
     }
 
     protected static void setEMC(HashMap<String, Integer> NEW_EMC_VALUES) {
@@ -509,7 +545,7 @@ public class EMCValues {
             return;
         }
         for (Map.Entry<String, Integer> entry : NEW_EMC_VALUES.entrySet()) {
-            setEMC(entry.getKey(), entry.getValue());
+            setEMC(entry.getKey(), entry.getValue(), "Tag");
         }
     }
 
@@ -578,11 +614,11 @@ public class EMCValues {
                             " " + emcValues);
                     HAS_MULTIPLE.add(resultId);
                 }
-                setEMC(resultId, emcValue);
+                setEMC(resultId, emcValue, "Recipe");
 
                 // add dynamic
                 if (resultId.contains("concrete_powder")) {
-                    setEMC(resultId.substring(0, resultId.indexOf("_powder")), emcValue + 20);
+                    setEMC(resultId.substring(0, resultId.indexOf("_powder")), emcValue + 20, "Recipe");
                 }
             });
             // if (HAS_MULTIPLE.size() > 0) VanillaEMC.LOGGER.info("FOUND " + (HAS_MULTIPLE.size()) + " ITEMS WITH MULTIPLE DIFFERENT VALUES!");
