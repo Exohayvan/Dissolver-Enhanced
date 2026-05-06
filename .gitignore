@@ -27,6 +27,7 @@ bin/
 # macos
 
 *.DS_Store
+._*
 
 # fabric
 
