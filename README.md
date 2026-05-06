@@ -1,5 +1,3 @@
-![VanillaEMC Banner](https://i.imgur.com/vOPofQQ.jpeg "VanillaEMC Banner")
-
 # Dissolver Enhanced
 
 Dissolver Enhanced is a Fabric mod forked from [Dissolver / VanillaEMC](https://github.com/vassbo/Dissolver). The original mod adds a Dissolver block that lets players convert items into EMC, then spend that EMC to recreate stored items.
