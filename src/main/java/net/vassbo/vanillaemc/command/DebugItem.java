@@ -57,10 +57,13 @@ public class DebugItem {
                 .forEach(tagId -> missingTagCounts.put(tagId, missingTagCounts.getOrDefault(tagId, 0) + 1));
         }
 
-        List<Map.Entry<String, Integer>> topTags = missingTagCounts
+        List<Map.Entry<String, Integer>> tagsWithoutValues = missingTagCounts
             .entrySet()
             .stream()
             .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+            .toList();
+        List<Map.Entry<String, Integer>> topTags = tagsWithoutValues
+            .stream()
             .limit(5)
             .toList();
 
@@ -82,7 +85,7 @@ public class DebugItem {
             }
         }
 
-        Path reportPath = writeReport(lines);
+        Path reportPath = writeReport(lines, tagsWithoutValues, itemsWithoutEMC);
         lines.add("Report: " + reportPath);
 
         String debugText = String.join("\n", lines);
@@ -161,14 +164,30 @@ public class DebugItem {
         return String.format("%.2f%%", value);
     }
 
-    private static Path writeReport(List<String> lines) {
+    private static Path writeReport(
+        List<String> lines,
+        List<Map.Entry<String, Integer>> tagsWithoutValues,
+        int itemsWithoutEMC
+    ) {
         Path reportDir = Path.of("debug");
         String fileName = "dissolver-debug-report-" + LocalDateTime.now().format(REPORT_DATE_FORMAT);
         Path reportPath = reportDir.resolve(fileName);
+        List<String> reportLines = new ArrayList<>(lines);
+        reportLines.add("");
+        reportLines.add("All tags without values:");
+
+        if (tagsWithoutValues.isEmpty()) {
+            reportLines.add("None");
+        } else {
+            for (Map.Entry<String, Integer> tag : tagsWithoutValues) {
+                double percentOfMissingItems = itemsWithoutEMC == 0 ? 0 : (tag.getValue() * 100.0) / itemsWithoutEMC;
+                reportLines.add("#" + tag.getKey() + " - " + formatPercent(percentOfMissingItems));
+            }
+        }
 
         try {
             Files.createDirectories(reportDir);
-            Files.writeString(reportPath, String.join("\n", lines) + "\n");
+            Files.writeString(reportPath, String.join("\n", reportLines) + "\n");
         } catch (IOException e) {
             VanillaEMC.LOGGER.error("Could not write EMC debug report to {}", reportPath, e);
         }
