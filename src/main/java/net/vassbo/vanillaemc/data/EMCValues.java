@@ -5,12 +5,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalDouble;
 import java.util.Set;
 
 import net.vassbo.vanillaemc.data.model.EMCRecord;
-import org.spongepowered.asm.mixin.injection.struct.InjectorGroupInfo.Map;
 
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
@@ -104,6 +104,46 @@ public class EMCValues {
 
     public static Set<String> getList() {
         return EMC_VALUES.keySet();
+    }
+
+    private static int syncVersion = 0;
+
+    public static int getSyncVersion() {
+        return syncVersion;
+    }
+
+    public static List<String> getSyncValues() {
+        List<String> values = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : EMC_VALUES.entrySet()) {
+            values.add(entry.getKey() + "=" + entry.getValue());
+        }
+
+        return values;
+    }
+
+    public static void applySyncValues(List<String> values) {
+        EMC_VALUES.clear();
+        EMC_SOURCES.clear();
+        EMC_SOURCE_DETAILS.clear();
+
+        for (String value : values) {
+            int splitIndex = value.lastIndexOf("=");
+            if (splitIndex <= 0 || splitIndex >= value.length() - 1) continue;
+
+            String itemId = value.substring(0, splitIndex);
+            int emc;
+            try {
+                emc = Integer.parseInt(value.substring(splitIndex + 1));
+            } catch (NumberFormatException ignored) {
+                continue;
+            }
+
+            setEMCUnchecked(itemId, emc, "Server Sync");
+        }
+    }
+
+    private static void incrementSyncVersion() {
+        syncVersion++;
     }
 
     public static void init() {
@@ -326,6 +366,8 @@ public class EMCValues {
         setEMCUnchecked("minecraft:iron_horse_armor", (int) (IRON * 1.2));
         int NETHERITE_INGOT = (int) (ANCIENT_DEBRIS * 4.455);
         EMC_TAG_VALUES.put("c:ingots/netherite", NETHERITE_INGOT);
+        EMC_TAG_VALUES.put("advancednetherite:ingot/netherites", NETHERITE_INGOT);
+        EMC_TAG_VALUES.put("advancednetherite:ingot/upgrade_to_netherite_iron", NETHERITE_INGOT);
         EMC_TAG_VALUES.put("c:ingots/aethersent", IRON);
         EMC_TAG_VALUES.put("c:ingots/thermal_springstone", IRON);
         EMC_TAG_VALUES.put("c:ingots/deepsilver", GOLD);
@@ -432,6 +474,7 @@ public class EMCValues {
         EMC_TAG_VALUES.put("c:ingots/copper", COPPER);
         EMC_TAG_VALUES.put("c:ingots/iron", IRON);
         EMC_TAG_VALUES.put("c:ingots/gold", GOLD);
+        EMC_TAG_VALUES.put("cobblemon:tier_1_poke_ball_materials", COPPER);
         EMC_TAG_VALUES.put("c:strings", 12);
         EMC_TAG_VALUES.put("c:leathers", 80);
         EMC_TAG_VALUES.put("minecraft:coal_ores", COAL);
@@ -444,6 +487,7 @@ public class EMCValues {
 
         // CUSTOM
         setEMCUnchecked("minecraft:charcoal", COAL);
+        setEMCUnchecked("carved_wood:pale_oak_chest", 32);
         setEMCUnchecked("minecraft:exposed_chiseled_copper", (int) (COPPER * 4));
         setEMCUnchecked("minecraft:waxed_exposed_chiseled_copper", (int) (COPPER * 4.2));
         // waxed weathered chiseled copper is currently higher than the waxed oxidized chiseled copper
@@ -718,6 +762,7 @@ public class EMCValues {
         itemsWithMultipleRecipes = 0;
         itemsWithoutRecipeOrEMC = 0;
         itemsWithoutEMC = 0;
+        resetRecipeState();
 
         VanillaEMC.LOGGER.info("----- Dissolver Enhanced initialized Startup - {} recipes -----", recipeCount);
     }
@@ -794,6 +839,7 @@ public class EMCValues {
             }
 
             logStartupSummary();
+            incrementSyncVersion();
         }
     }
 
@@ -853,7 +899,7 @@ public class EMCValues {
 
             int equivalentEMC = knownValues.iterator().next();
             for (String itemId : tag.getValue()) {
-                if (get(itemId) == 0) {
+                if (get(itemId) == 0 && !recipeKeySearch(itemId)) {
                     setEMC(itemId, equivalentEMC, "Equivalent Tag #" + tagId);
                 }
             }
@@ -866,6 +912,16 @@ public class EMCValues {
     private static final HashMap<String, List<String>> RECIPE_ITEM_SOURCE_DETAILS = new HashMap<String, List<String>>();
     private static final HashMap<String, List<String>> PARENTS = new HashMap<String, List<String>>();
 
+    private static void resetRecipeState() {
+        COMPLETED.clear();
+        MISSING.clear();
+        RECIPE_ITEM_VALUES.clear();
+        RECIPE_ITEM_SOURCE_DETAILS.clear();
+        PARENTS.clear();
+        previousCompletedSize = 0;
+        loops = 0;
+    }
+
     private static void checkRecipe(Map.Entry<String, List<String>> recipe) {
         String id = recipe.getKey();
         if (COMPLETED.contains(id)) {return;}
@@ -875,25 +931,18 @@ public class EMCValues {
         int resultCount = Integer.parseInt(parts[1]);
         int extraEMC = Integer.parseInt(parts[2]); // cooking
 
-        if (EMC_VALUES.containsKey(resultId)) {
-            if (hasUnresolvedRecipeAlternatives(id)) return;
-            checkReverseRecipe(id, resultId, resultCount, extraEMC, recipe.getValue());
-            COMPLETED.add(id);
-            return;
-        }
-
         List<String> ingredients = recipe.getValue();
-        if (hasUnresolvedRecipeAlternatives(id)) return;
-
-        if (getResultEMC(resultId) > 0) {
-            checkReverseRecipe(id, resultId, resultCount, extraEMC, ingredients);
-            COMPLETED.add(id);
-            return;
-        }
-
         int totalInputEMC = combineEMC(ingredients);
         if (totalInputEMC == 0) {
+            if (checkReverseRecipe(id, resultId, resultCount, extraEMC, ingredients)) {
+                COMPLETED.add(id);
+            }
             return; // try again!
+        }
+
+        if (EMC_VALUES.containsKey(resultId) && !RECIPE_ITEM_VALUES.containsKey(resultId)) {
+            COMPLETED.add(id);
+            return;
         }
 
         COMPLETED.add(id);
@@ -937,30 +986,6 @@ public class EMCValues {
         addRecipeSourceDetail(resultId, id, totalInputEMC, ingredients, resultCount, extraEMC);
     }
 
-    private static boolean hasUnresolvedRecipeAlternatives(String recipeKey) {
-        String recipeSource = RECIPE_SOURCES.get(recipeKey);
-        if (recipeSource == null) return false;
-
-        int sameSourceRecipes = 0;
-        for (String key : RECIPES.keySet()) {
-            if (recipeSource.equals(RECIPE_SOURCES.get(key))) {
-                sameSourceRecipes++;
-            }
-        }
-
-        if (sameSourceRecipes <= 1) return false;
-
-        for (String key : RECIPES.keySet()) {
-            if (recipeSource.equals(RECIPE_SOURCES.get(key))) {
-                if (combineEMC(RECIPES.get(key)) == 0) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     private static void logStartupSummary() {
         long elapsedMs = startupStartedAt == 0 ? 0 : System.currentTimeMillis() - startupStartedAt;
 
@@ -981,24 +1006,24 @@ public class EMCValues {
         );
     }
 
-    private static void checkReverseRecipe(
+    private static boolean checkReverseRecipe(
         String recipeKey,
         String resultId,
         int resultCount,
         int extraEMC,
         List<String> ingredients
     ) {
-        if (extraEMC != 0 || ingredients.isEmpty()) return;
+        if (extraEMC != 0 || ingredients.isEmpty()) return false;
 
         String unknownIngredient = ingredients.get(0);
         for (String ingredient : ingredients) {
             if (!ingredient.equals(unknownIngredient) || get(ingredient) > 0) {
-                return;
+                return false;
             }
         }
 
         int resultEMC = getResultEMC(resultId);
-        if (resultEMC == 0) return;
+        if (resultEMC == 0) return false;
 
         long totalResultEMC = (long) resultEMC * resultCount;
         int ingredientEMC = (int) ((totalResultEMC + ingredients.size() - 1) / ingredients.size());
@@ -1010,6 +1035,7 @@ public class EMCValues {
             "Reverse Recipe",
             formatReverseRecipeSourceDetail(recipeKey, resultId, resultCount, ingredients, ingredientEMC)
         );
+        return true;
     }
 
     private static int getResultEMC(String resultId) {

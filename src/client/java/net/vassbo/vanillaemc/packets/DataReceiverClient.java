@@ -5,13 +5,22 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.vassbo.vanillaemc.VanillaEMC;
+import net.vassbo.vanillaemc.data.EMCValues;
 import net.vassbo.vanillaemc.data.PlayerDataClient;
+import net.vassbo.vanillaemc.packets.clientbound.EMCValuesPayload;
 import net.vassbo.vanillaemc.packets.clientbound.PlayerDataPayload;
 
 public class DataReceiverClient {
     public static void init() {
+        ClientPlayNetworking.registerGlobalReceiver(EMCValuesPayload.ID, (payload, context) -> {
+            if (MinecraftClient.getInstance().getServer() != null) return;
+
+            EMCValues.applySyncValues(payload.values());
+        });
+
         ClientPlayNetworking.registerGlobalReceiver(PlayerDataPayload.ID, (payload, context) -> {
 			PlayerEntity player = context.player();
             PlayerDataPayload playerData = payload;

@@ -3,6 +3,7 @@ package net.vassbo.vanillaemc.packets;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.network.RegistryByteBuf;
 import net.vassbo.vanillaemc.VanillaEMC;
+import net.vassbo.vanillaemc.packets.clientbound.EMCValuesPayload;
 import net.vassbo.vanillaemc.packets.clientbound.PlayerDataPayload;
 import net.vassbo.vanillaemc.packets.serverbound.ClientPayload;
 
@@ -14,6 +15,7 @@ public class Packets {
 	}
 
 	private static void clientbound(PayloadTypeRegistry<RegistryByteBuf> registry) {
+		registry.register(EMCValuesPayload.ID, EMCValuesPayload.CODEC);
 		registry.register(PlayerDataPayload.ID, PlayerDataPayload.CODEC);
 	}
 

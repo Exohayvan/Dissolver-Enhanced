@@ -48,6 +48,10 @@ public class RecipeManagerMixin {
     @Inject(method = "apply", at = @At("HEAD"))
     private void applyMixin(Map<Identifier, JsonElement> map, ResourceManager resourceManager, Profiler profiler, CallbackInfo info) {
         EMCValues.beginStartup(map.size());
+        RECIPES.clear();
+        RECIPE_SOURCES.clear();
+        RECIPE_JSON.clear();
+        STONE_CUTTER_LIST.clear();
         RegistryOps<JsonElement> registryOps = this.registryLookup.getOps(JsonOps.INSTANCE);
 
         // let tag items load before looking through recipes
@@ -159,7 +163,7 @@ public class RecipeManagerMixin {
         
         if (recipe.getType() == RecipeType.CRAFTING) {
             boolean DEFAULT_GLASS = INGREDIENTS.contains("minecraft:glass") || INGREDIENTS.contains("minecraft:glass_pane");
-            if (resultId.contains("glass") && listSearch(INGREDIENTS, "glass") && !DEFAULT_GLASS) return; // glass into glass (dye)
+            if (resultId.startsWith("minecraft:") && resultId.contains("glass") && listSearch(INGREDIENTS, "glass") && !DEFAULT_GLASS) return; // glass into glass (dye)
             if (resultId.contains("carpet") && listSearch(INGREDIENTS, "carpet")) return; // carpet into carpet (dye)
             if (resultId.contains("bed") && listSearch(INGREDIENTS, "bed")) return; // bed into bed (dye)
             boolean NOT_WHITE_WOOL_OR_WHITE_DYE = !listSearch(INGREDIENTS, "white_wool") || !listSearch(INGREDIENTS, "dye");
@@ -272,7 +276,9 @@ public class RecipeManagerMixin {
         List<String> ingredients = new ArrayList<>();
         HashMap<String, List<String>> replaceIngredients = new HashMap<>();
 
-        if (recipeObject.has("ingredients") && recipeObject.get("ingredients").isJsonArray()) {
+        if (recipeObject.has("ingredient")) {
+            addJsonIngredient(ingredients, replaceIngredients, recipeObject.get("ingredient"));
+        } else if (recipeObject.has("ingredients") && recipeObject.get("ingredients").isJsonArray()) {
             for (JsonElement ingredient : recipeObject.get("ingredients").getAsJsonArray()) {
                 addJsonIngredient(ingredients, replaceIngredients, ingredient);
             }

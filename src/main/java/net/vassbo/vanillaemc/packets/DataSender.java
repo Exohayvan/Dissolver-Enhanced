@@ -1,21 +1,33 @@
 package net.vassbo.vanillaemc.packets;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.vassbo.vanillaemc.data.EMCValues;
 import net.vassbo.vanillaemc.data.PlayerData;
+import net.vassbo.vanillaemc.packets.clientbound.EMCValuesPayload;
 import net.vassbo.vanillaemc.packets.clientbound.PlayerDataPayload;
 
 public class DataSender {
+    private static final Map<UUID, Integer> EMC_SYNC_VERSIONS = new HashMap<>();
+
     public static void sendPlayerData(PlayerEntity player, PlayerData data) {
         MinecraftServer server = player.getServer();
         ServerPlayerEntity playerEntity = getServerPlayer(server, player);
         if (playerEntity == null) return;
 
         PlayerDataPayload dataToSend = new PlayerDataPayload(data.EMC, data.LEARNED_ITEMS.size(), data.MESSAGE, data.LEARNED_ITEMS);
+        EMCValuesPayload emcValuesToSend = getEMCValuesPayload(playerEntity);
 
         server.execute(() -> {
+            if (emcValuesToSend != null) {
+                ServerPlayNetworking.send(playerEntity, emcValuesToSend);
+            }
             ServerPlayNetworking.send(playerEntity, dataToSend);
         });
     }
@@ -30,6 +42,17 @@ public class DataSender {
         if (!(playerEntity instanceof ServerPlayerEntity)) return null;
 
         return playerEntity;
+    }
+
+    private static EMCValuesPayload getEMCValuesPayload(ServerPlayerEntity player) {
+        int syncVersion = EMCValues.getSyncVersion();
+        if (syncVersion <= 0) return null;
+
+        Integer playerSyncVersion = EMC_SYNC_VERSIONS.get(player.getUuid());
+        if (playerSyncVersion != null && playerSyncVersion == syncVersion) return null;
+
+        EMC_SYNC_VERSIONS.put(player.getUuid(), syncVersion);
+        return new EMCValuesPayload(syncVersion, EMCValues.getSyncValues());
     }
 
     // private static String listToString(List<String> items) {
