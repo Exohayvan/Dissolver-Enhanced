@@ -1,0 +1,8 @@
+{
+  "vanillaemc:emc_tooltip": {
+    "entrypoints": {
+      "client": "net.vassbo.vanillaemc.compat.wthit.VanillaEMCWailaPlugin"
+    },
+    "side": "client"
+  }
+}

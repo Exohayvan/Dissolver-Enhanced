@@ -28,7 +28,6 @@ public abstract class TagManagerLoaderMixin {
 
 	@Inject(method = "getRegistryTags", at = @At("HEAD"), cancellable = true)
 	public List<RegistryTags<?>> getRegistryTags(CallbackInfoReturnable<String> cir) {
-        VanillaEMC.LOGGER.info("Searching through " + registryTags.size() + " tags!");
         // TAG TYPE LIST (1.21): minecraft:banner_pattern, minecraft:worldgen/structure, minecraft:entity_type, minecraft:worldgen/world_preset, minecraft:fluid, minecraft:cat_variant, minecraft:game_event, minecraft:instrument, minecraft:item, minecraft:worldgen/biome, minecraft:enchantment, minecraft:block, minecraft:worldgen/flat_level_generator_preset, minecraft:painting_variant, minecraft:point_of_interest_type, minecraft:damage_type
         // List<String> tagTypeList = new ArrayList<>();
 

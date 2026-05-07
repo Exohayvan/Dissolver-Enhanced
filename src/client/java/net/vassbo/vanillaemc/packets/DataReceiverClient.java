@@ -26,10 +26,11 @@ public class DataReceiverClient {
     }
 
 	private static void receivedData(PlayerEntity player, PlayerDataPayload playerData) {
-		PlayerDataClient.EMC = playerData.emc();
-		PlayerDataClient.LEARNED_ITEMS_SIZE = playerData.learnedItemsSize();
-		PlayerDataClient.MESSAGE = playerData.message();
-	}
+			PlayerDataClient.EMC = playerData.emc();
+			PlayerDataClient.LEARNED_ITEMS_SIZE = playerData.learnedItemsSize();
+			PlayerDataClient.MESSAGE = playerData.message();
+			PlayerDataClient.LEARNED_ITEMS = playerData.learnedItems();
+		}
 
 	// HELPERS
 

@@ -66,6 +66,15 @@ public class DebugItem {
             .stream()
             .limit(5)
             .toList();
+        List<Map.Entry<String, Integer>> recipeUnlockItems = EMCValues.getRecipeUnlockCounts()
+            .entrySet()
+            .stream()
+            .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+            .toList();
+        List<Map.Entry<String, Integer>> topRecipeUnlockItems = recipeUnlockItems
+            .stream()
+            .limit(5)
+            .toList();
 
         double percentWithEMC = totalItems == 0 ? 0 : (itemsWithEMC * 100.0) / totalItems;
         List<String> lines = new ArrayList<>();
@@ -84,8 +93,17 @@ public class DebugItem {
                 lines.add("#" + tag.getKey() + " - " + formatPercent(percentOfMissingItems));
             }
         }
+        lines.add("Top 5 missing recipe ingredients:");
 
-        Path reportPath = writeReport(lines, tagsWithoutValues, itemsWithoutEMC);
+        if (topRecipeUnlockItems.isEmpty()) {
+            lines.add("None");
+        } else {
+            for (Map.Entry<String, Integer> item : topRecipeUnlockItems) {
+                lines.add(formatRecipeUnlockItem(item, itemsWithoutEMC));
+            }
+        }
+
+        Path reportPath = writeReport(lines, tagsWithoutValues, recipeUnlockItems, itemsWithoutEMC);
         lines.add("Report: " + reportPath);
 
         String debugText = String.join("\n", lines);
@@ -124,6 +142,7 @@ public class DebugItem {
             "EMC: " + emcText,
             "Stack EMC: " + stackEmcText,
             "EMC Source: " + EMCValues.getSource(itemId),
+            "EMC Source Detail: " + EMCValues.getSourceDetail(itemId),
             "Config Override: " + (configOverride ? "Yes" : "No"),
             "Has Components: " + (!stack.getComponentChanges().isEmpty() ? "Yes" : "No"),
             "Learnable: " + (emc > 0 ? "Yes" : "No")
@@ -131,6 +150,35 @@ public class DebugItem {
 
         VanillaEMC.LOGGER.info(debugText);
         ModCommands.feedback(context, debugText);
+        return 1;
+    }
+
+    public static int recipe(CommandContext<ServerCommandSource> context, String command) {
+        ServerPlayerEntity player = context.getSource().getPlayer();
+        if (player == null) {
+            ModCommands.feedback(context, "This command must be run by a player.");
+            return 0;
+        }
+
+        ItemStack stack = player.getMainHandStack();
+        if (stack.isEmpty()) {
+            ModCommands.feedback(context, "Hold an item to debug its recipes.");
+            return 0;
+        }
+
+        String itemId = stack.getItem().toString();
+        List<String> recipeLines = EMCValues.getRecipeDebugLines(itemId);
+        Path reportPath = writeRecipeReport(itemId, recipeLines);
+
+        String chatText = String.join("\n",
+            "Recipe Debug: " + itemId,
+            "Recipes found: " + countRecipes(recipeLines),
+            "Report: " + reportPath
+        );
+        String logText = "Recipe Debug: " + itemId + "\n" + String.join("\n", recipeLines);
+
+        VanillaEMC.LOGGER.info(logText);
+        ModCommands.feedback(context, chatText);
         return 1;
     }
 
@@ -167,6 +215,7 @@ public class DebugItem {
     private static Path writeReport(
         List<String> lines,
         List<Map.Entry<String, Integer>> tagsWithoutValues,
+        List<Map.Entry<String, Integer>> recipeUnlockItems,
         int itemsWithoutEMC
     ) {
         Path reportDir = Path.of("debug");
@@ -185,6 +234,17 @@ public class DebugItem {
             }
         }
 
+        reportLines.add("");
+        reportLines.add("All missing recipe ingredients:");
+
+        if (recipeUnlockItems.isEmpty()) {
+            reportLines.add("None");
+        } else {
+            for (Map.Entry<String, Integer> item : recipeUnlockItems) {
+                reportLines.add(formatRecipeUnlockItem(item, itemsWithoutEMC));
+            }
+        }
+
         try {
             Files.createDirectories(reportDir);
             Files.writeString(reportPath, String.join("\n", reportLines) + "\n");
@@ -193,5 +253,33 @@ public class DebugItem {
         }
 
         return reportPath;
+    }
+
+    private static Path writeRecipeReport(String itemId, List<String> recipeLines) {
+        Path reportDir = Path.of("debug");
+        String safeItemId = itemId.replace(":", "-");
+        String fileName = "dissolver-recipe-debug-" + safeItemId + "-" + LocalDateTime.now().format(REPORT_DATE_FORMAT);
+        Path reportPath = reportDir.resolve(fileName);
+
+        try {
+            Files.createDirectories(reportDir);
+            Files.writeString(reportPath, String.join("\n", recipeLines) + "\n");
+        } catch (IOException e) {
+            VanillaEMC.LOGGER.error("Could not write EMC recipe debug report to {}", reportPath, e);
+        }
+
+        return reportPath;
+    }
+
+    private static long countRecipes(List<String> recipeLines) {
+        return recipeLines
+            .stream()
+            .filter(line -> line.startsWith("Recipe: "))
+            .count();
+    }
+
+    private static String formatRecipeUnlockItem(Map.Entry<String, Integer> item, int itemsWithoutEMC) {
+        double percentOfMissingItems = itemsWithoutEMC == 0 ? 0 : (item.getValue() * 100.0) / itemsWithoutEMC;
+        return item.getKey() + " - " + formatPercent(percentOfMissingItems) + " (" + item.getValue() + " items)";
     }
 }

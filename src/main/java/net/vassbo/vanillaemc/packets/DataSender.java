@@ -13,7 +13,7 @@ public class DataSender {
         ServerPlayerEntity playerEntity = getServerPlayer(server, player);
         if (playerEntity == null) return;
 
-        PlayerDataPayload dataToSend = new PlayerDataPayload(data.EMC, data.LEARNED_ITEMS.size(), data.MESSAGE);
+        PlayerDataPayload dataToSend = new PlayerDataPayload(data.EMC, data.LEARNED_ITEMS.size(), data.MESSAGE, data.LEARNED_ITEMS);
 
         server.execute(() -> {
             ServerPlayNetworking.send(playerEntity, dataToSend);

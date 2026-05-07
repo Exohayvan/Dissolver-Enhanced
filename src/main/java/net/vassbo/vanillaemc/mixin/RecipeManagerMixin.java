@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.JsonOps;
 
@@ -46,7 +47,7 @@ public class RecipeManagerMixin {
 
     @Inject(method = "apply", at = @At("HEAD"))
     private void applyMixin(Map<Identifier, JsonElement> map, ResourceManager resourceManager, Profiler profiler, CallbackInfo info) {
-        VanillaEMC.LOGGER.info("Getting " + map.size() + " recipes!");
+        EMCValues.beginStartup(map.size());
         RegistryOps<JsonElement> registryOps = this.registryLookup.getOps(JsonOps.INSTANCE);
 
         // let tag items load before looking through recipes
@@ -55,22 +56,27 @@ public class RecipeManagerMixin {
 
             Iterator<Map.Entry<Identifier, JsonElement>> recipeIterator = map.entrySet().iterator();
             while (recipeIterator.hasNext()) {
+                Map.Entry<Identifier, JsonElement> entry = recipeIterator.next();
                 try {
-                    Map.Entry<Identifier, JsonElement> entry = recipeIterator.next();
                     getRecipe(entry, registryOps);
                 }catch (Exception e) {
-                    VanillaEMC.LOGGER.error("FOUND RECIPE WITH ISSUE" , e);
+                    if (!getJsonRecipe(entry)) {
+                        EMCValues.incrementRecipesNotUnderstood();
+                    }
                 }
             }
 
-            EMCValues.recipesLoaded(RECIPES, STONE_CUTTER_LIST);
+            EMCValues.recipesLoaded(RECIPES, RECIPE_SOURCES, RECIPE_JSON, STONE_CUTTER_LIST);
         }).start();
     }
 
     private static final HashMap<String, List<String>> RECIPES = new HashMap<String, List<String>>();
+    private static final HashMap<String, String> RECIPE_SOURCES = new HashMap<String, String>();
+    private static final HashMap<String, String> RECIPE_JSON = new HashMap<String, String>();
     private static final List<String> STONE_CUTTER_LIST = new ArrayList<>();
     private void getRecipe(Map.Entry<Identifier, JsonElement> entry, RegistryOps<JsonElement> registryOps) {
-        // Identifier identifier = entry.getKey(); // JSON RECIPE FILE NAME
+        Identifier identifier = entry.getKey(); // JSON RECIPE FILE NAME
+        String recipeId = identifier.toString();
         Recipe<?> recipe = Recipe.CODEC.parse(registryOps, entry.getValue()).getOrThrow(JsonParseException::new);
 
         // could filter by crafting only, but nice to have all recipes like smelting & stone cutting for more coverage!
@@ -88,7 +94,10 @@ public class RecipeManagerMixin {
 
         List<String> INGREDIENTS = new ArrayList<>();
         HashMap<String, List<String>> REPLACE_INGREDIENTS = new HashMap<>();
+        boolean hasUnresolvedIngredient = false;
+        int ingredientIndex = -1;
         for (Ingredient ingredient : recipe.getIngredients()) {
+            ingredientIndex++;
             // mostly just one ingredient (per slot) - but e.g. stone cutter can have multiple!
             int index = -1;
             for (int rawId : ingredient.getMatchingItemIds()) {
@@ -100,7 +109,7 @@ public class RecipeManagerMixin {
                 } else if (recipe.getType() == RecipeType.STONECUTTING) {
                     List<String> INGREDIENT = new ArrayList<>();
                     INGREDIENT.add(itemId);
-                    addRecipe(resultId + "__" + 1, 0, INGREDIENT);
+                    addRecipe(resultId + "__" + 1, 0, INGREDIENT, recipeId, entry.getValue());
                 } else if (resultId.contains("bed") || resultId.contains("glass")) {
                     // don't do anything
                     // bed: bed colors
@@ -117,6 +126,35 @@ public class RecipeManagerMixin {
                     }
                 }
             }
+
+            if (index == -1) {
+                List<String> jsonIngredientIds = getJsonIngredientItemIds(entry.getValue(), ingredientIndex);
+                if (jsonIngredientIds.isEmpty()) hasUnresolvedIngredient = true;
+
+                for (String itemId : jsonIngredientIds) {
+                    index++;
+                    if (index == 0) {
+                        INGREDIENTS.add(itemId);
+                    } else if (recipe.getType() == RecipeType.STONECUTTING) {
+                        List<String> INGREDIENT = new ArrayList<>();
+                        INGREDIENT.add(itemId);
+                        addRecipe(resultId + "__" + 1, 0, INGREDIENT, recipeId, entry.getValue());
+                    } else {
+                        String rootItemId = getJsonIngredientItemIds(entry.getValue(), ingredientIndex).get(0);
+                        List<String> REPLACE = new ArrayList<>();
+                        if (REPLACE_INGREDIENTS.containsKey(rootItemId)) REPLACE = REPLACE_INGREDIENTS.get(rootItemId);
+                        REPLACE.add(itemId);
+                        REPLACE_INGREDIENTS.put(rootItemId, REPLACE);
+                    }
+                }
+            }
+        }
+
+        if (hasUnresolvedIngredient) {
+            if (getJsonRecipe(entry)) return;
+
+            EMCValues.incrementRecipesNotUnderstood();
+            return;
         }
         
         if (recipe.getType() == RecipeType.CRAFTING) {
@@ -143,8 +181,10 @@ public class RecipeManagerMixin {
             //     VanillaEMC.LOGGER.info("FOUND ITEM RECIPE WITH NO INGREDIENTS: " + resultId);
             // }
 
+            if (getJsonRecipe(entry)) return;
+
             if (!resultId.contains("minecraft:air") && !resultId.contains("firework") && !RECIPES.containsKey(resultId)) {
-                VanillaEMC.LOGGER.info("FOUND ITEM RECIPE WITH NO INGREDIENTS: " + resultId);
+                EMCValues.incrementItemRecipesWithNoIngredients();
             }
             return;
         }
@@ -156,7 +196,7 @@ public class RecipeManagerMixin {
         boolean isStone = listSearch(INGREDIENTS, "stone");
 
         // add extra EMC if cooking (because of fuel+time)
-        addRecipe(resultId + "__" + resultCount, isCooking && !isOre && !isStone ? 10 : 0, INGREDIENTS);
+        addRecipe(resultId + "__" + resultCount, isCooking && !isOre && !isStone ? 10 : 0, INGREDIENTS, recipeId, entry.getValue());
         if (recipe.getType() == RecipeType.STONECUTTING && !STONE_CUTTER_LIST.contains(resultId)) STONE_CUTTER_LIST.add(resultId);
 
         if (REPLACE_INGREDIENTS.size() > 0) {
@@ -171,20 +211,210 @@ public class RecipeManagerMixin {
                         NEW_INGREDIENTS.add(key.contains(ingredient) ? replacedIngredient : ingredient);
                     }
                     
-                    addRecipe(resultId + "__" + resultCount, 0, NEW_INGREDIENTS);
+                    addRecipe(resultId + "__" + resultCount, 0, NEW_INGREDIENTS, recipeId, entry.getValue());
                 }
             }
         }
     }
 
-    private static void addRecipe(String id, int extraEMC, List<String> INGREDIENTS) {
+    private static void addRecipe(String id, int extraEMC, List<String> INGREDIENTS, String recipeId, JsonElement rawJson) {
         // multiple recipes for same output
         int index = 1;
         while (RECIPES.containsKey(id + "__" + extraEMC + "__" + index)) {
             index++;
         }
 
-        RECIPES.put(id + "__" + extraEMC + "__" + index, INGREDIENTS);
+        String recipeKey = id + "__" + extraEMC + "__" + index;
+        RECIPES.put(recipeKey, INGREDIENTS);
+        RECIPE_SOURCES.put(recipeKey, recipeId);
+        RECIPE_JSON.put(recipeKey, rawJson.toString());
+    }
+
+    private static List<String> getJsonIngredientItemIds(JsonElement recipeJson, int ingredientIndex) {
+        List<String> itemIds = new ArrayList<>();
+        if (!recipeJson.isJsonObject()) return itemIds;
+
+        JsonObject recipeObject = recipeJson.getAsJsonObject();
+        if (!recipeObject.has("ingredients") || !recipeObject.get("ingredients").isJsonArray()) return itemIds;
+        if (ingredientIndex >= recipeObject.get("ingredients").getAsJsonArray().size()) return itemIds;
+
+        JsonElement ingredientJson = recipeObject.get("ingredients").getAsJsonArray().get(ingredientIndex);
+        if (!ingredientJson.isJsonObject()) return itemIds;
+
+        JsonObject ingredientObject = ingredientJson.getAsJsonObject();
+        if (ingredientObject.has("item")) {
+            itemIds.add(ingredientObject.get("item").getAsString());
+        } else if (ingredientObject.has("tag")) {
+            addJsonTagIngredient(itemIds, ingredientObject.get("tag").getAsString());
+        }
+
+        return itemIds;
+    }
+
+    private static boolean getJsonRecipe(Map.Entry<Identifier, JsonElement> entry) {
+        if (!entry.getValue().isJsonObject()) return false;
+
+        JsonObject recipeObject = entry.getValue().getAsJsonObject();
+        if (!recipeObject.has("result")) return false;
+
+        String type = recipeObject.has("type") ? recipeObject.get("type").getAsString() : "";
+        if (type.contains("smithing")) return false;
+
+        JsonResult result = getJsonResult(recipeObject.get("result"));
+        if (result == null || result.itemId.contains("minecraft:air") || result.itemId.contains("firework")) {
+            return false;
+        }
+
+        boolean isCooking = type.contains("smelting") || type.contains("blasting") || type.contains("smoking") ||
+            type.contains("campfire_cooking");
+        if (isCooking && result.itemId.contains("nugget")) return false;
+
+        List<String> ingredients = new ArrayList<>();
+        HashMap<String, List<String>> replaceIngredients = new HashMap<>();
+
+        if (recipeObject.has("ingredients") && recipeObject.get("ingredients").isJsonArray()) {
+            for (JsonElement ingredient : recipeObject.get("ingredients").getAsJsonArray()) {
+                addJsonIngredient(ingredients, replaceIngredients, ingredient);
+            }
+        } else if (recipeObject.has("pattern") && recipeObject.get("pattern").isJsonArray() &&
+            recipeObject.has("key") && recipeObject.get("key").isJsonObject()) {
+            JsonObject key = recipeObject.get("key").getAsJsonObject();
+            for (JsonElement patternLine : recipeObject.get("pattern").getAsJsonArray()) {
+                String line = patternLine.getAsString();
+                for (int i = 0; i < line.length(); i++) {
+                    String keyName = String.valueOf(line.charAt(i));
+                    if (keyName.equals(" ") || !key.has(keyName)) continue;
+
+                    addJsonIngredient(ingredients, replaceIngredients, key.get(keyName));
+                }
+            }
+        }
+
+        if (ingredients.isEmpty()) return false;
+
+        boolean isOre = listSearch(ingredients, "ore");
+        boolean isStone = listSearch(ingredients, "stone");
+        addRecipe(
+            result.itemId + "__" + result.count,
+            isCooking && !isOre && !isStone ? 10 : 0,
+            ingredients,
+            entry.getKey().toString(),
+            entry.getValue()
+        );
+        addReplacementRecipes(result.itemId, result.count, replaceIngredients, ingredients, entry.getKey().toString(), entry.getValue());
+
+        return true;
+    }
+
+    private static void addJsonIngredient(
+        List<String> ingredients,
+        HashMap<String, List<String>> replaceIngredients,
+        JsonElement ingredientJson
+    ) {
+        List<String> itemIds = getJsonIngredientItemIds(ingredientJson);
+        if (itemIds.isEmpty()) return;
+
+        String rootItemId = itemIds.get(0);
+        ingredients.add(rootItemId);
+
+        for (int i = 1; i < itemIds.size(); i++) {
+            List<String> replace = new ArrayList<>();
+            if (replaceIngredients.containsKey(rootItemId)) replace = replaceIngredients.get(rootItemId);
+            replace.add(itemIds.get(i));
+            replaceIngredients.put(rootItemId, replace);
+        }
+    }
+
+    private static List<String> getJsonIngredientItemIds(JsonElement ingredientJson) {
+        List<String> itemIds = new ArrayList<>();
+
+        if (ingredientJson.isJsonArray()) {
+            for (JsonElement alternative : ingredientJson.getAsJsonArray()) {
+                itemIds.addAll(getJsonIngredientItemIds(alternative));
+            }
+            return itemIds;
+        }
+
+        if (!ingredientJson.isJsonObject()) return itemIds;
+
+        JsonObject ingredientObject = ingredientJson.getAsJsonObject();
+        if (ingredientObject.has("item")) {
+            itemIds.add(ingredientObject.get("item").getAsString());
+        } else if (ingredientObject.has("id")) {
+            itemIds.add(ingredientObject.get("id").getAsString());
+        } else if (ingredientObject.has("tag")) {
+            addJsonTagIngredient(itemIds, ingredientObject.get("tag").getAsString());
+        }
+
+        return itemIds;
+    }
+
+    private static void addJsonTagIngredient(List<String> itemIds, String tagId) {
+        if (EMCValues.EMC_TAG_VALUES.containsKey(tagId)) {
+            itemIds.add("#" + tagId);
+            return;
+        }
+
+        List<String> tagItems = EMCValues.getTagItems(tagId);
+        if (tagItems.isEmpty()) {
+            itemIds.add("#" + tagId);
+            return;
+        }
+
+        itemIds.addAll(tagItems);
+    }
+
+    private static void addReplacementRecipes(
+        String resultId,
+        int resultCount,
+        HashMap<String, List<String>> replaceIngredients,
+        List<String> ingredients,
+        String recipeId,
+        JsonElement rawJson
+    ) {
+        if (replaceIngredients.isEmpty()) return;
+
+        for (Map.Entry<String, List<String>> replace : replaceIngredients.entrySet()) {
+            String key = replace.getKey();
+            List<String> replacedIngredients = replace.getValue();
+
+            for (String replacedIngredient : replacedIngredients) {
+                List<String> newIngredients = new ArrayList<>();
+
+                for (String ingredient : ingredients) {
+                    newIngredients.add(key.contains(ingredient) ? replacedIngredient : ingredient);
+                }
+
+                addRecipe(resultId + "__" + resultCount, 0, newIngredients, recipeId, rawJson);
+            }
+        }
+    }
+
+    private static JsonResult getJsonResult(JsonElement resultJson) {
+        if (resultJson.isJsonPrimitive()) {
+            return new JsonResult(resultJson.getAsString(), 1);
+        }
+
+        if (!resultJson.isJsonObject()) return null;
+
+        JsonObject resultObject = resultJson.getAsJsonObject();
+        String itemId = null;
+        if (resultObject.has("id")) itemId = resultObject.get("id").getAsString();
+        if (itemId == null && resultObject.has("item")) itemId = resultObject.get("item").getAsString();
+        if (itemId == null) return null;
+
+        int count = resultObject.has("count") ? resultObject.get("count").getAsInt() : 1;
+        return new JsonResult(itemId, count);
+    }
+
+    private static class JsonResult {
+        private final String itemId;
+        private final int count;
+
+        private JsonResult(String itemId, int count) {
+            this.itemId = itemId;
+            this.count = count;
+        }
     }
 
     static private boolean listSearch(List<String> INGREDIENTS, String keyId) {

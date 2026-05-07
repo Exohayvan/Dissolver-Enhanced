@@ -24,6 +24,7 @@ public class EMCValues {
 
     protected static final HashMap<String, Integer> EMC_VALUES = new HashMap<String, Integer>();
     private static final HashMap<String, String> EMC_SOURCES = new HashMap<String, String>();
+    private static final HashMap<String, String> EMC_SOURCE_DETAILS = new HashMap<String, String>();
     public static final HashMap<String, Integer> EMC_TAG_VALUES = new HashMap<String, Integer>();
     private static final HashMap<String, List<String>> TAG_ITEMS = new HashMap<String, List<String>>();
 
@@ -33,6 +34,68 @@ public class EMCValues {
 
     public static String getSource(String key) {
         return EMC_SOURCES.getOrDefault(key, "None");
+    }
+
+    public static String getSourceDetail(String key) {
+        return EMC_SOURCE_DETAILS.getOrDefault(key, "None");
+    }
+
+    public static List<String> getTagItems(String tagId) {
+        return TAG_ITEMS.getOrDefault(tagId, new ArrayList<>());
+    }
+
+    public static HashMap<String, Integer> getRecipeUnlockCounts() {
+        HashMap<String, Set<String>> unlockableResults = new HashMap<>();
+
+        for (Map.Entry<String, List<String>> recipe : RECIPES.entrySet()) {
+            String resultId = recipe.getKey().split("__")[0];
+            if (get(resultId) > 0) continue;
+
+            Set<String> missingIngredients = new HashSet<>();
+            for (String ingredient : recipe.getValue()) {
+                if (get(ingredient) == 0) {
+                    missingIngredients.add(ingredient);
+                }
+            }
+
+            if (missingIngredients.size() != 1) continue;
+
+            String missingIngredient = missingIngredients.iterator().next();
+            Set<String> resultIds = new HashSet<>();
+            if (unlockableResults.containsKey(missingIngredient)) {
+                resultIds = unlockableResults.get(missingIngredient);
+            }
+            resultIds.add(resultId);
+            unlockableResults.put(missingIngredient, resultIds);
+        }
+
+        HashMap<String, Integer> unlockCounts = new HashMap<>();
+        unlockableResults.forEach((itemId, resultIds) -> unlockCounts.put(itemId, resultIds.size()));
+        return unlockCounts;
+    }
+
+    public static List<String> getRecipeDebugLines(String itemId) {
+        List<String> lines = new ArrayList<>();
+
+        for (Map.Entry<String, List<String>> recipe : RECIPES.entrySet()) {
+            String resultId = recipe.getKey().split("__")[0];
+            if (!resultId.equals(itemId)) continue;
+
+            int emc = combineEMC(recipe.getValue());
+            lines.add("Recipe: " + RECIPE_SOURCES.getOrDefault(recipe.getKey(), recipe.getKey()));
+            lines.add("Key: " + recipe.getKey());
+            lines.add("Ingredients: " + formatIngredients(recipe.getValue()));
+            lines.add("Ingredient EMC: " + (emc > 0 ? emc : "Blocked"));
+            lines.add("Raw JSON:");
+            lines.add(RECIPE_JSON.getOrDefault(recipe.getKey(), "Unavailable"));
+            lines.add("");
+        }
+
+        if (lines.isEmpty()) {
+            lines.add("No recipes found for " + itemId);
+        }
+
+        return lines;
     }
 
     public static boolean isConfigOverridden(String key) {
@@ -262,6 +325,14 @@ public class EMCValues {
         setEMCUnchecked("minecraft:golden_horse_armor", (int) (GOLD * 1.2));
         setEMCUnchecked("minecraft:iron_horse_armor", (int) (IRON * 1.2));
         int NETHERITE_INGOT = (int) (ANCIENT_DEBRIS * 4.455);
+        EMC_TAG_VALUES.put("c:ingots/netherite", NETHERITE_INGOT);
+        EMC_TAG_VALUES.put("c:ingots/aethersent", IRON);
+        EMC_TAG_VALUES.put("c:ingots/thermal_springstone", IRON);
+        EMC_TAG_VALUES.put("c:ingots/deepsilver", GOLD);
+        EMC_TAG_VALUES.put("c:ingots/unrealium", DIAMOND);
+        EMC_TAG_VALUES.put("c:ingots/amaramber", GOLD);
+        EMC_TAG_VALUES.put("c:ingots/oxidized_golem_steel", NETHERITE_INGOT);
+        EMC_TAG_VALUES.put("c:ingots/golem_steel", NETHERITE_INGOT);
         setEMCUnchecked("minecraft:netherite_sword", NETHERITE_INGOT + (DIAMOND * 2) + 2);
         setEMCUnchecked("minecraft:netherite_pickaxe", NETHERITE_INGOT + (DIAMOND * 3) + (2 * 2));
         setEMCUnchecked("minecraft:netherite_axe", NETHERITE_INGOT + (DIAMOND * 3) + (2 * 2));
@@ -354,9 +425,15 @@ public class EMCValues {
         EMC_TAG_VALUES.put("minecraft:leaves", LEAVES);
         EMC_TAG_VALUES.put("minecraft:arrow", 10);
         EMC_TAG_VALUES.put("cobblemon:apricorns", 30);
+        EMC_TAG_VALUES.put("cobblemon:evolution_stones", 1280);
         EMC_TAG_VALUES.put("simplehats:all_hats", 254);
         // materials
         int COAL = 40;
+        EMC_TAG_VALUES.put("c:ingots/copper", COPPER);
+        EMC_TAG_VALUES.put("c:ingots/iron", IRON);
+        EMC_TAG_VALUES.put("c:ingots/gold", GOLD);
+        EMC_TAG_VALUES.put("c:strings", 12);
+        EMC_TAG_VALUES.put("c:leathers", 80);
         EMC_TAG_VALUES.put("minecraft:coal_ores", COAL);
         EMC_TAG_VALUES.put("minecraft:redstone_ores", 50);
         EMC_TAG_VALUES.put("minecraft:lapis_ores", 400);
@@ -499,6 +576,7 @@ public class EMCValues {
             VanillaEMC.LOGGER.info("Removing EMC value from {}", blockName);
         }
         EMC_SOURCES.remove(blockName);
+        EMC_SOURCE_DETAILS.remove(blockName);
     }
 
     private static void setEMCUnchecked(
@@ -513,9 +591,19 @@ public class EMCValues {
         Integer value,
         String source
     ) {
+        setEMCUnchecked(blockName, value, source, "None");
+    }
+
+    private static void setEMCUnchecked(
+        String blockName,
+        Integer value,
+        String source,
+        String sourceDetail
+    ) {
         //has value
         EMC_VALUES.put(blockName, value);
         EMC_SOURCES.put(blockName, source);
+        EMC_SOURCE_DETAILS.put(blockName, sourceDetail);
     }
 
     protected static void setEMC(
@@ -542,6 +630,20 @@ public class EMCValues {
         }
 
         setEMCUnchecked(blockName, emcValue, source);
+    }
+
+    protected static void setEMC(
+        String blockName,
+        int emcValue,
+        String source,
+        String sourceDetail
+    ) {
+        if(CONFIG_OVERRIDDEN != null && CONFIG_OVERRIDDEN.contains(blockName)) {
+            //config is locked
+            return;
+        }
+
+        setEMCUnchecked(blockName, emcValue, source, sourceDetail);
     }
 
     protected static void setEMC(HashMap<String, Integer> NEW_EMC_VALUES) {
@@ -574,7 +676,17 @@ public class EMCValues {
     }
 
     private static HashMap<String, List<String>> RECIPES = new HashMap<String, List<String>>();
+    private static HashMap<String, String> RECIPE_SOURCES = new HashMap<String, String>();
+    private static HashMap<String, String> RECIPE_JSON = new HashMap<String, String>();
     private static List<String> STONE_CUTTER_LIST = new ArrayList<>();
+    private static long startupStartedAt = 0;
+    private static int startupRecipeCount = 0;
+    private static int itemRecipesWithNoIngredients = 0;
+    private static int recipesNotUnderstood = 0;
+    private static int childParentUnmatchingEMC = 0;
+    private static int itemsWithMultipleRecipes = 0;
+    private static int itemsWithoutRecipeOrEMC = 0;
+    private static int itemsWithoutEMC = 0;
 
     public static void recipesLoaded(
         HashMap<String, List<String>> recipes,
@@ -586,8 +698,39 @@ public class EMCValues {
         if (tags_loaded && !RECIPES.isEmpty()) {startQuery();}
     }
 
+    public static void recipesLoaded(
+        HashMap<String, List<String>> recipes,
+        HashMap<String, String> recipeSources,
+        HashMap<String, String> recipeJson,
+        List<String> stonecutter
+    ) {
+        RECIPE_SOURCES = recipeSources;
+        RECIPE_JSON = recipeJson;
+        recipesLoaded(recipes, stonecutter);
+    }
+
+    public static void beginStartup(int recipeCount) {
+        startupStartedAt = System.currentTimeMillis();
+        startupRecipeCount = recipeCount;
+        itemRecipesWithNoIngredients = 0;
+        recipesNotUnderstood = 0;
+        childParentUnmatchingEMC = 0;
+        itemsWithMultipleRecipes = 0;
+        itemsWithoutRecipeOrEMC = 0;
+        itemsWithoutEMC = 0;
+
+        VanillaEMC.LOGGER.info("----- Dissolver Enhanced initialized Startup - {} recipes -----", recipeCount);
+    }
+
+    public static void incrementItemRecipesWithNoIngredients() {
+        itemRecipesWithNoIngredients++;
+    }
+
+    public static void incrementRecipesNotUnderstood() {
+        recipesNotUnderstood++;
+    }
+
     private static void startQuery() {
-        VanillaEMC.LOGGER.info("Searching through " + RECIPES.size() + " recipes!");
         queryRecipes(RECIPES);
     }
 
@@ -613,8 +756,6 @@ public class EMCValues {
             previousCompletedSize = COMPLETED.size();
             queryRecipes(RECIPES);
         } else {
-            VanillaEMC.LOGGER.info("Found recipes in " + loops + " loops!");
-
             List<String> HAS_MULTIPLE = new ArrayList<>();
             RECIPE_ITEM_VALUES.forEach((resultId, emcValues) -> {
                 int emcValue = getAverage(emcValues);
@@ -623,13 +764,10 @@ public class EMCValues {
                     resultId.contains("painting");
                 if (emcValues.size() > 1 && !STONE_CUTTER_LIST.contains(resultId) && !HAS_MULTIPLE.contains(resultId) &&
                     !ignored) {
-                    String blockName = ItemHelper.getName(ItemHelper.getById(resultId));
-                    VanillaEMC.LOGGER.info(
-                        "Found item with multiple different recipes: " + blockName + ". Using average: " + emcValue +
-                            " " + emcValues);
+                    itemsWithMultipleRecipes++;
                     HAS_MULTIPLE.add(resultId);
                 }
-                setEMC(resultId, emcValue, "Recipe");
+                setEMC(resultId, emcValue, "Recipe", getRecipeSourceDetail(resultId));
 
                 // add dynamic
                 if (resultId.contains("concrete_powder")) {
@@ -644,24 +782,18 @@ public class EMCValues {
             // LOG ITEMS WITH MISSING EMC - that does not have a crafting recipe!
             for (String missing : MISSING) {
                 if (!COMPLETED.contains(missing) && !unused.contains(missing)) {
-                    VanillaEMC.LOGGER.info(
-                        "FOUND ITEM WITH NO RECIPE AND NO EMC: " + ItemHelper.getName(ItemHelper.getById(missing)) +
-                            " (" + missing + ")");
+                    itemsWithoutRecipeOrEMC++;
                 }
             }
 
-            int NOT_FOUND = 0;
             for (RegistryKey<Item> item : Registries.ITEM.getKeys()) {
                 String itemId = item
                     .getValue()
                     .toString();
-                if (!checkItem(itemId)) {NOT_FOUND++;}
+                if (!checkItem(itemId)) {itemsWithoutEMC++;}
             }
 
-            // VanillaEMC.LOGGER.info("FOUND " + (NOT_FOUND.size()) + " ITEMS WITH NO EMC!");
-            VanillaEMC.LOGGER.info(
-                "Loaded EMC values for " + EMC_VALUES.size() + " recipes! Could not find value for " + NOT_FOUND +
-                    " items.");
+            logStartupSummary();
         }
     }
 
@@ -685,8 +817,6 @@ public class EMCValues {
 
         if (!EMC_VALUES.containsKey(itemId) && !unused.contains(itemId) && !itemId.contains("bucket") &&
             !itemId.contains("potion") && !itemId.contains("infested_") && itemId != "minecraft:air") {
-            VanillaEMC.LOGGER.info(
-                "No EMC value for item: " + ItemHelper.getName(ItemHelper.getById(itemId)) + " (" + itemId + ")");
             return false;
         }
 
@@ -733,29 +863,40 @@ public class EMCValues {
     private static final List<String> COMPLETED = new ArrayList<String>();
     private static final List<String> MISSING = new ArrayList<String>();
     private static final HashMap<String, List<Integer>> RECIPE_ITEM_VALUES = new HashMap<String, List<Integer>>();
+    private static final HashMap<String, List<String>> RECIPE_ITEM_SOURCE_DETAILS = new HashMap<String, List<String>>();
     private static final HashMap<String, List<String>> PARENTS = new HashMap<String, List<String>>();
 
     private static void checkRecipe(Map.Entry<String, List<String>> recipe) {
         String id = recipe.getKey();
         if (COMPLETED.contains(id)) {return;}
 
-        if (EMC_VALUES.containsKey(id.split("__")[0])) {
+        String[] parts = id.split("__");
+        String resultId = parts[0];
+        int resultCount = Integer.parseInt(parts[1]);
+        int extraEMC = Integer.parseInt(parts[2]); // cooking
+
+        if (EMC_VALUES.containsKey(resultId)) {
+            if (hasUnresolvedRecipeAlternatives(id)) return;
+            checkReverseRecipe(id, resultId, resultCount, extraEMC, recipe.getValue());
             COMPLETED.add(id);
             return;
         }
 
         List<String> ingredients = recipe.getValue();
+        if (hasUnresolvedRecipeAlternatives(id)) return;
+
+        if (getResultEMC(resultId) > 0) {
+            checkReverseRecipe(id, resultId, resultCount, extraEMC, ingredients);
+            COMPLETED.add(id);
+            return;
+        }
+
         int totalInputEMC = combineEMC(ingredients);
         if (totalInputEMC == 0) {
             return; // try again!
         }
 
         COMPLETED.add(id);
-
-        String[] parts = id.split("__");
-        String resultId = parts[0];
-        int resultCount = Integer.parseInt(parts[1]);
-        int extraEMC = Integer.parseInt(parts[2]); // cooking
 
         // don't allow "children" to change the item they received emc value from
         if (PARENTS.containsKey(resultId)) {
@@ -770,9 +911,7 @@ public class EMCValues {
             if (newEMC < 1) {newEMC = 1;}
             if (previousEMC == newEMC) {return;}
 
-            VanillaEMC.LOGGER.info(
-                "Found child & parent ITEMS with unmatching EMC values: " + resultId + " - " + PARENTS.get(resultId) +
-                    " (THIS COULD RESULT IN INFINITE EMC)!");
+            childParentUnmatchingEMC++;
             return;
         } else if (ingredients.size() == 1) {
             List<String> children = new ArrayList<>();
@@ -795,13 +934,168 @@ public class EMCValues {
         values.add(totalInputEMC);
 
         RECIPE_ITEM_VALUES.put(resultId, values);
+        addRecipeSourceDetail(resultId, id, totalInputEMC, ingredients, resultCount, extraEMC);
+    }
+
+    private static boolean hasUnresolvedRecipeAlternatives(String recipeKey) {
+        String recipeSource = RECIPE_SOURCES.get(recipeKey);
+        if (recipeSource == null) return false;
+
+        int sameSourceRecipes = 0;
+        for (String key : RECIPES.keySet()) {
+            if (recipeSource.equals(RECIPE_SOURCES.get(key))) {
+                sameSourceRecipes++;
+            }
+        }
+
+        if (sameSourceRecipes <= 1) return false;
+
+        for (String key : RECIPES.keySet()) {
+            if (recipeSource.equals(RECIPE_SOURCES.get(key))) {
+                if (combineEMC(RECIPES.get(key)) == 0) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static void logStartupSummary() {
+        long elapsedMs = startupStartedAt == 0 ? 0 : System.currentTimeMillis() - startupStartedAt;
+
+        VanillaEMC.LOGGER.info(
+            String.join("\n",
+                "----- Dissolver Enhanced Finished Startup -----",
+                "Time to finish: " + elapsedMs + "ms",
+                "Recipes scanned: " + startupRecipeCount,
+                "Recipe loops: " + loops,
+                "Item Recipes with no ingredients: " + itemRecipesWithNoIngredients,
+                "Recipes not understood: " + recipesNotUnderstood,
+                "Child & Parent with unmatching EMC: " + childParentUnmatchingEMC,
+                "Items with multiple different recipes: " + itemsWithMultipleRecipes,
+                "Items without Recipe or EMC: " + itemsWithoutRecipeOrEMC,
+                "Items without EMC: " + itemsWithoutEMC,
+                "Items set with EMC: " + EMC_VALUES.size()
+            )
+        );
+    }
+
+    private static void checkReverseRecipe(
+        String recipeKey,
+        String resultId,
+        int resultCount,
+        int extraEMC,
+        List<String> ingredients
+    ) {
+        if (extraEMC != 0 || ingredients.isEmpty()) return;
+
+        String unknownIngredient = ingredients.get(0);
+        for (String ingredient : ingredients) {
+            if (!ingredient.equals(unknownIngredient) || get(ingredient) > 0) {
+                return;
+            }
+        }
+
+        int resultEMC = getResultEMC(resultId);
+        if (resultEMC == 0) return;
+
+        long totalResultEMC = (long) resultEMC * resultCount;
+        int ingredientEMC = (int) ((totalResultEMC + ingredients.size() - 1) / ingredients.size());
+        if (ingredientEMC < 1) ingredientEMC = 1;
+
+        setEMC(
+            unknownIngredient,
+            ingredientEMC,
+            "Reverse Recipe",
+            formatReverseRecipeSourceDetail(recipeKey, resultId, resultCount, ingredients, ingredientEMC)
+        );
+    }
+
+    private static int getResultEMC(String resultId) {
+        int resultEMC = get(resultId);
+        if (resultEMC > 0) return resultEMC;
+
+        if (RECIPE_ITEM_VALUES.containsKey(resultId)) {
+            return getAverage(RECIPE_ITEM_VALUES.get(resultId));
+        }
+
+        return 0;
+    }
+
+    private static void addRecipeSourceDetail(
+        String resultId,
+        String recipeKey,
+        int emcValue,
+        List<String> ingredients,
+        int resultCount,
+        int extraEMC
+    ) {
+        List<String> sourceDetails = new ArrayList<>();
+        if (RECIPE_ITEM_SOURCE_DETAILS.containsKey(resultId)) {
+            sourceDetails = RECIPE_ITEM_SOURCE_DETAILS.get(resultId);
+        }
+
+        String sourceDetail = formatRecipeSourceDetail(recipeKey, resultId, resultCount, ingredients, emcValue, extraEMC);
+        if (!sourceDetails.contains(sourceDetail)) {
+            sourceDetails.add(sourceDetail);
+        }
+
+        RECIPE_ITEM_SOURCE_DETAILS.put(resultId, sourceDetails);
+    }
+
+    private static String getRecipeSourceDetail(String resultId) {
+        if (!RECIPE_ITEM_SOURCE_DETAILS.containsKey(resultId)) {
+            return "None";
+        }
+
+        return String.join("; ", RECIPE_ITEM_SOURCE_DETAILS.get(resultId));
+    }
+
+    private static String formatRecipeSourceDetail(
+        String recipeKey,
+        String resultId,
+        int resultCount,
+        List<String> ingredients,
+        int emcValue,
+        int extraEMC
+    ) {
+        return "Recipe " + getRecipeSource(recipeKey) + ": " + formatIngredients(ingredients) + " -> " +
+            resultCount + "x " + resultId + " = " + emcValue + " EMC" +
+            (extraEMC > 0 ? " (+" + extraEMC + " cooking)" : "");
+    }
+
+    private static String formatReverseRecipeSourceDetail(
+        String recipeKey,
+        String resultId,
+        int resultCount,
+        List<String> ingredients,
+        int emcValue
+    ) {
+        return "Reverse recipe " + getRecipeSource(recipeKey) + ": " + formatIngredients(ingredients) + " -> " +
+            resultCount + "x " + resultId + " = " + emcValue + " EMC each";
+    }
+
+    private static String getRecipeSource(String recipeKey) {
+        return RECIPE_SOURCES.getOrDefault(recipeKey, recipeKey);
+    }
+
+    private static String formatIngredients(List<String> ingredients) {
+        HashMap<String, Integer> counts = new HashMap<>();
+        for (String ingredient : ingredients) {
+            counts.put(ingredient, counts.getOrDefault(ingredient, 0) + 1);
+        }
+
+        List<String> formatted = new ArrayList<>();
+        counts.forEach((itemId, count) -> formatted.add(count + "x " + itemId));
+        return String.join(", ", formatted);
     }
 
     private static int combineEMC(List<String> itemIds) {
         int totalEmcValue = 0;
 
         for (String itemId : itemIds) {
-            int emcValue = get(itemId);
+            int emcValue = getIngredientEMC(itemId);
             if (emcValue == 0) {
                 // could not get value for all blocks
                 if (!RECIPE_ITEM_VALUES.containsKey(itemId)) {
@@ -817,6 +1111,14 @@ public class EMCValues {
         }
 
         return totalEmcValue;
+    }
+
+    private static int getIngredientEMC(String itemId) {
+        if (itemId.startsWith("#")) {
+            return EMC_TAG_VALUES.getOrDefault(itemId.substring(1), 0);
+        }
+
+        return get(itemId);
     }
 
     static private boolean recipeKeySearch(String keyId) {

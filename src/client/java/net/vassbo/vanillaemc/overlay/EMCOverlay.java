@@ -7,6 +7,7 @@ import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 import net.vassbo.vanillaemc.config.ModConfig;
 import net.vassbo.vanillaemc.data.PlayerDataClient;
+import net.vassbo.vanillaemc.helpers.NumberHelpers;
 
 public class EMCOverlay implements HudRenderCallback {
     private static final int WHITE_COLOR = 0xFFFFFF;
@@ -24,8 +25,7 @@ public class EMCOverlay implements HudRenderCallback {
 
         if (ModConfig.EMC_ON_HUD == false) return;
 
-        // String emc = NumberHelpers.format(PlayerDataClient.EMC);
-        String emc = String.valueOf(PlayerDataClient.EMC); // show full amount when on HUD
+        String emc = NumberHelpers.format(PlayerDataClient.EMC);
         Text text = Text.translatable("emc.title", emc);
         drawContext.drawText(client.textRenderer, text, 4, 4, WHITE_COLOR, false);
     }
