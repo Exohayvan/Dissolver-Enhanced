@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 
 import net.minecraft.item.Item;
@@ -66,12 +67,12 @@ public class DebugItem {
             .stream()
             .limit(5)
             .toList();
-        List<Map.Entry<String, Integer>> recipeUnlockItems = EMCValues.getRecipeUnlockCounts()
+        List<Map.Entry<String, EMCValues.RecipeUnlockInfo>> recipeUnlockItems = EMCValues.getRecipeUnlockInfos()
             .entrySet()
             .stream()
-            .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+            .sorted((a, b) -> Integer.compare(b.getValue().count(), a.getValue().count()))
             .toList();
-        List<Map.Entry<String, Integer>> topRecipeUnlockItems = recipeUnlockItems
+        List<Map.Entry<String, EMCValues.RecipeUnlockInfo>> topRecipeUnlockItems = recipeUnlockItems
             .stream()
             .limit(5)
             .toList();
@@ -98,12 +99,130 @@ public class DebugItem {
         if (topRecipeUnlockItems.isEmpty()) {
             lines.add("None");
         } else {
-            for (Map.Entry<String, Integer> item : topRecipeUnlockItems) {
+            for (Map.Entry<String, EMCValues.RecipeUnlockInfo> item : topRecipeUnlockItems) {
                 lines.add(formatRecipeUnlockItem(item, itemsWithoutEMC));
             }
         }
 
         Path reportPath = writeReport(lines, tagsWithoutValues, recipeUnlockItems, itemsWithoutEMC);
+        lines.add("Report: " + reportPath);
+
+        String debugText = String.join("\n", lines);
+        VanillaEMC.LOGGER.info(debugText);
+        ModCommands.feedback(context, debugText);
+        return 1;
+    }
+
+    public static int namespace(CommandContext<ServerCommandSource> context, String command) {
+        return namespaceSummary(context, null);
+    }
+
+    public static int namespaceFiltered(CommandContext<ServerCommandSource> context, String command) {
+        return namespaceSummary(context, StringArgumentType.getString(context, "namespace"));
+    }
+
+    private static int namespaceSummary(CommandContext<ServerCommandSource> context, String namespace) {
+        List<Item> items = Registries.ITEM
+            .stream()
+            .filter(item -> !item.getDefaultStack().isEmpty())
+            .filter(item -> namespace == null || getNamespace(item.toString()).equals(namespace))
+            .toList();
+
+        int totalItems = items.size();
+        int itemsWithEMC = 0;
+        int itemsWithoutEMC = 0;
+        HashMap<String, Integer> missingNamespaceCounts = new HashMap<>();
+        HashMap<String, List<String>> missingItemsByNamespace = new HashMap<>();
+        HashMap<String, Integer> missingTagCounts = new HashMap<>();
+
+        for (Item item : items) {
+            String itemId = item.toString();
+            int emc = EMCValues.get(itemId);
+
+            if (emc > 0) {
+                itemsWithEMC++;
+                continue;
+            }
+
+            itemsWithoutEMC++;
+            String itemNamespace = getNamespace(itemId);
+            missingNamespaceCounts.put(itemNamespace, missingNamespaceCounts.getOrDefault(itemNamespace, 0) + 1);
+
+            List<String> missingItems = new ArrayList<>();
+            if (missingItemsByNamespace.containsKey(itemNamespace)) {
+                missingItems = missingItemsByNamespace.get(itemNamespace);
+            }
+            missingItems.add(itemId);
+            missingItemsByNamespace.put(itemNamespace, missingItems);
+
+            item.getDefaultStack()
+                .streamTags()
+                .map(TagKey::id)
+                .map(Identifier::toString)
+                .filter(tagId -> !EMCValues.EMC_TAG_VALUES.containsKey(tagId))
+                .forEach(tagId -> missingTagCounts.put(tagId, missingTagCounts.getOrDefault(tagId, 0) + 1));
+        }
+
+        List<Map.Entry<String, Integer>> namespacesWithMissingItems = missingNamespaceCounts
+            .entrySet()
+            .stream()
+            .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+            .toList();
+        List<Map.Entry<String, Integer>> topNamespaces = namespacesWithMissingItems
+            .stream()
+            .limit(5)
+            .toList();
+        List<Map.Entry<String, Integer>> tagsWithoutValues = missingTagCounts
+            .entrySet()
+            .stream()
+            .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+            .toList();
+        List<Map.Entry<String, EMCValues.RecipeUnlockInfo>> recipeUnlockItems = EMCValues.getRecipeUnlockInfos(namespace)
+            .entrySet()
+            .stream()
+            .sorted((a, b) -> Integer.compare(b.getValue().count(), a.getValue().count()))
+            .toList();
+
+        double percentWithEMC = totalItems == 0 ? 0 : (itemsWithEMC * 100.0) / totalItems;
+        List<String> lines = new ArrayList<>();
+        lines.add(namespace == null ? "Namespace EMC Debug" : "Namespace EMC Debug: " + namespace);
+        lines.add("Total Items: " + totalItems);
+        lines.add("Items with EMC: " + itemsWithEMC);
+        lines.add("Items without EMC: " + itemsWithoutEMC);
+        lines.add("% of items with EMC: " + formatPercent(percentWithEMC));
+        lines.add("Top 5 namespaces with missing EMC:");
+
+        if (topNamespaces.isEmpty()) {
+            lines.add("None");
+        } else {
+            for (Map.Entry<String, Integer> itemNamespace : topNamespaces) {
+                double percentOfMissingItems = itemsWithoutEMC == 0 ? 0 : (itemNamespace.getValue() * 100.0) / itemsWithoutEMC;
+                lines.add(itemNamespace.getKey() + " - " + formatPercent(percentOfMissingItems) + " (" + itemNamespace.getValue() + " items)");
+            }
+        }
+
+        if (namespace != null) {
+            lines.add("Top 5 tags without values:");
+            if (tagsWithoutValues.isEmpty()) {
+                lines.add("None");
+            } else {
+                for (Map.Entry<String, Integer> tag : tagsWithoutValues.stream().limit(5).toList()) {
+                    double percentOfMissingItems = itemsWithoutEMC == 0 ? 0 : (tag.getValue() * 100.0) / itemsWithoutEMC;
+                    lines.add("#" + tag.getKey() + " - " + formatPercent(percentOfMissingItems));
+                }
+            }
+
+            lines.add("Top 5 missing recipe ingredients:");
+            if (recipeUnlockItems.isEmpty()) {
+                lines.add("None");
+            } else {
+                for (Map.Entry<String, EMCValues.RecipeUnlockInfo> item : recipeUnlockItems.stream().limit(5).toList()) {
+                    lines.add(formatRecipeUnlockItem(item, itemsWithoutEMC));
+                }
+            }
+        }
+
+        Path reportPath = writeNamespaceReport(lines, namespace, namespacesWithMissingItems, missingItemsByNamespace, tagsWithoutValues, recipeUnlockItems, itemsWithoutEMC);
         lines.add("Report: " + reportPath);
 
         String debugText = String.join("\n", lines);
@@ -215,7 +334,7 @@ public class DebugItem {
     private static Path writeReport(
         List<String> lines,
         List<Map.Entry<String, Integer>> tagsWithoutValues,
-        List<Map.Entry<String, Integer>> recipeUnlockItems,
+        List<Map.Entry<String, EMCValues.RecipeUnlockInfo>> recipeUnlockItems,
         int itemsWithoutEMC
     ) {
         Path reportDir = Path.of("debug");
@@ -240,7 +359,7 @@ public class DebugItem {
         if (recipeUnlockItems.isEmpty()) {
             reportLines.add("None");
         } else {
-            for (Map.Entry<String, Integer> item : recipeUnlockItems) {
+            for (Map.Entry<String, EMCValues.RecipeUnlockInfo> item : recipeUnlockItems) {
                 reportLines.add(formatRecipeUnlockItem(item, itemsWithoutEMC));
             }
         }
@@ -250,6 +369,87 @@ public class DebugItem {
             Files.writeString(reportPath, String.join("\n", reportLines) + "\n");
         } catch (IOException e) {
             VanillaEMC.LOGGER.error("Could not write EMC debug report to {}", reportPath, e);
+        }
+
+        return reportPath;
+    }
+
+    private static Path writeNamespaceReport(
+        List<String> lines,
+        String namespace,
+        List<Map.Entry<String, Integer>> namespacesWithMissingItems,
+        HashMap<String, List<String>> missingItemsByNamespace,
+        List<Map.Entry<String, Integer>> tagsWithoutValues,
+        List<Map.Entry<String, EMCValues.RecipeUnlockInfo>> recipeUnlockItems,
+        int itemsWithoutEMC
+    ) {
+        Path reportDir = Path.of("debug");
+        String namespacePart = namespace == null ? "all" : namespace;
+        String fileName = "dissolver-namespace-debug-" + namespacePart + "-" + LocalDateTime.now().format(REPORT_DATE_FORMAT);
+        Path reportPath = reportDir.resolve(fileName);
+        List<String> reportLines = new ArrayList<>(lines);
+
+        reportLines.add("");
+        reportLines.add("All namespaces with missing EMC:");
+        if (namespacesWithMissingItems.isEmpty()) {
+            reportLines.add("None");
+        } else {
+            for (Map.Entry<String, Integer> itemNamespace : namespacesWithMissingItems) {
+                double percentOfMissingItems = itemsWithoutEMC == 0 ? 0 : (itemNamespace.getValue() * 100.0) / itemsWithoutEMC;
+                reportLines.add(itemNamespace.getKey() + " - " + formatPercent(percentOfMissingItems) + " (" + itemNamespace.getValue() + " items)");
+            }
+        }
+
+        reportLines.add("");
+        reportLines.add("All missing items:");
+        if (missingItemsByNamespace.isEmpty()) {
+            reportLines.add("None");
+        } else {
+            List<String> itemNamespaces = missingItemsByNamespace
+                .keySet()
+                .stream()
+                .sorted()
+                .toList();
+            for (String itemNamespace : itemNamespaces) {
+                List<String> missingItems = missingItemsByNamespace.get(itemNamespace)
+                    .stream()
+                    .sorted()
+                    .toList();
+                reportLines.add(itemNamespace + " (" + missingItems.size() + " items)");
+                for (String itemId : missingItems) {
+                    reportLines.add("- " + itemId);
+                }
+            }
+        }
+
+        if (namespace != null) {
+            reportLines.add("");
+            reportLines.add("All tags without values:");
+            if (tagsWithoutValues.isEmpty()) {
+                reportLines.add("None");
+            } else {
+                for (Map.Entry<String, Integer> tag : tagsWithoutValues) {
+                    double percentOfMissingItems = itemsWithoutEMC == 0 ? 0 : (tag.getValue() * 100.0) / itemsWithoutEMC;
+                    reportLines.add("#" + tag.getKey() + " - " + formatPercent(percentOfMissingItems));
+                }
+            }
+
+            reportLines.add("");
+            reportLines.add("All missing recipe ingredients:");
+            if (recipeUnlockItems.isEmpty()) {
+                reportLines.add("None");
+            } else {
+                for (Map.Entry<String, EMCValues.RecipeUnlockInfo> item : recipeUnlockItems) {
+                    reportLines.add(formatRecipeUnlockItem(item, itemsWithoutEMC));
+                }
+            }
+        }
+
+        try {
+            Files.createDirectories(reportDir);
+            Files.writeString(reportPath, String.join("\n", reportLines) + "\n");
+        } catch (IOException e) {
+            VanillaEMC.LOGGER.error("Could not write EMC namespace debug report to {}", reportPath, e);
         }
 
         return reportPath;
@@ -278,8 +478,14 @@ public class DebugItem {
             .count();
     }
 
-    private static String formatRecipeUnlockItem(Map.Entry<String, Integer> item, int itemsWithoutEMC) {
-        double percentOfMissingItems = itemsWithoutEMC == 0 ? 0 : (item.getValue() * 100.0) / itemsWithoutEMC;
-        return item.getKey() + " - " + formatPercent(percentOfMissingItems) + " (" + item.getValue() + " items)";
+    private static String formatRecipeUnlockItem(Map.Entry<String, EMCValues.RecipeUnlockInfo> item, int itemsWithoutEMC) {
+        double percentOfMissingItems = itemsWithoutEMC == 0 ? 0 : (item.getValue().count() * 100.0) / itemsWithoutEMC;
+        return item.getKey() + " - " + formatPercent(percentOfMissingItems) + " (" + item.getValue().count() +
+            " items, " + item.getValue().reason() + ")";
+    }
+
+    private static String getNamespace(String itemId) {
+        int separator = itemId.indexOf(":");
+        return separator < 0 ? "minecraft" : itemId.substring(0, separator);
     }
 }
