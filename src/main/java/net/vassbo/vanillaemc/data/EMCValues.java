@@ -49,16 +49,30 @@ public class EMCValues {
         return TAG_ITEMS.getOrDefault(tagId, new ArrayList<>());
     }
 
+    public record RecipeUnlockInfo(int count, String reason) {}
+
     public static HashMap<String, Integer> getRecipeUnlockCounts() {
+        HashMap<String, RecipeUnlockInfo> unlockInfos = getRecipeUnlockInfos();
+        HashMap<String, Integer> unlockCounts = new HashMap<>();
+        unlockInfos.forEach((itemId, info) -> unlockCounts.put(itemId, info.count()));
+        return unlockCounts;
+    }
+
+    public static HashMap<String, RecipeUnlockInfo> getRecipeUnlockInfos() {
+        return getRecipeUnlockInfos(null);
+    }
+
+    public static HashMap<String, RecipeUnlockInfo> getRecipeUnlockInfos(String namespace) {
         HashMap<String, Set<String>> unlockableResults = new HashMap<>();
 
         for (Map.Entry<String, List<String>> recipe : RECIPES.entrySet()) {
             String resultId = recipe.getKey().split("__")[0];
+            if (namespace != null && !resultId.startsWith(namespace + ":")) continue;
             if (get(resultId) > 0) continue;
 
             Set<String> missingIngredients = new HashSet<>();
             for (String ingredient : recipe.getValue()) {
-                if (get(ingredient) == 0) {
+                if (getRecipeIngredientValue(ingredient) == 0) {
                     missingIngredients.add(ingredient);
                 }
             }
@@ -74,9 +88,54 @@ public class EMCValues {
             unlockableResults.put(missingIngredient, resultIds);
         }
 
-        HashMap<String, Integer> unlockCounts = new HashMap<>();
-        unlockableResults.forEach((itemId, resultIds) -> unlockCounts.put(itemId, resultIds.size()));
-        return unlockCounts;
+        HashMap<String, RecipeUnlockInfo> unlockInfos = new HashMap<>();
+        unlockableResults.forEach((itemId, resultIds) ->
+            unlockInfos.put(itemId, new RecipeUnlockInfo(resultIds.size(), getMissingRecipeIngredientReason(itemId)))
+        );
+        return unlockInfos;
+    }
+
+    private static int getRecipeIngredientValue(String itemId) {
+        int emc = getIngredientEMC(itemId);
+        if (emc > 0) return emc;
+
+        if (RECIPE_ITEM_VALUES.containsKey(itemId)) {
+            return getAverage(RECIPE_ITEM_VALUES.get(itemId));
+        }
+
+        return 0;
+    }
+
+    private static String getMissingRecipeIngredientReason(String itemId) {
+        if (itemId.startsWith("#")) {
+            String tagId = itemId.substring(1);
+            List<String> tagItems = TAG_ITEMS.get(tagId);
+            if (tagItems == null || tagItems.isEmpty()) {
+                return "Missing tag value";
+            }
+
+            boolean hasKnownAlternative = false;
+            boolean hasBlockedAlternative = false;
+            for (String tagItem : tagItems) {
+                if (getRecipeIngredientValue(tagItem) > 0) {
+                    hasKnownAlternative = true;
+                } else {
+                    hasBlockedAlternative = true;
+                }
+            }
+
+            if (!hasKnownAlternative && hasBlockedAlternative) {
+                return "Tag alternatives all blocked";
+            }
+
+            return "Missing tag value";
+        }
+
+        if (recipeKeySearch(itemId)) {
+            return "Blocked item recipe";
+        }
+
+        return "Missing item value";
     }
 
     public static List<String> getRecipeDebugLines(String itemId) {
@@ -199,11 +258,9 @@ public class EMCValues {
         setEMCUnchecked("minecraft:raw_iron", IRON - 10);
         setEMCUnchecked("minecraft:raw_gold", GOLD - 10);
         setEMCUnchecked("minecraft:raw_copper", COPPER - 10);
-        setEMCUnchecked("minecraft:deepslate", DEEPSLATE);
         setEMCUnchecked("minecraft:cobbled_deepslate", COBBLESTONE);
         setEMCUnchecked("minecraft:blackstone", COBBLESTONE);
         setEMCUnchecked("minecraft:gilded_blackstone", GOLD);
-        setEMCUnchecked("minecraft:tuff", DEEPSLATE);
         setEMCUnchecked("minecraft:mud", DIRT);
         setEMCUnchecked("minecraft:clay_ball", LEAVES);
         setEMCUnchecked("minecraft:short_grass", DIRT);
@@ -371,13 +428,6 @@ public class EMCValues {
         EMC_TAG_VALUES.put("c:ingots/netherite", NETHERITE_INGOT);
         EMC_TAG_VALUES.put("advancednetherite:ingot/netherites", NETHERITE_INGOT);
         EMC_TAG_VALUES.put("advancednetherite:ingot/upgrade_to_netherite_iron", NETHERITE_INGOT);
-        EMC_TAG_VALUES.put("c:ingots/aethersent", IRON);
-        EMC_TAG_VALUES.put("c:ingots/thermal_springstone", IRON);
-        EMC_TAG_VALUES.put("c:ingots/deepsilver", GOLD);
-        EMC_TAG_VALUES.put("c:ingots/unrealium", DIAMOND);
-        EMC_TAG_VALUES.put("c:ingots/amaramber", GOLD);
-        EMC_TAG_VALUES.put("c:ingots/oxidized_golem_steel", NETHERITE_INGOT);
-        EMC_TAG_VALUES.put("c:ingots/golem_steel", NETHERITE_INGOT);
         setEMCUnchecked("minecraft:netherite_sword", NETHERITE_INGOT + (DIAMOND * 2) + 2);
         setEMCUnchecked("minecraft:netherite_pickaxe", NETHERITE_INGOT + (DIAMOND * 3) + (2 * 2));
         setEMCUnchecked("minecraft:netherite_axe", NETHERITE_INGOT + (DIAMOND * 3) + (2 * 2));
@@ -458,7 +508,8 @@ public class EMCValues {
         // nature
         int LOGS = 16; // bamboo planks (BAMBOO * 9 / 2) * 4 (all planks should be same EMC)
         int FLOWERS = 8; // at least 8 so dyed glass is more expensive
-        EMC_TAG_VALUES.put("minecraft:stone", COBBLESTONE * 2);
+        EMC_TAG_VALUES.put("minecraft:stone", COBBLESTONE);
+        EMC_TAG_VALUES.put("c:stones", COBBLESTONE);
         EMC_TAG_VALUES.put("minecraft:logs", LOGS); // dividable by 4
         EMC_TAG_VALUES.put("minecraft:planks", 4);
         EMC_TAG_VALUES.put("minecraft:nylium", 2);
@@ -469,15 +520,11 @@ public class EMCValues {
         EMC_TAG_VALUES.put("minecraft:flowers", FLOWERS);
         EMC_TAG_VALUES.put("minecraft:leaves", LEAVES);
         EMC_TAG_VALUES.put("minecraft:arrow", 10);
-        EMC_TAG_VALUES.put("cobblemon:apricorns", 30);
-        EMC_TAG_VALUES.put("cobblemon:evolution_stones", 1280);
-        EMC_TAG_VALUES.put("simplehats:all_hats", 254);
         // materials
         int COAL = 40;
         EMC_TAG_VALUES.put("c:ingots/copper", COPPER);
         EMC_TAG_VALUES.put("c:ingots/iron", IRON);
         EMC_TAG_VALUES.put("c:ingots/gold", GOLD);
-        EMC_TAG_VALUES.put("cobblemon:tier_1_poke_ball_materials", COPPER);
         EMC_TAG_VALUES.put("c:strings", 12);
         EMC_TAG_VALUES.put("c:leathers", 80);
         EMC_TAG_VALUES.put("minecraft:coal_ores", COAL);
@@ -489,11 +536,84 @@ public class EMCValues {
         EMC_TAG_VALUES.put("minecraft:emerald_ores", 1600);
 
         // CUSTOM
+        // namespace: minecraft
         setEMCUnchecked("minecraft:charcoal", COAL);
-        setEMCUnchecked("carved_wood:pale_oak_chest", 32);
         setEMCUnchecked("minecraft:exposed_chiseled_copper", (int) (COPPER * 4));
         setEMCUnchecked("minecraft:waxed_exposed_chiseled_copper", (int) (COPPER * 4.2));
         // waxed weathered chiseled copper is currently higher than the waxed oxidized chiseled copper
+
+        // namespace: carved_wood
+        setEMCUnchecked("carved_wood:pale_oak_chest", 32);
+
+        // namespace: cobblemon
+        EMC_TAG_VALUES.put("cobblemon:apricorns", 30);
+        EMC_TAG_VALUES.put("cobblemon:evolution_stones", 1280);
+        EMC_TAG_VALUES.put("cobblemon:tier_1_poke_ball_materials", COPPER);
+
+        // namespace: eternal_starlight
+        EMC_TAG_VALUES.put("c:ingots/aethersent", IRON);
+        EMC_TAG_VALUES.put("c:raw_materials/aethersent", IRON - 10);
+        EMC_TAG_VALUES.put("c:ingots/thermal_springstone", IRON);
+        setEMCUnchecked("eternal_starlight:thermal_springstone", IRON - 10);
+        EMC_TAG_VALUES.put("c:ingots/deepsilver", GOLD);
+        EMC_TAG_VALUES.put("c:raw_materials/deepsilver", GOLD - 10);
+        EMC_TAG_VALUES.put("c:ingots/amaramber", GOLD);
+        EMC_TAG_VALUES.put("c:raw_materials/amaramber", (GOLD * 2) - DEEPSLATE);
+        EMC_TAG_VALUES.put("c:ingots/golem_steel", 5207);
+        EMC_TAG_VALUES.put("c:ingots/oxidized_golem_steel", 5197);
+        EMC_TAG_VALUES.put("c:ingots/unrealium", 12000);
+        EMC_TAG_VALUES.put("c:gems/glacite", 512);
+        EMC_TAG_VALUES.put("c:gems/starlit_diamond", DIAMOND);
+        EMC_TAG_VALUES.put("c:gems/malarite", 2400);
+        EMC_TAG_VALUES.put("c:gems/thioquartz", 128);
+        EMC_TAG_VALUES.put("c:gems/starcore", 1260);
+        EMC_TAG_VALUES.put("c:dusts/saltpeter", 90);
+        EMC_TAG_VALUES.put("eternal_starlight:yeti_fur", 32);
+        setEMCUnchecked("eternal_starlight:cobbled_grimstone", DIRT);
+        setEMCUnchecked("eternal_starlight:cobbled_voidstone", DIRT);
+        setEMCUnchecked("eternal_starlight:radianite", DEEPSLATE);
+        setEMCUnchecked("eternal_starlight:cobbled_radianite", 3);
+        setEMCUnchecked("eternal_starlight:springstone", DEEPSLATE);
+        setEMCUnchecked("eternal_starlight:doomeden_bricks", DEEPSLATE);
+        setEMCUnchecked("eternal_starlight:flare_bricks", DEEPSLATE);
+        setEMCUnchecked("eternal_starlight:starfire", LOGS);
+        setEMCUnchecked("eternal_starlight:saltpeter_powder", 90);
+        setEMCUnchecked("eternal_starlight:raw_flowglaze", 256);
+        setEMCUnchecked("eternal_starlight:tooth_of_hunger", 256);
+        setEMCUnchecked("eternal_starlight:cave_moss_block", 2);
+        setEMCUnchecked("eternal_starlight:bouldershroom", 5);
+        setEMCUnchecked("eternal_starlight:lunaris_cactus", 5);
+        setEMCUnchecked("eternal_starlight:lunaris_cactus_fruit", 24);
+        setEMCUnchecked("eternal_starlight:carved_lunaris_cactus_fruit", 24);
+        setEMCUnchecked("eternal_starlight:ashen_snowball", 1);
+        setEMCUnchecked("eternal_starlight:soul_dew", 8000);
+        setEMCUnchecked("eternal_starlight:red_starlight_crystal_shard", 256);
+        setEMCUnchecked("eternal_starlight:blue_starlight_crystal_shard", 256);
+        setEMCUnchecked("eternal_starlight:sunset_thornbloom", 8);
+        setEMCUnchecked("eternal_starlight:starlight_flower", 8);
+        setEMCUnchecked("eternal_starlight:whisperbloom", 8);
+        setEMCUnchecked("eternal_starlight:conebloom", 8);
+        setEMCUnchecked("eternal_starlight:starlight_torchflower", 8);
+        setEMCUnchecked("eternal_starlight:orbflora_light", 8);
+        setEMCUnchecked("eternal_starlight:crinoa", 24);
+        setEMCUnchecked("eternal_starlight:lunar_berries", 16);
+        setEMCUnchecked("eternal_starlight:pungency_fruit", 64);
+        setEMCUnchecked("eternal_starlight:rookfish", 24);
+        setEMCUnchecked("eternal_starlight:luminofish", 24);
+        setEMCUnchecked("eternal_starlight:luminaris", 32);
+        setEMCUnchecked("eternal_starlight:aurora_deer_steak", 48);
+        setEMCUnchecked("eternal_starlight:ratlin_meat", 24);
+        setEMCUnchecked("eternal_starlight:shadow_snail_meat", 32);
+        setEMCUnchecked("eternal_starlight:creteor_hide", 128);
+        setEMCUnchecked("eternal_starlight:rookfish_air_sac", 96);
+        setEMCUnchecked("eternal_starlight:seeker_tentacle", 256);
+        setEMCUnchecked("eternal_starlight:shivering_gel", 128);
+        setEMCUnchecked("eternal_starlight:dusted_shard", 128);
+        setEMCUnchecked("eternal_starlight:tenacious_petal", 64);
+        setEMCUnchecked("eternal_starlight:tenacious_vine", 32);
+
+        // namespace: simplehats
+        EMC_TAG_VALUES.put("simplehats:all_hats", 254);
 
         // GENERATE
 

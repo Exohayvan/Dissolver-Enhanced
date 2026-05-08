@@ -12,7 +12,7 @@ public class EMCExpected {
      * Helper that does not include dirt to allow testing overrides of the standard set
      */
     public static List<EMCRecord> common(){
-        return Arrays.asList(
+        List<EMCRecord> list = new ArrayList<>(Arrays.asList(
             new EMCRecord("minecraft:burn_pottery_sherd", 2500),
             new EMCRecord("minecraft:music_disc_stal", 8000),
             new EMCRecord("minecraft:name_tag", 250),
@@ -124,7 +124,6 @@ public class EMCExpected {
             new EMCRecord("minecraft:wither_skeleton_skull", 4000),
             new EMCRecord("minecraft:oak_sapling", 3),
             new EMCRecord("minecraft:suspicious_gravel", 2),
-            new EMCRecord("minecraft:tuff", 4),
             new EMCRecord("minecraft:netherite_boots", 20364),
             new EMCRecord("minecraft:dragon_head", 1500),
             new EMCRecord("minecraft:dead_fire_coral_fan", 2),
@@ -324,7 +323,6 @@ public class EMCExpected {
             new EMCRecord("minecraft:torchflower_seeds", 2),
             new EMCRecord("minecraft:honeycomb", 50),
             new EMCRecord("minecraft:music_disc_mellohi", 8000),
-            new EMCRecord("minecraft:deepslate", 4),
             new EMCRecord("minecraft:light_gray_dye", 8),
             new EMCRecord("minecraft:rooted_dirt", 5),
             new EMCRecord("minecraft:spider_eye", 25),
@@ -345,7 +343,9 @@ public class EMCExpected {
             new EMCRecord("minecraft:dead_bubble_coral_block", 4),
             new EMCRecord("minecraft:netherite_sword", 11966),
             new EMCRecord("minecraft:host_armor_trim_smithing_template", 9200)
-        );
+        ));
+        list.addAll(eternalStarlightDefault());
+        return list;
     }
 
     public static List<EMCRecord> standard() {
@@ -357,7 +357,7 @@ public class EMCExpected {
     }
 
     public static List<EMCRecord> skyblocks(){
-        return Arrays.asList(
+        List<EMCRecord> list = new ArrayList<>(Arrays.asList(
             new EMCRecord("minecraft:burn_pottery_sherd", 2500),
             new EMCRecord("minecraft:music_disc_stal", 8000),
             new EMCRecord("minecraft:name_tag", 250),
@@ -469,7 +469,6 @@ public class EMCExpected {
             new EMCRecord("minecraft:wither_skeleton_skull", 4000),
             new EMCRecord("minecraft:oak_sapling", 3),
             new EMCRecord("minecraft:suspicious_gravel", 80),
-            new EMCRecord("minecraft:tuff", 4),
             new EMCRecord("minecraft:netherite_boots", 35564),
             new EMCRecord("minecraft:dragon_head", 1500),
             new EMCRecord("minecraft:dead_fire_coral_fan", 2),
@@ -670,7 +669,6 @@ public class EMCExpected {
             new EMCRecord("minecraft:torchflower_seeds", 90),
             new EMCRecord("minecraft:honeycomb", 50),
             new EMCRecord("minecraft:music_disc_mellohi", 8000),
-            new EMCRecord("minecraft:deepslate", 4),
             new EMCRecord("minecraft:light_gray_dye", 8),
             new EMCRecord("minecraft:rooted_dirt", 5),
             new EMCRecord("minecraft:spider_eye", 25),
@@ -691,6 +689,64 @@ public class EMCExpected {
             new EMCRecord("minecraft:dead_bubble_coral_block", 4),
             new EMCRecord("minecraft:netherite_sword", 19566),
             new EMCRecord("minecraft:host_armor_trim_smithing_template", 9200)
+        ));
+        list.addAll(eternalStarlightSkyblocks());
+        return list;
+    }
+
+    private static List<EMCRecord> eternalStarlightDefault() {
+        return eternalStarlight(215, 1, 1);
+    }
+
+    private static List<EMCRecord> eternalStarlightSkyblocks() {
+        return eternalStarlight(490, 80, 80);
+    }
+
+    private static List<EMCRecord> eternalStarlight(int thermalSpringstone, int cobbledGrimstone, int cobbledVoidstone) {
+        return Arrays.asList(
+            new EMCRecord("eternal_starlight:thermal_springstone", thermalSpringstone),
+            new EMCRecord("eternal_starlight:cobbled_grimstone", cobbledGrimstone),
+            new EMCRecord("eternal_starlight:cobbled_voidstone", cobbledVoidstone),
+            new EMCRecord("eternal_starlight:radianite", 4),
+            new EMCRecord("eternal_starlight:cobbled_radianite", 3),
+            new EMCRecord("eternal_starlight:springstone", 4),
+            new EMCRecord("eternal_starlight:doomeden_bricks", 4),
+            new EMCRecord("eternal_starlight:flare_bricks", 4),
+            new EMCRecord("eternal_starlight:starfire", 16),
+            new EMCRecord("eternal_starlight:saltpeter_powder", 90),
+            new EMCRecord("eternal_starlight:raw_flowglaze", 256),
+            new EMCRecord("eternal_starlight:tooth_of_hunger", 256),
+            new EMCRecord("eternal_starlight:cave_moss_block", 2),
+            new EMCRecord("eternal_starlight:bouldershroom", 5),
+            new EMCRecord("eternal_starlight:lunaris_cactus", 5),
+            new EMCRecord("eternal_starlight:lunaris_cactus_fruit", 24),
+            new EMCRecord("eternal_starlight:carved_lunaris_cactus_fruit", 24),
+            new EMCRecord("eternal_starlight:ashen_snowball", 1),
+            new EMCRecord("eternal_starlight:soul_dew", 8000),
+            new EMCRecord("eternal_starlight:red_starlight_crystal_shard", 256),
+            new EMCRecord("eternal_starlight:blue_starlight_crystal_shard", 256),
+            new EMCRecord("eternal_starlight:sunset_thornbloom", 8),
+            new EMCRecord("eternal_starlight:starlight_flower", 8),
+            new EMCRecord("eternal_starlight:whisperbloom", 8),
+            new EMCRecord("eternal_starlight:conebloom", 8),
+            new EMCRecord("eternal_starlight:starlight_torchflower", 8),
+            new EMCRecord("eternal_starlight:orbflora_light", 8),
+            new EMCRecord("eternal_starlight:crinoa", 24),
+            new EMCRecord("eternal_starlight:lunar_berries", 16),
+            new EMCRecord("eternal_starlight:pungency_fruit", 64),
+            new EMCRecord("eternal_starlight:rookfish", 24),
+            new EMCRecord("eternal_starlight:luminofish", 24),
+            new EMCRecord("eternal_starlight:luminaris", 32),
+            new EMCRecord("eternal_starlight:aurora_deer_steak", 48),
+            new EMCRecord("eternal_starlight:ratlin_meat", 24),
+            new EMCRecord("eternal_starlight:shadow_snail_meat", 32),
+            new EMCRecord("eternal_starlight:creteor_hide", 128),
+            new EMCRecord("eternal_starlight:rookfish_air_sac", 96),
+            new EMCRecord("eternal_starlight:seeker_tentacle", 256),
+            new EMCRecord("eternal_starlight:shivering_gel", 128),
+            new EMCRecord("eternal_starlight:dusted_shard", 128),
+            new EMCRecord("eternal_starlight:tenacious_petal", 64),
+            new EMCRecord("eternal_starlight:tenacious_vine", 32)
         );
     }
 
