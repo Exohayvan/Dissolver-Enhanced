@@ -25,11 +25,16 @@ public class EMCValues {
     protected static final HashMap<String, Integer> EMC_VALUES = new HashMap<String, Integer>();
     private static final HashMap<String, String> EMC_SOURCES = new HashMap<String, String>();
     private static final HashMap<String, String> EMC_SOURCE_DETAILS = new HashMap<String, String>();
+    private static final HashMap<String, Integer> CLIENT_SYNC_VALUES = new HashMap<String, Integer>();
     public static final HashMap<String, Integer> EMC_TAG_VALUES = new HashMap<String, Integer>();
     private static final HashMap<String, List<String>> TAG_ITEMS = new HashMap<String, List<String>>();
 
     public static Integer get(String key) {
         return EMC_VALUES.getOrDefault(key, 0);
+    }
+
+    public static Integer getDisplay(String key) {
+        return CLIENT_SYNC_VALUES.getOrDefault(key, get(key));
     }
 
     public static String getSource(String key) {
@@ -121,10 +126,8 @@ public class EMCValues {
         return values;
     }
 
-    public static void applySyncValues(List<String> values) {
-        EMC_VALUES.clear();
-        EMC_SOURCES.clear();
-        EMC_SOURCE_DETAILS.clear();
+    public static void applyClientSyncValues(List<String> values) {
+        CLIENT_SYNC_VALUES.clear();
 
         for (String value : values) {
             int splitIndex = value.lastIndexOf("=");
@@ -138,7 +141,7 @@ public class EMCValues {
                 continue;
             }
 
-            setEMCUnchecked(itemId, emc, "Server Sync");
+            CLIENT_SYNC_VALUES.put(itemId, emc);
         }
     }
 
@@ -703,6 +706,7 @@ public class EMCValues {
 
     public static void tagsLoaded(HashMap<String, Integer> NEW_EMC_VALUES) {
         setEMC(NEW_EMC_VALUES);
+        inferTagEMCValues();
         tags_loaded = true;
 
         if (tags_loaded && !RECIPES.isEmpty()) {startQuery();}
@@ -717,6 +721,38 @@ public class EMCValues {
         }
 
         tagsLoaded(NEW_EMC_VALUES);
+    }
+
+    private static void inferTagEMCValues() {
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+
+            for (Map.Entry<String, List<String>> tag : TAG_ITEMS.entrySet()) {
+                String tagId = tag.getKey();
+                if (EMC_TAG_VALUES.containsKey(tagId)) continue;
+
+                Integer tagEMC = getEquivalentTagEMC(tag.getValue());
+                if (tagEMC == null) continue;
+
+                EMC_TAG_VALUES.put(tagId, tagEMC);
+                changed = true;
+            }
+        }
+    }
+
+    private static Integer getEquivalentTagEMC(List<String> itemIds) {
+        if (itemIds == null || itemIds.isEmpty()) return null;
+
+        Set<Integer> knownValues = new HashSet<>();
+        for (String itemId : itemIds) {
+            int emc = getIngredientEMC(itemId);
+            if (emc == 0) return null;
+            knownValues.add(emc);
+        }
+
+        if (knownValues.size() != 1) return null;
+        return knownValues.iterator().next();
     }
 
     private static HashMap<String, List<String>> RECIPES = new HashMap<String, List<String>>();
@@ -1141,7 +1177,12 @@ public class EMCValues {
 
     private static int getIngredientEMC(String itemId) {
         if (itemId.startsWith("#")) {
-            return EMC_TAG_VALUES.getOrDefault(itemId.substring(1), 0);
+            String tagId = itemId.substring(1);
+            int tagEMC = EMC_TAG_VALUES.getOrDefault(tagId, 0);
+            if (tagEMC > 0) return tagEMC;
+
+            Integer inferredEMC = getEquivalentTagEMC(TAG_ITEMS.get(tagId));
+            return inferredEMC == null ? 0 : inferredEMC;
         }
 
         return get(itemId);

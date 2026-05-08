@@ -23,7 +23,7 @@ public class VanillaEMCWailaProvider implements IBlockComponentProvider {
         }
 
         String itemId = stack.getItem().toString();
-        int emc = EMCValues.get(itemId);
+        int emc = EMCValues.getDisplay(itemId);
         if (emc == 0) {
             return;
         }

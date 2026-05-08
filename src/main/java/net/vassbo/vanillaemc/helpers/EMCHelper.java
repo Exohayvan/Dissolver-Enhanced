@@ -234,7 +234,7 @@ public class EMCHelper {
     }
 
     public static Text tooltipValue(String key, double reducedEmc) {
-        Integer EMC = EMCValues.get(key);
+        Integer EMC = EMCValues.getDisplay(key);
         Text text = Text.literal("");
         if (EMC == 0) return text;
 

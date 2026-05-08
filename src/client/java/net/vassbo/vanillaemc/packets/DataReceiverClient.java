@@ -18,7 +18,7 @@ public class DataReceiverClient {
         ClientPlayNetworking.registerGlobalReceiver(EMCValuesPayload.ID, (payload, context) -> {
             if (MinecraftClient.getInstance().getServer() != null) return;
 
-            EMCValues.applySyncValues(payload.values());
+            EMCValues.applyClientSyncValues(payload.values());
         });
 
         ClientPlayNetworking.registerGlobalReceiver(PlayerDataPayload.ID, (payload, context) -> {
