@@ -531,7 +531,7 @@ public class EMCValues {
         // nature
         int LOGS = 16; // bamboo planks (BAMBOO * 9 / 2) * 4 (all planks should be same EMC)
         int FLOWERS = 8; // at least 8 so dyed glass is more expensive
-        EMC_TAG_VALUES.put("minecraft:stone", COBBLESTONE);
+        EMC_TAG_VALUES.put("minecraft:stone_crafting_materials", 2);
         EMC_TAG_VALUES.put("c:stones", COBBLESTONE);
         EMC_TAG_VALUES.put("minecraft:logs", LOGS); // dividable by 4
         EMC_TAG_VALUES.put("minecraft:planks", 4);
