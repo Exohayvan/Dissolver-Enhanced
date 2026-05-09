@@ -24,6 +24,7 @@ public class ItemHelper {
     // HELPERS
 
     public static Identifier identifierById(String fullItemId) {
+        fullItemId = EMCKey.baseItemId(fullItemId);
         String[] parts = fullItemId.split(":");
         String modId = parts[0];
         String itemId = parts[1];

@@ -25,6 +25,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.vassbo.vanillaemc.VanillaEMC;
 import net.vassbo.vanillaemc.data.EMCValues;
+import net.vassbo.vanillaemc.helpers.EMCKey;
 
 public class DebugItem {
     private static final DateTimeFormatter REPORT_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
@@ -245,27 +246,36 @@ public class DebugItem {
         }
 
         String itemId = stack.getItem().toString();
-        int emc = EMCValues.get(itemId);
+        String emcKey = EMCKey.fromStack(stack);
+        int emc = EMCValues.get(emcKey);
         String emcText = emc > 0 ? String.valueOf(emc) : "None";
         String stackEmcText = emc > 0 ? String.valueOf(emc * stack.getCount()) : "None";
-        boolean configOverride = EMCValues.isConfigOverridden(itemId);
+        boolean configOverride = EMCValues.isConfigOverridden(emcKey) || EMCValues.isConfigOverridden(itemId);
 
         List<TagKey<Item>> tags = stack.streamTags().toList();
-        String debugText = String.join("\n",
+        List<String> lines = new ArrayList<>(List.of(
             "Name: " + stack.getName().getString(),
             "ID: " + itemId,
+            "EMC Key: " + emcKey,
             "Count: " + stack.getCount(),
             "Minecraft Tags: " + formatTags(tags, "minecraft"),
             "Common Tags: " + formatTags(tags, "c"),
             "Other Tags: " + formatOtherTags(tags),
             "EMC: " + emcText,
             "Stack EMC: " + stackEmcText,
-            "EMC Source: " + EMCValues.getSource(itemId),
-            "EMC Source Detail: " + EMCValues.getSourceDetail(itemId),
+            "EMC Source: " + EMCValues.getSource(emcKey),
+            "EMC Source Detail: " + EMCValues.getSourceDetail(emcKey),
             "Config Override: " + (configOverride ? "Yes" : "No"),
             "Has Components: " + (!stack.getComponentChanges().isEmpty() ? "Yes" : "No"),
             "Learnable: " + (emc > 0 ? "Yes" : "No")
-        );
+        ));
+        List<String> componentLines = EMCKey.describe(stack);
+        if (!componentLines.isEmpty()) {
+            lines.add("Component Scan:");
+            lines.addAll(componentLines);
+        }
+
+        String debugText = String.join("\n", lines);
 
         VanillaEMC.LOGGER.info(debugText);
         ModCommands.feedback(context, debugText);

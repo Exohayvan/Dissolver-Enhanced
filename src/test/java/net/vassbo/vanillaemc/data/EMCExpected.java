@@ -345,6 +345,7 @@ public class EMCExpected {
             new EMCRecord("minecraft:host_armor_trim_smithing_template", 9200)
         ));
         list.addAll(eternalStarlightDefault());
+        list.addAll(simpleHats());
         return list;
     }
 
@@ -691,6 +692,7 @@ public class EMCExpected {
             new EMCRecord("minecraft:host_armor_trim_smithing_template", 9200)
         ));
         list.addAll(eternalStarlightSkyblocks());
+        list.addAll(simpleHats());
         return list;
     }
 
@@ -747,6 +749,28 @@ public class EMCExpected {
             new EMCRecord("eternal_starlight:dusted_shard", 128),
             new EMCRecord("eternal_starlight:tenacious_petal", 64),
             new EMCRecord("eternal_starlight:tenacious_vine", 32)
+        );
+    }
+
+    private static List<EMCRecord> simpleHats() {
+        return Arrays.asList(
+            new EMCRecord("simplehats:hatscraps_common", 64),
+            new EMCRecord("simplehats:hatscraps_uncommon", 128),
+            new EMCRecord("simplehats:hatscraps_rare", 256),
+            new EMCRecord("simplehats:hatscraps_easter", 64),
+            new EMCRecord("simplehats:hatscraps_summer", 64),
+            new EMCRecord("simplehats:hatscraps_halloween", 64),
+            new EMCRecord("simplehats:hatscraps_festive", 64),
+            new EMCRecord("simplehats:hatbag_common", 256),
+            new EMCRecord("simplehats:hatbag_uncommon", 512),
+            new EMCRecord("simplehats:hatbag_rare", 1024),
+            new EMCRecord("simplehats:hatbag_epic", 2048),
+            new EMCRecord("simplehats:hatbag_easter", 256),
+            new EMCRecord("simplehats:hatbag_summer", 256),
+            new EMCRecord("simplehats:hatbag_halloween", 256),
+            new EMCRecord("simplehats:hatbag_festive", 256),
+            new EMCRecord("simplehats:hatdisplay", 18),
+            new EMCRecord("simplehats:haticon", 1)
         );
     }
 

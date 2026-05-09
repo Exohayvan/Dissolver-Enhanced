@@ -13,13 +13,14 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.vassbo.vanillaemc.helpers.EMCHelper;
+import net.vassbo.vanillaemc.helpers.EMCKey;
 import net.vassbo.vanillaemc.helpers.ItemHelper;
 
 @Mixin(Item.class)
 public class ItemMixin {
     @Inject(at = @At("RETURN"), method = "appendTooltip", cancellable = true)
     public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type, CallbackInfo ci) {
-        String itemId = stack.getItem().toString();
+        String itemId = EMCKey.fromStack(stack);
 
         // add emc value
         Text formattedText = EMCHelper.tooltipValue(itemId, ItemHelper.getDurabilityPercentage(stack));

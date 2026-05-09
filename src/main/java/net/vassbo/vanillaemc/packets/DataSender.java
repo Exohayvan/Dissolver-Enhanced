@@ -21,7 +21,8 @@ public class DataSender {
         ServerPlayerEntity playerEntity = getServerPlayer(server, player);
         if (playerEntity == null) return;
 
-        PlayerDataPayload dataToSend = new PlayerDataPayload(data.EMC, data.LEARNED_ITEMS.size(), data.MESSAGE, data.LEARNED_ITEMS);
+        int learnedItemsTotalSize = data.LEARNED_ITEMS_TOTAL_SIZE > 0 ? data.LEARNED_ITEMS_TOTAL_SIZE : data.LEARNED_ITEMS.size();
+        PlayerDataPayload dataToSend = new PlayerDataPayload(data.EMC, data.LEARNED_ITEMS.size(), learnedItemsTotalSize, data.MESSAGE, data.LEARNED_ITEMS);
         EMCValuesPayload emcValuesToSend = getEMCValuesPayload(playerEntity);
 
         server.execute(() -> {

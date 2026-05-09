@@ -14,6 +14,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.vassbo.vanillaemc.VanillaEMC;
+import net.vassbo.vanillaemc.data.EMCValues;
 import net.vassbo.vanillaemc.data.PlayerDataClient;
 import net.vassbo.vanillaemc.helpers.NumberHelpers;
 import net.vassbo.vanillaemc.packets.DataSenderClient;
@@ -100,8 +101,23 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
         // context.drawText(this.textRenderer, this.title, this.titleX, this.titleY, 4210752, false);
         context.drawText(this.textRenderer, this.playerInventoryTitle, this.playerInventoryTitleX, this.playerInventoryTitleY, 4210752, false);
+        renderLearnedSummary(context);
 
         renderText(context, 33, 6);
+    }
+
+    private void renderLearnedSummary(DrawContext context) {
+        String learnedSummary = getLearnedSummary();
+        int summaryX = this.backgroundWidth - 19 - this.textRenderer.getWidth(learnedSummary);
+        context.drawText(this.textRenderer, learnedSummary, Math.max(84, summaryX), this.playerInventoryTitleY, 4210752, false);
+    }
+
+    private String getLearnedSummary() {
+        int learned = PlayerDataClient.LEARNED_ITEMS_TOTAL_SIZE;
+        int learnable = EMCValues.getLearnableCount();
+        double percent = learnable == 0 ? 0 : learned * 100.0 / learnable;
+
+        return learned + "/" + learnable + " (" + String.format("%.1f%%", percent) + ")";
     }
 
     private void renderText(DrawContext context, int x, int y) {

@@ -12,6 +12,7 @@ import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import net.vassbo.vanillaemc.data.EMCValues;
 import net.vassbo.vanillaemc.data.PlayerDataClient;
+import net.vassbo.vanillaemc.helpers.EMCKey;
 import net.vassbo.vanillaemc.helpers.NumberHelpers;
 
 public class VanillaEMCWailaProvider implements IBlockComponentProvider {
@@ -22,13 +23,13 @@ public class VanillaEMCWailaProvider implements IBlockComponentProvider {
             return;
         }
 
-        String itemId = stack.getItem().toString();
+        String itemId = EMCKey.fromStack(stack);
         int emc = EMCValues.getDisplay(itemId);
         if (emc == 0) {
             return;
         }
 
-        boolean learned = PlayerDataClient.LEARNED_ITEMS.contains(itemId);
+        boolean learned = PlayerDataClient.LEARNED_ITEMS.contains(itemId) || PlayerDataClient.LEARNED_ITEMS.contains(EMCKey.baseItemId(itemId));
         tooltip.addLine()
             .with(new WrappedComponent(Text.literal("EMC: " + NumberHelpers.format(emc))))
             .with(GrowingComponent.INSTANCE)

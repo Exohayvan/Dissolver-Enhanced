@@ -85,7 +85,12 @@ public class RecipeManagerMixin {
 
         // could filter by crafting only, but nice to have all recipes like smelting & stone cutting for more coverage!
         // if (recipe.getType() != RecipeType.CRAFTING) return;
-        if (recipe.getType() == RecipeType.SMITHING) return; // no ingredients!
+        if (recipe.getType() == RecipeType.SMITHING) {
+            if (!getJsonRecipe(entry)) {
+                EMCValues.incrementRecipesNotUnderstood();
+            }
+            return;
+        }
         
         ItemStack resultItem = recipe.getResult(this.registryLookup);
         String resultId = resultItem.getItem().toString();
@@ -262,8 +267,6 @@ public class RecipeManagerMixin {
         if (!recipeObject.has("result")) return false;
 
         String type = recipeObject.has("type") ? recipeObject.get("type").getAsString() : "";
-        if (type.contains("smithing")) return false;
-
         JsonResult result = getJsonResult(recipeObject.get("result"));
         if (result == null || result.itemId.contains("minecraft:air") || result.itemId.contains("firework")) {
             return false;
@@ -276,7 +279,17 @@ public class RecipeManagerMixin {
         List<String> ingredients = new ArrayList<>();
         HashMap<String, List<String>> replaceIngredients = new HashMap<>();
 
-        if (recipeObject.has("ingredient")) {
+        if (type.contains("smithing")) {
+            if (recipeObject.has("template")) {
+                addJsonIngredient(ingredients, replaceIngredients, recipeObject.get("template"));
+            }
+            if (recipeObject.has("base")) {
+                addJsonIngredient(ingredients, replaceIngredients, recipeObject.get("base"));
+            }
+            if (recipeObject.has("addition")) {
+                addJsonIngredient(ingredients, replaceIngredients, recipeObject.get("addition"));
+            }
+        } else if (recipeObject.has("ingredient")) {
             addJsonIngredient(ingredients, replaceIngredients, recipeObject.get("ingredient"));
         } else if (recipeObject.has("ingredients") && recipeObject.get("ingredients").isJsonArray()) {
             for (JsonElement ingredient : recipeObject.get("ingredients").getAsJsonArray()) {

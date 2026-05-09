@@ -11,7 +11,6 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
-import net.vassbo.vanillaemc.helpers.EMCHelper;
 import net.vassbo.vanillaemc.helpers.WirelessDissolver;
 
 public class CrystalFrameItem extends Item {
@@ -25,11 +24,6 @@ public class CrystalFrameItem extends Item {
     @Override
     public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
         tooltip.add(Text.translatable(TOOLTIP_TEXT).formatted(TOOLTIP_FORMAT));
-
-        // add emc value
-        String itemId = stack.getItem().toString(); // vanillaemc:magic_item
-        Text formattedText = EMCHelper.tooltipValue(itemId);
-        if (!"".equals(formattedText.getLiteralString())) tooltip.add(formattedText);
     }
     
     @Override

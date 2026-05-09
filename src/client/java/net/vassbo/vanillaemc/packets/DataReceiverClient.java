@@ -37,6 +37,7 @@ public class DataReceiverClient {
 	private static void receivedData(PlayerEntity player, PlayerDataPayload playerData) {
 			PlayerDataClient.EMC = playerData.emc();
 			PlayerDataClient.LEARNED_ITEMS_SIZE = playerData.learnedItemsSize();
+			PlayerDataClient.LEARNED_ITEMS_TOTAL_SIZE = playerData.learnedItemsTotalSize();
 			PlayerDataClient.MESSAGE = playerData.message();
 			PlayerDataClient.LEARNED_ITEMS = playerData.learnedItems();
 		}

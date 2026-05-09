@@ -82,7 +82,7 @@ public class EMCHelper {
     // GET
 
     public static boolean getItem(PlayerEntity player, ItemStack itemStack, DissolverScreenHandler handler, int items) {
-        String itemId = itemStack.getItem().toString();
+        String itemId = EMCKey.fromStack(itemStack);
         int emcValue = EMCValues.get(itemId) * items;
 
         if (!checkValidEMC(emcValue, itemId, Action.GET)) return false;
@@ -103,7 +103,7 @@ public class EMCHelper {
     }
 
     public static boolean addItem(ItemStack itemStack) {
-        String itemId = itemStack.getItem().toString();
+        String itemId = EMCKey.fromStack(itemStack);
         int emcValue = EMCValues.get(itemId);
 
         return checkValidEMC(emcValue, itemId, Action.ADD);
@@ -113,7 +113,7 @@ public class EMCHelper {
 
     // added from another inventory & not private EMC
     public static boolean addItem(ItemStack itemStack, World world) {
-        String itemId = itemStack.getItem().toString();
+        String itemId = EMCKey.fromStack(itemStack);
         int emcValue = EMCValues.get(itemId);
 
         if (!checkValidEMC(emcValue, itemId, Action.ADD)) return false;
@@ -121,11 +121,11 @@ public class EMCHelper {
         int itemCount = itemStack.getCount();
         int addedEmcValue = (int)(emcValue * itemCount * ItemHelper.getDurabilityPercentage(itemStack));
 
-        return serverAddItem(world, itemId, addedEmcValue);
+        return serverAddItem(world, storageKey(itemId), addedEmcValue);
     }
 
     public static boolean addItem(ItemStack itemStack, PlayerEntity player, DissolverScreenHandler handler) {
-        String itemId = itemStack.getItem().toString();
+        String itemId = EMCKey.fromStack(itemStack);
         int emcValue = EMCValues.get(itemId);
 
         if (!checkValidEMC(emcValue, itemId, Action.ADD)) return false;
@@ -134,7 +134,7 @@ public class EMCHelper {
         int itemCount = itemStack.getCount();
         int addedEmcValue = (int)(emcValue * itemCount * ItemHelper.getDurabilityPercentage(itemStack));
 
-        learnItem(player, itemId);
+        learnItem(player, storageKey(itemId));
 
         EMCHelper.addEMCValue(player, addedEmcValue);
 
@@ -164,6 +164,14 @@ public class EMCHelper {
         }).start();
 
         return true;
+    }
+
+    private static String storageKey(String itemId) {
+        if (!EMCKey.isComponentKey(itemId) || EMCValues.hasExactValue(itemId)) {
+            return itemId;
+        }
+
+        return EMCKey.baseItemId(itemId);
     }
 
     public static boolean forgetItem(PlayerEntity player, String itemId) {

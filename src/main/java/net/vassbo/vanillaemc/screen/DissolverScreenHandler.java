@@ -17,6 +17,7 @@ import net.vassbo.vanillaemc.data.EMCValues;
 import net.vassbo.vanillaemc.data.PlayerData;
 import net.vassbo.vanillaemc.data.StateSaverAndLoader;
 import net.vassbo.vanillaemc.helpers.EMCHelper;
+import net.vassbo.vanillaemc.helpers.EMCKey;
 import net.vassbo.vanillaemc.helpers.ItemHelper;
 import net.vassbo.vanillaemc.inventory.DissolverInventory;
 import net.vassbo.vanillaemc.inventory.DissolverInventoryInput;
@@ -127,6 +128,8 @@ public class DissolverScreenHandler extends ScreenHandler {
             PlayerData playerState = StateSaverAndLoader.getPlayerState(player);
             PlayerData newData = new PlayerData();
             newData.EMC = playerState.EMC;
+            newData.LEARNED_ITEMS_TOTAL_SIZE = playerState.LEARNED_ITEMS.size();
+            newData.MESSAGE = playerState.MESSAGE;
             newData.LEARNED_ITEMS = itemIds;
             DataSender.sendPlayerData(player, newData);
         }
@@ -147,7 +150,7 @@ public class DissolverScreenHandler extends ScreenHandler {
     }
 
     private ItemStack getHighestPossibleStack(int playerEMC, ItemStack stack) {
-        int emcValue = EMCValues.get(stack.getItem().toString());
+        int emcValue = EMCValues.get(EMCKey.fromStack(stack));
 
         if (emcValue == 0) {
             return stack;

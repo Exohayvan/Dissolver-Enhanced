@@ -17,6 +17,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.vassbo.vanillaemc.VanillaEMC;
 import net.vassbo.vanillaemc.config.ModConfig;
+import net.vassbo.vanillaemc.helpers.EMCKey;
 import net.vassbo.vanillaemc.helpers.ItemHelper;
 
 public class EMCValues {
@@ -30,19 +31,31 @@ public class EMCValues {
     private static final HashMap<String, List<String>> TAG_ITEMS = new HashMap<String, List<String>>();
 
     public static Integer get(String key) {
-        return EMC_VALUES.getOrDefault(key, 0);
+        int emc = EMC_VALUES.getOrDefault(key, 0);
+        if (emc > 0 || !EMCKey.isComponentKey(key)) return emc;
+
+        return EMC_VALUES.getOrDefault(EMCKey.baseItemId(key), 0);
     }
 
     public static Integer getDisplay(String key) {
-        return CLIENT_SYNC_VALUES.getOrDefault(key, get(key));
+        int emc = CLIENT_SYNC_VALUES.getOrDefault(key, 0);
+        if (emc > 0 || !EMCKey.isComponentKey(key)) return CLIENT_SYNC_VALUES.getOrDefault(key, get(key));
+
+        return CLIENT_SYNC_VALUES.getOrDefault(EMCKey.baseItemId(key), get(key));
     }
 
     public static String getSource(String key) {
-        return EMC_SOURCES.getOrDefault(key, "None");
+        String source = EMC_SOURCES.getOrDefault(key, "None");
+        if (!source.equals("None") || !EMCKey.isComponentKey(key)) return source;
+
+        return EMC_SOURCES.getOrDefault(EMCKey.baseItemId(key), "None");
     }
 
     public static String getSourceDetail(String key) {
-        return EMC_SOURCE_DETAILS.getOrDefault(key, "None");
+        String sourceDetail = EMC_SOURCE_DETAILS.getOrDefault(key, "None");
+        if (!sourceDetail.equals("None") || !EMCKey.isComponentKey(key)) return sourceDetail;
+
+        return EMC_SOURCE_DETAILS.getOrDefault(EMCKey.baseItemId(key), "None");
     }
 
     public static List<String> getTagItems(String tagId) {
@@ -166,6 +179,10 @@ public class EMCValues {
         return CONFIG_OVERRIDDEN.contains(key);
     }
 
+    public static boolean hasExactValue(String key) {
+        return EMC_VALUES.containsKey(key);
+    }
+
     public static Set<String> getList() {
         return EMC_VALUES.keySet();
     }
@@ -183,6 +200,12 @@ public class EMCValues {
         }
 
         return values;
+    }
+
+    public static int getLearnableCount() {
+        if (!CLIENT_SYNC_VALUES.isEmpty()) return CLIENT_SYNC_VALUES.size();
+
+        return EMC_VALUES.size();
     }
 
     public static void applyClientSyncValues(List<String> values) {
@@ -555,8 +578,8 @@ public class EMCValues {
         EMC_TAG_VALUES.put("c:raw_materials/aethersent", IRON - 10);
         EMC_TAG_VALUES.put("c:ingots/thermal_springstone", IRON);
         setEMCUnchecked("eternal_starlight:thermal_springstone", IRON - 10);
-        EMC_TAG_VALUES.put("c:ingots/deepsilver", GOLD);
-        EMC_TAG_VALUES.put("c:raw_materials/deepsilver", GOLD - 10);
+        EMC_TAG_VALUES.put("c:ingots/deepsilver", IRON);
+        EMC_TAG_VALUES.put("c:raw_materials/deepsilver", IRON - 10);
         EMC_TAG_VALUES.put("c:ingots/amaramber", GOLD);
         EMC_TAG_VALUES.put("c:raw_materials/amaramber", (GOLD * 2) - DEEPSLATE);
         EMC_TAG_VALUES.put("c:ingots/golem_steel", 5207);
@@ -614,6 +637,23 @@ public class EMCValues {
 
         // namespace: simplehats
         EMC_TAG_VALUES.put("simplehats:all_hats", 254);
+        setEMCUnchecked("simplehats:hatscraps_common", 64);
+        setEMCUnchecked("simplehats:hatscraps_uncommon", 128);
+        setEMCUnchecked("simplehats:hatscraps_rare", 256);
+        setEMCUnchecked("simplehats:hatscraps_easter", 64);
+        setEMCUnchecked("simplehats:hatscraps_summer", 64);
+        setEMCUnchecked("simplehats:hatscraps_halloween", 64);
+        setEMCUnchecked("simplehats:hatscraps_festive", 64);
+        setEMCUnchecked("simplehats:hatbag_common", 256);
+        setEMCUnchecked("simplehats:hatbag_uncommon", 512);
+        setEMCUnchecked("simplehats:hatbag_rare", 1024);
+        setEMCUnchecked("simplehats:hatbag_epic", 2048);
+        setEMCUnchecked("simplehats:hatbag_easter", 256);
+        setEMCUnchecked("simplehats:hatbag_summer", 256);
+        setEMCUnchecked("simplehats:hatbag_halloween", 256);
+        setEMCUnchecked("simplehats:hatbag_festive", 256);
+        setEMCUnchecked("simplehats:hatdisplay", 18);
+        setEMCUnchecked("simplehats:haticon", 1);
 
         // GENERATE
 
@@ -1301,11 +1341,31 @@ public class EMCValues {
             int tagEMC = EMC_TAG_VALUES.getOrDefault(tagId, 0);
             if (tagEMC > 0) return tagEMC;
 
-            Integer inferredEMC = getEquivalentTagEMC(TAG_ITEMS.get(tagId));
+            Integer inferredEMC = getEquivalentTagIngredientEMC(TAG_ITEMS.get(tagId));
             return inferredEMC == null ? 0 : inferredEMC;
         }
 
         return get(itemId);
+    }
+
+    private static Integer getEquivalentTagIngredientEMC(List<String> itemIds) {
+        if (itemIds == null || itemIds.isEmpty()) {
+            return null;
+        }
+
+        Set<Integer> knownValues = new HashSet<>();
+        for (String itemId : itemIds) {
+            int emc = getResultEMC(itemId);
+            if (emc > 0) {
+                knownValues.add(emc);
+            }
+        }
+
+        if (knownValues.size() != 1) {
+            return null;
+        }
+
+        return knownValues.iterator().next();
     }
 
     static private boolean recipeKeySearch(String keyId) {
