@@ -285,7 +285,7 @@ public class DissolverScreenHandler extends ScreenHandler {
         if (player.getServer() == null) return ItemStack.EMPTY;
 
         if (invSlot < PLAYER_INV_SIZE) {
-            if (!EMCHelper.addItem(slot.getStack())) return newStack;
+            if (!EMCHelper.canAddItem(slot.getStack(), player)) return newStack;
         }
 
         int inputSlotsStartIndex = this.slots.size() - this.inventoryInput.slots();

@@ -3,7 +3,6 @@ package net.vassbo.vanillaemc.inventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
-import net.vassbo.vanillaemc.helpers.EMCHelper;
 
 public class DissolverSlotInput extends Slot {
     public int id;
@@ -31,9 +30,6 @@ public class DissolverSlotInput extends Slot {
 
     public ItemStack insertStack(ItemStack stack, int count) {
         if (stack.isEmpty() || !this.canInsert(stack)) return stack;
-
-        // check that item has emc and is valid
-        if (!EMCHelper.addItem(stack)) return stack;
 
         ItemStack itemStack = this.getStack();
         int i = Math.min(Math.min(count, stack.getCount()), this.getMaxItemCount(stack) - itemStack.getCount());

@@ -10,7 +10,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
+import net.vassbo.vanillaemc.data.EMCValues;
 import net.vassbo.vanillaemc.helpers.EMCHelper;
+import net.vassbo.vanillaemc.helpers.EMCKey;
 import net.vassbo.vanillaemc.screen.DissolverScreenHandler;
 
 public class DissolverInventoryInput implements Inventory {
@@ -90,9 +92,18 @@ public class DissolverInventoryInput implements Inventory {
 
         if (!player.getWorld().isClient()) {
             if (slot == 0) {
-                if (EMCHelper.addItem(stack, player, this.handler)) return;
+                if (!EMCHelper.addItem(stack, player, this.handler)) {
+                    player.getInventory().offerOrDrop(stack);
+                }
+                return;
             } else if (slot == 1) {
-                String itemId = stack.getItem().toString();
+                String itemId = EMCKey.fromStack(stack);
+                if (EMCValues.get(itemId) == 0) {
+                    EMCHelper.reportMissingItemValue(player, stack);
+                    player.getInventory().offerOrDrop(stack);
+                    return;
+                }
+
                 EMCHelper.learnItem(player, itemId);
                 this.handler.refresh();
             } else if (slot == 2) {
