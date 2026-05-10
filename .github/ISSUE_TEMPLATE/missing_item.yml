@@ -1,0 +1,182 @@
+name: Missing Item Value
+description: Auto-generated report for an item the Dissolver could not assign an EMC value to.
+title: "[Missing Item]: "
+labels: ["missing item", "emc value"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Do not open this issue template by hand
+
+        This report is only for items that the Dissolver attempted to process but could not assign an EMC value to.
+
+        The in-game report link should fill this form automatically when an item without a value is placed into the Dissolver. Please use that generated link instead of creating this issue manually so the report includes the exact item identifier and diagnostic data.
+
+        This template is not for requesting a different value for an item that already has one.
+
+  - type: input
+    id: item_id
+    attributes:
+      label: Item ID
+      description: Auto-filled by the generated report link.
+      placeholder: "minecraft:diamond"
+    validations:
+      required: false
+
+  - type: input
+    id: item_name
+    attributes:
+      label: Item Name
+      description: Auto-filled by the generated report link.
+      placeholder: "Diamond"
+    validations:
+      required: false
+
+  - type: input
+    id: item_count
+    attributes:
+      label: Stack Count
+      description: Auto-filled by the generated report link.
+      placeholder: "1"
+    validations:
+      required: false
+
+  - type: input
+    id: source_namespace
+    attributes:
+      label: Source Namespace
+      description: Auto-filled from the item ID namespace.
+      placeholder: "minecraft"
+    validations:
+      required: false
+
+  - type: input
+    id: minecraft_version
+    attributes:
+      label: Minecraft Version
+      description: Auto-filled by the generated report link.
+      placeholder: "1.21.1"
+    validations:
+      required: false
+
+  - type: input
+    id: mod_version
+    attributes:
+      label: Dissolver Enhanced Version
+      description: Auto-filled by the generated report link.
+      placeholder: "1.0.0"
+    validations:
+      required: false
+
+  - type: input
+    id: mod_loader
+    attributes:
+      label: Mod Loader
+      description: Auto-filled by the generated report link.
+      placeholder: "Fabric"
+    validations:
+      required: false
+
+  - type: input
+    id: loader_version
+    attributes:
+      label: Loader Version
+      description: Auto-filled by the generated report link, if available.
+      placeholder: "0.16.10"
+    validations:
+      required: false
+
+  - type: input
+    id: modpack
+    attributes:
+      label: Modpack
+      description: Auto-filled by the generated report link, if available.
+      placeholder: "None detected"
+    validations:
+      required: false
+
+  - type: textarea
+    id: item_data
+    attributes:
+      label: Item Data
+      description: Auto-filled item stack data from the generated report link.
+      render: json
+      placeholder: |
+        {
+          "id": "minecraft:diamond",
+          "count": 1
+        }
+    validations:
+      required: false
+
+  - type: textarea
+    id: item_tags
+    attributes:
+      label: Item Tags
+      description: Auto-filled item tags from the generated report link, if available.
+      placeholder: |
+        minecraft:trim_materials
+        c:gems/diamond
+    validations:
+      required: false
+
+  - type: textarea
+    id: recipe_diagnostics
+    attributes:
+      label: Recipe Diagnostics
+      description: Auto-filled recipe lookup details from the generated report link, if available.
+      placeholder: |
+        Recipes checked:
+        - none found
+
+        Ingredients with missing values:
+        - none detected
+    validations:
+      required: false
+
+  - type: textarea
+    id: loaded_mods
+    attributes:
+      label: Loaded Mods
+      description: Auto-filled relevant mod list from the generated report link, if available.
+      placeholder: |
+        fabricloader 0.16.10
+        fabric-api 0.102.0
+        dissolver-enhanced 1.0.0
+    validations:
+      required: false
+
+  - type: textarea
+    id: config_snapshot
+    attributes:
+      label: Config Snapshot
+      description: Auto-filled relevant config values from the generated report link, if available.
+      render: shell
+      placeholder: |
+        Paste generated config details here.
+    validations:
+      required: false
+
+  - type: textarea
+    id: log_excerpt
+    attributes:
+      label: Log Excerpt
+      description: Auto-filled relevant log lines from the generated report link, if available.
+      render: shell
+      placeholder: "Generated log excerpt."
+    validations:
+      required: false
+
+  - type: textarea
+    id: generated_report
+    attributes:
+      label: Full Generated Report
+      description: Auto-filled raw report payload. This is the best place to include any extra diagnostic data your mod can collect.
+      render: json
+      placeholder: |
+        {
+          "reason": "missing_emc_value",
+          "itemId": "minecraft:diamond"
+        }
+    validations:
+      required: false
