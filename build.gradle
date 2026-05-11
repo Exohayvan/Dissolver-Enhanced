@@ -17,9 +17,14 @@ def commonVersion = commonProperties.getProperty("common_version")
 if (commonVersion == null || commonVersion.isBlank()) {
 	throw new GradleException("common_version is missing from ${commonPropertiesFile}.")
 }
+def releaseArchiveVersion = "${project.mod_version}-mc${project.minecraft_version}-c${commonVersion}"
 
 base {
 	archivesName = project.archives_base_name
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+	archiveVersion = releaseArchiveVersion
 }
 
 test {

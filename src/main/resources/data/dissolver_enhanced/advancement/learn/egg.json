@@ -1,0 +1,28 @@
+{
+  "parent": "dissolver_enhanced:story/place_dissolver",
+  "display": {
+    "icon": {
+      "id": "minecraft:egg",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.dissolver_enhanced.learn.egg.title"
+    },
+    "description": {
+      "translate": "advancements.dissolver_enhanced.learn.egg.description"
+    }
+  },
+  "criteria": {
+    "learned": {
+      "trigger": "dissolver_enhanced:learned_item",
+      "conditions": {
+        "item": "minecraft:egg"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "learned"
+    ]
+  ]
+}

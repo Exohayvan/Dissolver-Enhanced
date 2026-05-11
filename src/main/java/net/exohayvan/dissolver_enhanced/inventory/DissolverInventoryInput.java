@@ -10,6 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
+import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
@@ -105,6 +106,7 @@ public class DissolverInventoryInput implements Inventory {
                 }
 
                 EMCHelper.learnItem(player, itemId);
+                ModCriteria.triggerLearnedItem(player, itemId);
                 this.handler.refresh();
             } else if (slot == 2) {
                 String itemId = stack.getItem().toString();

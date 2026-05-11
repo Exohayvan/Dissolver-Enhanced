@@ -1,0 +1,28 @@
+{
+  "parent": "dissolver_enhanced:story/place_dissolver",
+  "display": {
+    "icon": {
+      "id": "minecraft:cobblestone",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.dissolver_enhanced.learn.cobblestone.title"
+    },
+    "description": {
+      "translate": "advancements.dissolver_enhanced.learn.cobblestone.description"
+    }
+  },
+  "criteria": {
+    "learned": {
+      "trigger": "dissolver_enhanced:learned_item",
+      "conditions": {
+        "item": "minecraft:cobblestone"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "learned"
+    ]
+  ]
+}

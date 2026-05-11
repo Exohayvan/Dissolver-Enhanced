@@ -20,6 +20,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.world.World;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
@@ -166,6 +167,7 @@ public class EMCHelper {
         int addedEmcValue = (int)(emcValue * itemCount * ItemHelper.getDurabilityPercentage(itemStack));
 
         learnItem(player, storageKey(itemId));
+        ModCriteria.triggerLearnedItem(player, itemId);
 
         EMCHelper.addEMCValue(player, addedEmcValue);
 
