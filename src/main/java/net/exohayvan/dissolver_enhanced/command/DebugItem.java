@@ -19,7 +19,7 @@ import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -50,9 +50,9 @@ public class DebugItem {
 
             itemsWithoutEMC++;
             item.getDefaultInstance()
-                .getTags()
+                .typeHolder().tags()
                 .map(TagKey::location)
-                .map(ResourceLocation::toString)
+                .map(Identifier::toString)
                 .filter(tagId -> !EMCValues.EMC_TAG_VALUES.containsKey(tagId))
                 .forEach(tagId -> missingTagCounts.put(tagId, missingTagCounts.getOrDefault(tagId, 0) + 1));
         }
@@ -155,9 +155,9 @@ public class DebugItem {
             missingItemsByNamespace.put(itemNamespace, missingItems);
 
             item.getDefaultInstance()
-                .getTags()
+                .typeHolder().tags()
                 .map(TagKey::location)
-                .map(ResourceLocation::toString)
+                .map(Identifier::toString)
                 .filter(tagId -> !EMCValues.EMC_TAG_VALUES.containsKey(tagId))
                 .forEach(tagId -> missingTagCounts.put(tagId, missingTagCounts.getOrDefault(tagId, 0) + 1));
         }
@@ -250,7 +250,7 @@ public class DebugItem {
         String stackEmcText = emc > 0 ? String.valueOf(emc * stack.getCount()) : "None";
         boolean configOverride = EMCValues.isConfigOverridden(emcKey) || EMCValues.isConfigOverridden(itemId);
 
-        List<TagKey<Item>> tags = stack.getTags().toList();
+        List<TagKey<Item>> tags = stack.typeHolder().tags().toList();
         List<String> lines = new ArrayList<>(List.of(
             "Name: " + stack.getHoverName().getString(),
             "ID: " + itemId,
@@ -331,7 +331,7 @@ public class DebugItem {
         return result.isEmpty() ? "None" : result;
     }
 
-    private static String formatTag(ResourceLocation id) {
+    private static String formatTag(Identifier id) {
         return "#" + id;
     }
 

@@ -64,7 +64,7 @@ public class DissolverBlock extends BaseEntityBlock {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
-        if (world.isClientSide) {
+        if (world.isClientSide()) {
             return InteractionResult.SUCCESS;
         } else if (!player.getAbilities().mayBuild) {
             return InteractionResult.PASS;

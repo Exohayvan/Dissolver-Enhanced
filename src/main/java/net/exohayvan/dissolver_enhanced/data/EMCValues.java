@@ -544,7 +544,7 @@ public class EMCValues {
 
             for (ResourceKey<Item> item : BuiltInRegistries.ITEM.registryKeySet()) {
                 String itemId = item
-                    .location()
+                    .identifier()
                     .toString();
                 if (!checkItem(itemId)) {itemsWithoutEMC++;}
             }

@@ -17,7 +17,7 @@ public class DataSender {
     private static final Map<UUID, Integer> EMC_SYNC_VERSIONS = new HashMap<>();
 
     public static void sendPlayerData(Player player, PlayerData data) {
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.level().getServer();
         ServerPlayer playerEntity = getServerPlayer(server, player);
         if (playerEntity == null) return;
 

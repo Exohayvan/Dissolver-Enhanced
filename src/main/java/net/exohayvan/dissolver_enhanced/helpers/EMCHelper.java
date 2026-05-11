@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.net.URLEncoder;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
@@ -47,7 +48,7 @@ public class EMCHelper {
     }
 
     public static void addEMCValue(Player player, int addedValue) {
-        if (player.getServer() == null) return;
+        if (player.level().getServer() == null) return;
 
         int currentValue = getEMCValue(player);
         int newValue = currentValue += addedValue;
@@ -56,7 +57,7 @@ public class EMCHelper {
     }
 
     public static boolean removeEMCValue(Player player, int removedValue) {
-        if (player.getServer() == null) return false;
+        if (player.level().getServer() == null) return false;
 
         int currentValue = getEMCValue(player);
         int newValue = currentValue -= removedValue;
@@ -223,9 +224,9 @@ public class EMCHelper {
                 .withStyle(style -> style
                     .withColor(ChatFormatting.AQUA)
                     .withUnderlined(true)
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, reportUrl))));
+                    .withClickEvent(new ClickEvent.OpenUrl(URI.create(reportUrl)))));
 
-        player.displayClientMessage(message, false);
+        player.sendSystemMessage(message);
     }
 
     private static String missingItemReportUrl(ItemStack itemStack, String itemId, String namespace) {
@@ -235,7 +236,7 @@ public class EMCHelper {
             + "&item_name=" + urlEncode(itemStack.getHoverName().getString())
             + "&item_count=" + urlEncode(String.valueOf(itemStack.getCount()))
             + "&source_namespace=" + urlEncode(namespace)
-            + "&minecraft_version=" + urlEncode(SharedConstants.getCurrentVersion().getName())
+            + "&minecraft_version=" + urlEncode(SharedConstants.getCurrentVersion().name())
             + "&mod_version=" + urlEncode(modVersion(DissolverEnhanced.MOD_ID))
             + "&mod_loader=" + urlEncode("Fabric")
             + "&loader_version=" + urlEncode(modVersion("fabricloader"))
@@ -256,7 +257,7 @@ public class EMCHelper {
             + "  \"itemName\": \"" + jsonEscape(itemStack.getHoverName().getString()) + "\",\n"
             + "  \"count\": " + itemStack.getCount() + ",\n"
             + "  \"sourceNamespace\": \"" + jsonEscape(namespace) + "\",\n"
-            + "  \"minecraftVersion\": \"" + jsonEscape(SharedConstants.getCurrentVersion().getName()) + "\",\n"
+            + "  \"minecraftVersion\": \"" + jsonEscape(SharedConstants.getCurrentVersion().name()) + "\",\n"
             + "  \"modVersion\": \"" + jsonEscape(modVersion(DissolverEnhanced.MOD_ID)) + "\",\n"
             + "  \"loader\": \"Fabric\",\n"
             + "  \"loaderVersion\": \"" + jsonEscape(modVersion("fabricloader")) + "\",\n"
@@ -280,7 +281,7 @@ public class EMCHelper {
 
     private static String itemTags(ItemStack itemStack) {
         String tags = itemStack
-            .getTags()
+            .typeHolder().tags()
             .map(TagKey::location)
             .map(id -> "#" + id)
             .sorted()

@@ -22,7 +22,7 @@ import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.RegistryOps;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
@@ -38,14 +38,14 @@ public class RecipeManagerMixin {
 
     // CUSTOM RECIPE
     @Inject(method = "apply", at = @At("HEAD"))
-    public void interceptApply(Map<ResourceLocation, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
+    public void interceptApply(Map<Identifier, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
         if (RecipeGenerator.DISSOLVER_RECIPE != null) {
-            map.put(ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
+            map.put(Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
         }
     }
 
     @Inject(method = "apply", at = @At("HEAD"))
-    private void applyMixin(Map<ResourceLocation, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
+    private void applyMixin(Map<Identifier, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
         EMCValues.beginStartup(map.size());
         RECIPES.clear();
         RECIPE_SOURCES.clear();
@@ -57,9 +57,9 @@ public class RecipeManagerMixin {
         new Thread(() -> {
             wait(800);
 
-            Iterator<Map.Entry<ResourceLocation, JsonElement>> recipeIterator = map.entrySet().iterator();
+            Iterator<Map.Entry<Identifier, JsonElement>> recipeIterator = map.entrySet().iterator();
             while (recipeIterator.hasNext()) {
-                Map.Entry<ResourceLocation, JsonElement> entry = recipeIterator.next();
+                Map.Entry<Identifier, JsonElement> entry = recipeIterator.next();
                 try {
                     getRecipe(entry, registryOps);
                 }catch (Exception e) {
@@ -77,151 +77,9 @@ public class RecipeManagerMixin {
     private static final HashMap<String, String> RECIPE_SOURCES = new HashMap<String, String>();
     private static final HashMap<String, String> RECIPE_JSON = new HashMap<String, String>();
     private static final List<String> STONE_CUTTER_LIST = new ArrayList<>();
-    private void getRecipe(Map.Entry<ResourceLocation, JsonElement> entry, RegistryOps<JsonElement> registryOps) {
-        ResourceLocation identifier = entry.getKey(); // JSON RECIPE FILE NAME
-        String recipeId = identifier.toString();
-        Recipe<?> recipe = Recipe.CODEC.parse(registryOps, entry.getValue()).getOrThrow(JsonParseException::new);
-
-        // could filter by crafting only, but nice to have all recipes like smelting & stone cutting for more coverage!
-        // if (recipe.getType() != RecipeType.CRAFTING) return;
-        if (recipe.getType() == RecipeType.SMITHING) {
-            if (!getJsonRecipe(entry)) {
-                EMCValues.incrementRecipesNotUnderstood();
-            }
-            return;
-        }
-        
-        ItemStack resultItem = recipe.getResultItem(this.registryLookup);
-        String resultId = resultItem.getItem().toString();
-        int resultCount = resultItem.getCount();
-
-        boolean isCooking = recipe.getType() == RecipeType.SMELTING || recipe.getType() == RecipeType.BLASTING || recipe.getType() == RecipeType.SMOKING || recipe.getType() == RecipeType.CAMPFIRE_COOKING;
-
-        // smelting armor/tools will give nuggets - that should not be the same emc value!!
-        if ((isCooking) && resultId.contains("nugget")) return;
-
-        List<String> INGREDIENTS = new ArrayList<>();
-        HashMap<String, List<String>> REPLACE_INGREDIENTS = new HashMap<>();
-        boolean hasUnresolvedIngredient = false;
-        int ingredientIndex = -1;
-        for (Ingredient ingredient : recipe.getIngredients()) {
-            ingredientIndex++;
-            // mostly just one ingredient (per slot) - but e.g. stone cutter can have multiple!
-            int index = -1;
-            for (int rawId : ingredient.getStackingIds()) {
-                String itemId = Item.byId(rawId).toString();
-                index++;
-
-                if (index == 0) {
-                    INGREDIENTS.add(itemId);
-                } else if (recipe.getType() == RecipeType.STONECUTTING) {
-                    List<String> INGREDIENT = new ArrayList<>();
-                    INGREDIENT.add(itemId);
-                    addRecipe(resultId + "__" + 1, 0, INGREDIENT, recipeId, entry.getValue());
-                } else if (resultId.contains("bed") || resultId.contains("glass")) {
-                    // don't do anything
-                    // bed: bed colors
-                    // glass: smelting red sand
-                } else {
-                    // example: TNT is normally sand, but slot can also contain red_sand
-                    // wool should only add white wool
-                    String rootItemId = Item.byId(ingredient.getStackingIds().getInt(0)).toString();
-                    if (!resultId.contains("wool") || itemId.contains("dye")) {
-                        List<String> REPLACE = new ArrayList<>();
-                        if (REPLACE_INGREDIENTS.containsKey(rootItemId)) REPLACE = REPLACE_INGREDIENTS.get(rootItemId);
-                        REPLACE.add(itemId);
-                        REPLACE_INGREDIENTS.put(rootItemId, REPLACE);
-                    }
-                }
-            }
-
-            if (index == -1) {
-                List<String> jsonIngredientIds = getJsonIngredientItemIds(entry.getValue(), ingredientIndex);
-                if (jsonIngredientIds.isEmpty()) hasUnresolvedIngredient = true;
-
-                for (String itemId : jsonIngredientIds) {
-                    index++;
-                    if (index == 0) {
-                        INGREDIENTS.add(itemId);
-                    } else if (recipe.getType() == RecipeType.STONECUTTING) {
-                        List<String> INGREDIENT = new ArrayList<>();
-                        INGREDIENT.add(itemId);
-                        addRecipe(resultId + "__" + 1, 0, INGREDIENT, recipeId, entry.getValue());
-                    } else {
-                        String rootItemId = getJsonIngredientItemIds(entry.getValue(), ingredientIndex).get(0);
-                        List<String> REPLACE = new ArrayList<>();
-                        if (REPLACE_INGREDIENTS.containsKey(rootItemId)) REPLACE = REPLACE_INGREDIENTS.get(rootItemId);
-                        REPLACE.add(itemId);
-                        REPLACE_INGREDIENTS.put(rootItemId, REPLACE);
-                    }
-                }
-            }
-        }
-
-        if (hasUnresolvedIngredient) {
-            if (getJsonRecipe(entry)) return;
-
+    private void getRecipe(Map.Entry<Identifier, JsonElement> entry, RegistryOps<JsonElement> registryOps) {
+        if (!getJsonRecipe(entry)) {
             EMCValues.incrementRecipesNotUnderstood();
-            return;
-        }
-        
-        if (recipe.getType() == RecipeType.CRAFTING) {
-            boolean DEFAULT_GLASS = INGREDIENTS.contains("minecraft:glass") || INGREDIENTS.contains("minecraft:glass_pane");
-            if (resultId.startsWith("minecraft:") && resultId.contains("glass") && listSearch(INGREDIENTS, "glass") && !DEFAULT_GLASS) return; // glass into glass (dye)
-            if (resultId.contains("carpet") && listSearch(INGREDIENTS, "carpet")) return; // carpet into carpet (dye)
-            if (resultId.contains("bed") && listSearch(INGREDIENTS, "bed")) return; // bed into bed (dye)
-            boolean NOT_WHITE_WOOL_OR_WHITE_DYE = !listSearch(INGREDIENTS, "white_wool") || !listSearch(INGREDIENTS, "dye");
-            if (resultId.contains("wool") && listSearch(INGREDIENTS, "wool") && NOT_WHITE_WOOL_OR_WHITE_DYE) return; // wool into wool (dye) (only one recipe because of REPLACE_INGREDIENTS)
-        }
-
-        // some items does not have any ingredients, so manually add those! (it uses tags)
-        if (INGREDIENTS.size() == 0) {
-            // if (resultId.contains("_planks")) {
-            //     String plank_type = resultId.substring(resultId.indexOf(":") + 1, resultId.indexOf("_planks"));
-            //     if (resultId.contains("warped") || resultId.contains("crimson")) INGREDIENTS.add("minecraft:" + plank_type + "_stem");
-            //     else if (resultId.contains("bamboo")) INGREDIENTS.add("minecraft:" + plank_type + "_block");
-            //     else INGREDIENTS.add("minecraft:" + plank_type + "_log");
-            // } else if (resultId == "minecraft:glass") {
-            //     INGREDIENTS.add("minecraft:sand");
-            // } else if (resultId == "minecraft:charcoal") {
-            //     INGREDIENTS.add("minecraft:oak_log");
-            // } else {
-            //     DissolverEnhanced.LOGGER.info("FOUND ITEM RECIPE WITH NO INGREDIENTS: " + resultId);
-            // }
-
-            if (getJsonRecipe(entry)) return;
-
-            if (!resultId.contains("minecraft:air") && !resultId.contains("firework") && !RECIPES.containsKey(resultId)) {
-                EMCValues.incrementItemRecipesWithNoIngredients();
-            }
-            return;
-        }
-
-        // use this to debug items having weird multiple emc values!
-        // if (resultId.contains("item_id")) DissolverEnhanced.LOGGER.info("Found with the type " + recipe.getType() + ". Ingredients: " + INGREDIENTS);
-
-        boolean isOre = listSearch(INGREDIENTS, "ore");
-        boolean isStone = listSearch(INGREDIENTS, "stone");
-
-        // add extra EMC if cooking (because of fuel+time)
-        addRecipe(resultId + "__" + resultCount, isCooking && !isOre && !isStone ? 10 : 0, INGREDIENTS, recipeId, entry.getValue());
-        if (recipe.getType() == RecipeType.STONECUTTING && !STONE_CUTTER_LIST.contains(resultId)) STONE_CUTTER_LIST.add(resultId);
-
-        if (REPLACE_INGREDIENTS.size() > 0) {
-            for (Map.Entry<String, List<String>> replace : REPLACE_INGREDIENTS.entrySet()) {
-                String key = replace.getKey();
-                List<String> replacedIngredients = replace.getValue();
-
-                for (String replacedIngredient : replacedIngredients) {
-                    List<String> NEW_INGREDIENTS = new ArrayList<>();
-
-                    for (String ingredient : INGREDIENTS) {
-                        NEW_INGREDIENTS.add(key.contains(ingredient) ? replacedIngredient : ingredient);
-                    }
-                    
-                    addRecipe(resultId + "__" + resultCount, 0, NEW_INGREDIENTS, recipeId, entry.getValue());
-                }
-            }
         }
     }
 
@@ -259,7 +117,7 @@ public class RecipeManagerMixin {
         return itemIds;
     }
 
-    private static boolean getJsonRecipe(Map.Entry<ResourceLocation, JsonElement> entry) {
+    private static boolean getJsonRecipe(Map.Entry<Identifier, JsonElement> entry) {
         if (!entry.getValue().isJsonObject()) return false;
 
         JsonObject recipeObject = entry.getValue().getAsJsonObject();

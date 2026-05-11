@@ -3,7 +3,7 @@ package net.exohayvan.dissolver_enhanced.item;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 
 public class ModItems {
@@ -16,7 +16,7 @@ public class ModItems {
     // HELPERS
 
 	private static Item registerItem(String id, Item item) {
-		ResourceLocation itemID = ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, id);
+		Identifier itemID = Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, id);
 		Item registeredItem = Registry.register(BuiltInRegistries.ITEM, itemID, item);
 
 		return registeredItem;

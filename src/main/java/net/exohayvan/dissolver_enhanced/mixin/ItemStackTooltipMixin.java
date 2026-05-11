@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -33,7 +33,7 @@ public class ItemStackTooltipMixin {
     }
 
     private int getInsertIndexAfterModName(ItemStack stack, List<Component> tooltip) {
-        ResourceLocation id = ResourceLocation.tryParse(EMCKey.baseItemId(EMCKey.fromStack(stack)));
+        Identifier id = Identifier.tryParse(EMCKey.baseItemId(EMCKey.fromStack(stack)));
         if (id == null) return tooltip.size();
 
         String modName = FabricLoader.getInstance()

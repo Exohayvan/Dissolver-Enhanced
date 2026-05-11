@@ -58,7 +58,7 @@ public class DissolverSlot extends Slot {
         } else if (!this.allowModification(player) && max < this.getItem().getCount()) {
             return Optional.empty();
         } else {
-            if (player.getServer() != null) { // getting double stack if this is not checked
+            if (player.level().getServer() != null) { // getting double stack if this is not checked
                 boolean CANT_GET_ITEM = !EMCHelper.getItem(player, this.getItem(), this.handler, min);
                 if (CANT_GET_ITEM) return Optional.empty();
             }
@@ -79,7 +79,7 @@ public class DissolverSlot extends Slot {
 
     // often called by double clicking from another inventory
     public ItemStack safeTake(int min, int max, Player player) {
-        if (player.getServer() == null) return ItemStack.EMPTY;
+        if (player.level().getServer() == null) return ItemStack.EMPTY;
         
         Optional<ItemStack> optional = this.tryRemove(min, max, player);
         optional.ifPresent((stack) -> {

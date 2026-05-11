@@ -5,7 +5,7 @@ import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.item.DissolverBlockItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
@@ -29,11 +29,11 @@ public class ModBlocks {
     
     private static Block registerBlock(String id, Block block, BlockItem blockItem) {
         registerBlockItem(DissolverEnhanced.MOD_ID, id, blockItem);
-        return Registry.register(BuiltInRegistries.BLOCK, ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, id), block);
+        return Registry.register(BuiltInRegistries.BLOCK, Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, id), block);
     }
 
     private static Item registerBlockItem(String namespace, String id, BlockItem blockItem) {
-        return Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath(namespace, id), blockItem);
+        return Registry.register(BuiltInRegistries.ITEM, Identifier.fromNamespaceAndPath(namespace, id), blockItem);
     }
     
     private static ToIntFunction<BlockState> getLuminance(int luminance) {

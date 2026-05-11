@@ -103,12 +103,12 @@ public class LearnItems {
     // HELPERS
 
     private static String getItemId(CommandContext<CommandSourceStack> context) {
-        final Item item = ItemArgument.getItem(context, "item").getItem();
+        final Item item = ItemArgument.getItem(context, "item").item().value();
         return item.toString();
     }
 
     private static String getItemName(CommandContext<CommandSourceStack> context) {
-        final Item item = ItemArgument.getItem(context, "item").getItem();
-        return item.getDescription().getString();
+        final Item item = ItemArgument.getItem(context, "item").item().value();
+        return item.getName(item.getDefaultInstance()).getString();
     }
 }

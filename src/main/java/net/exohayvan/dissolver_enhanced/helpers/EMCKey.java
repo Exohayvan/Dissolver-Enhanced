@@ -82,7 +82,7 @@ public class EMCKey {
         return potionContents
             .potion()
             .flatMap(Holder<Potion>::unwrapKey)
-            .map(key -> key.location().toString());
+            .map(key -> key.identifier().toString());
     }
 
     private static String storedEnchantmentsKey(ItemStack stack, String itemId) {
@@ -112,7 +112,7 @@ public class EMCKey {
         String enchantmentId = entry
             .getKey()
             .unwrapKey()
-            .map(key -> key.location().toString())
+            .map(key -> key.identifier().toString())
             .orElse("unknown");
 
         return enchantmentId + ":" + entry.getIntValue();

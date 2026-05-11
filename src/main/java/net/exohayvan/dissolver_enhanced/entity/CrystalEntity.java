@@ -1,11 +1,14 @@
 package net.exohayvan.dissolver_enhanced.entity;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.Vec3;
 
@@ -43,21 +46,25 @@ public class CrystalEntity extends Entity {
 	@Override
 	public void tick() {
 		this.crystalAge++;
-		this.checkInsideBlocks();
-		this.handlePortal();
+		this.applyEffectsFromBlocks();
 		// this.isPowered();
 	}
 
 	@Override
-	protected void addAdditionalSaveData(CompoundTag nbt) {
+	protected void addAdditionalSaveData(ValueOutput output) {
 	}
 
 	@Override
-	protected void readAdditionalSaveData(CompoundTag nbt) {
+	protected void readAdditionalSaveData(ValueInput input) {
 	}
 
 	@Override
 	public boolean isPickable() {
+		return false;
+	}
+
+	@Override
+	public boolean hurtServer(ServerLevel level, DamageSource damageSource, float amount) {
 		return false;
 	}
 

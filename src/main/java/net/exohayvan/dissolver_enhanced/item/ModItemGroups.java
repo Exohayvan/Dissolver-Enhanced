@@ -1,10 +1,9 @@
 package net.exohayvan.dissolver_enhanced.item;
 
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTab.ItemDisplayParameters;
 import net.minecraft.world.item.CreativeModeTab.Output;
@@ -26,8 +25,8 @@ public class ModItemGroups {
 	private static CreativeModeTab registerItemGroup(String id, String name, Item icon, CreativeModeTab.DisplayItemsGenerator entryList) {
 		return Registry.register(
             BuiltInRegistries.CREATIVE_MODE_TAB,
-            ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, id),
-            FabricItemGroup.builder()
+            Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, id),
+            CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
             .title(Component.translatable(name))
             .icon(() -> new ItemStack(icon))
             .displayItems(entryList)

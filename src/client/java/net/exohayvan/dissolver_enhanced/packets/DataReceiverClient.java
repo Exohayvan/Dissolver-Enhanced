@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
@@ -15,13 +16,13 @@ import net.exohayvan.dissolver_enhanced.packets.clientbound.PlayerDataPayload;
 public class DataReceiverClient {
     public static void init() {
         ClientPlayNetworking.registerGlobalReceiver(EMCValuesPayload.ID, (payload, context) -> {
-            if (MinecraftClient.getInstance().getServer() != null) return;
+            if (Minecraft.getInstance().getSingleplayerServer() != null) return;
 
             EMCValues.applyClientSyncValues(payload.values());
         });
 
         ClientPlayNetworking.registerGlobalReceiver(PlayerDataPayload.ID, (payload, context) -> {
-			PlayerEntity player = context.player();
+			Player player = context.player();
             PlayerDataPayload playerData = payload;
 
             if (player == null) {

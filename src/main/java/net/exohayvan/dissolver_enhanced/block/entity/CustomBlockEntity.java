@@ -5,14 +5,13 @@ import java.util.Iterator;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Component.Serializer;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
@@ -28,6 +27,8 @@ import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public abstract class CustomBlockEntity extends BlockEntity implements WorldlyContainer, MenuProvider, Nameable {
     private LockCode lock;
@@ -39,20 +40,18 @@ public abstract class CustomBlockEntity extends BlockEntity implements WorldlyCo
         this.lock = LockCode.NO_LOCK;
     }
 
-    protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider registryLookup) {
-        super.loadAdditional(nbt, registryLookup);
-        this.lock = LockCode.fromTag(nbt);
-        if (nbt.contains("CustomName", 8)) {
-            this.customName = parseCustomNameSafe(nbt.getString("CustomName"), registryLookup);
-        }
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        this.lock = LockCode.fromTag(input);
+        this.customName = parseCustomNameSafe(input, "CustomName");
 
     }
 
-    protected void saveAdditional(CompoundTag nbt, HolderLookup.Provider registryLookup) {
-        super.saveAdditional(nbt, registryLookup);
-        this.lock.addToTag(nbt);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        this.lock.addToTag(output);
         if (this.customName != null) {
-            nbt.putString("CustomName", Serializer.toJson(this.customName, registryLookup));
+            output.store("CustomName", ComponentSerialization.CODEC, this.customName);
         }
 
     }
@@ -78,8 +77,8 @@ public abstract class CustomBlockEntity extends BlockEntity implements WorldlyCo
 
     public static boolean checkUnlocked(Player player, LockCode lock, Component containerName) {
         if (!player.isSpectator() && !lock.unlocksWith(player.getMainHandItem())) {
-            player.displayClientMessage(Component.translatable("container.isLocked", new Object[]{containerName}), true);
-            player.playNotifySound(SoundEvents.BLOCK_CHEST_LOCKED, SoundSource.BLOCKS, 1.0F, 1.0F);
+            player.sendSystemMessage(Component.translatable("container.isLocked", new Object[]{containerName}));
+            player.playSound(SoundEvents.CHEST_LOCKED, 1.0F, 1.0F);
             return false;
         } else {
             return true;
@@ -143,7 +142,7 @@ public abstract class CustomBlockEntity extends BlockEntity implements WorldlyCo
 
     protected abstract AbstractContainerMenu createScreenHandler(int syncId, Inventory playerInventory);
 
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput components) {
+    protected void applyImplicitComponents(DataComponentGetter components) {
         super.applyImplicitComponents(components);
         this.customName = (Component)components.get(DataComponents.CUSTOM_NAME);
         this.lock = (LockCode)components.getOrDefault(DataComponents.LOCK, LockCode.NO_LOCK);
@@ -160,10 +159,10 @@ public abstract class CustomBlockEntity extends BlockEntity implements WorldlyCo
         componentMapBuilder.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(this.getHeldStacks()));
     }
 
-    public void removeComponentsFromTag(CompoundTag nbt) {
-        nbt.remove("CustomName");
-        nbt.remove("Lock");
-        nbt.remove("Items");
+    public void removeComponentsFromTag(ValueOutput output) {
+        output.discard("CustomName");
+        output.discard("Lock");
+        output.discard("Items");
     }
 
     // HOPPER/DROPPER INSERT

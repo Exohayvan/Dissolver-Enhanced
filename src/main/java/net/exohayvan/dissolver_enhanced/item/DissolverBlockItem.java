@@ -1,11 +1,12 @@
 package net.exohayvan.dissolver_enhanced.item;
 
-import java.util.List;
+import java.util.function.Consumer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.block.Block;
 
 public class DissolverBlockItem extends BlockItem {
@@ -17,8 +18,8 @@ public class DissolverBlockItem extends BlockItem {
 	}
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
-        tooltip.add(Component.translatable(TOOLTIP_TEXT).withStyle(TOOLTIP_FORMAT));
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
+        tooltip.accept(Component.translatable(TOOLTIP_TEXT).withStyle(TOOLTIP_FORMAT));
     }
     
     @Override

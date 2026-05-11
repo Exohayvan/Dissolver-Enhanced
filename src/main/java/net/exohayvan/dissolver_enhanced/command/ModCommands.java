@@ -17,6 +17,7 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
@@ -38,7 +39,7 @@ public class ModCommands {
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> createRootCommand(String command) {
-        return literal(command).requires(source -> source.hasPermission(2)); // requires OP
+        return literal(command).requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)); // requires OP
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> createCommandWithPlayerArg(String command, ArgumentType<?> argType, CommandMethodInterface func, CommandMethodPlayerInterface playerFunc) {

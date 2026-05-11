@@ -10,8 +10,8 @@ import net.exohayvan.dissolver_enhanced.packets.serverbound.ClientPayload;
 public class Packets {
 	public static void init() {
         DissolverEnhanced.LOGGER.info("Registering packet payloads.");
-		clientbound(PayloadTypeRegistry.playS2C());
-		serverbound(PayloadTypeRegistry.playC2S());
+		clientbound(PayloadTypeRegistry.clientboundPlay());
+		serverbound(PayloadTypeRegistry.serverboundPlay());
 	}
 
 	private static void clientbound(PayloadTypeRegistry<RegistryFriendlyByteBuf> registry) {

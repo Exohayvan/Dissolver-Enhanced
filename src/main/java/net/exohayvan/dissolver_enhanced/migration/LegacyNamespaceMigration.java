@@ -43,13 +43,13 @@ public final class LegacyNamespaceMigration {
 
     private static boolean migrateCompound(CompoundTag compound) {
         boolean changed = false;
-        List<String> keys = new ArrayList<>(compound.getAllKeys());
+        List<String> keys = new ArrayList<>(compound.keySet());
 
         for (String key : keys) {
             Tag value = compound.get(key);
             if (value instanceof StringTag stringValue) {
-                String migrated = migrateIdentifier(stringValue.getAsString());
-                if (!migrated.equals(stringValue.getAsString())) {
+                String migrated = migrateIdentifier(stringValue.value());
+                if (!migrated.equals(stringValue.value())) {
                     compound.put(key, StringTag.valueOf(migrated));
                     changed = true;
                 }
@@ -67,8 +67,8 @@ public final class LegacyNamespaceMigration {
         for (int i = 0; i < list.size(); i++) {
             Tag value = list.get(i);
             if (value instanceof StringTag stringValue) {
-                String migrated = migrateIdentifier(stringValue.getAsString());
-                if (!migrated.equals(stringValue.getAsString())) {
+                String migrated = migrateIdentifier(stringValue.value());
+                if (!migrated.equals(stringValue.value())) {
                     list.set(i, StringTag.valueOf(migrated));
                     changed = true;
                 }

@@ -113,7 +113,7 @@ public class DissolverScreenHandler extends AbstractContainerMenu {
         List<String> newItems = new ArrayList<>();
         for (String itemId : items) {
             Item item = ItemHelper.getById(itemId);
-            String itemName = item.getDescription().getString().toLowerCase();
+            String itemName = item.getName(item.getDefaultInstance()).getString().toLowerCase();
             if (itemName.contains(searchValue.toLowerCase())) newItems.add(itemId);
         }
         
@@ -122,7 +122,7 @@ public class DissolverScreenHandler extends AbstractContainerMenu {
 
     private List<Item> convertIdsToItems(List<String> itemIds) {
         // send to client (for scroll bar)
-        if (player.getServer() != null) {
+        if (player.level().getServer() != null) {
             // copy so items stored don't get deleted!
             PlayerData playerState = StateSaverAndLoader.getPlayerState(player);
             PlayerData newData = new PlayerData();
@@ -281,7 +281,7 @@ public class DissolverScreenHandler extends AbstractContainerMenu {
         if (slot == null || !slot.hasItem()) return newStack;
 
         // getting double stack if server is not checked
-        if (player.getServer() == null) return ItemStack.EMPTY;
+        if (player.level().getServer() == null) return ItemStack.EMPTY;
 
         if (invSlot < PLAYER_INV_SIZE) {
             if (!EMCHelper.canAddItem(slot.getItem(), player)) return newStack;

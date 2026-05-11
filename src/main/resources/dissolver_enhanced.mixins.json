@@ -1,12 +1,10 @@
 {
 	"required": true,
 	"package": "net.exohayvan.dissolver_enhanced.mixin",
-	"compatibilityLevel": "JAVA_21",
+	"compatibilityLevel": "JAVA_25",
 	"mixins": [
-		"ChunkSerializerMixin",
 		"ItemStackTooltipMixin",
-		"RecipeManagerMixin",
-		"TagManagerLoaderMixin"
+		"RecipeManagerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
