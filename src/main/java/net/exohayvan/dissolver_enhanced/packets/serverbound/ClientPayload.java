@@ -1,22 +1,22 @@
 package net.exohayvan.dissolver_enhanced.packets.serverbound;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-public record ClientPayload(String messageId, String data) implements CustomPayload {
-	public static final CustomPayload.Id<ClientPayload> ID = new CustomPayload.Id<>(Identifier.of(DissolverEnhanced.MOD_ID, "msg_to_server_payload"));
-	public static final PacketCodec<RegistryByteBuf, ClientPayload> CODEC = PacketCodec.tuple(
-		PacketCodecs.STRING, ClientPayload::messageId,
-		PacketCodecs.STRING, ClientPayload::data,
+public record ClientPayload(String messageId, String data) implements CustomPacketPayload {
+	public static final CustomPacketPayload.Type<ClientPayload> ID = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "msg_to_server_payload"));
+	public static final StreamCodec<RegistryFriendlyByteBuf, ClientPayload> CODEC = StreamCodec.composite(
+		ByteBufCodecs.STRING_UTF8, ClientPayload::messageId,
+		ByteBufCodecs.STRING_UTF8, ClientPayload::data,
 		ClientPayload::new
 	);
 
 	@Override
-	public Id<? extends CustomPayload> getId() {
+	public Type<? extends CustomPacketPayload> type() {
 		return ID;
 	}
 }

@@ -1,7 +1,7 @@
 package net.exohayvan.dissolver_enhanced.packets;
 
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.packets.clientbound.EMCValuesPayload;
 import net.exohayvan.dissolver_enhanced.packets.clientbound.PlayerDataPayload;
@@ -14,12 +14,12 @@ public class Packets {
 		serverbound(PayloadTypeRegistry.playC2S());
 	}
 
-	private static void clientbound(PayloadTypeRegistry<RegistryByteBuf> registry) {
+	private static void clientbound(PayloadTypeRegistry<RegistryFriendlyByteBuf> registry) {
 		registry.register(EMCValuesPayload.ID, EMCValuesPayload.CODEC);
 		registry.register(PlayerDataPayload.ID, PlayerDataPayload.CODEC);
 	}
 
-	private static void serverbound(PayloadTypeRegistry<RegistryByteBuf> registry) {
+	private static void serverbound(PayloadTypeRegistry<RegistryFriendlyByteBuf> registry) {
 		registry.register(ClientPayload.ID, ClientPayload.CODEC);
 	}
 }

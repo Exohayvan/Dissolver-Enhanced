@@ -5,8 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.player.Player;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerDataClient;
@@ -34,7 +33,7 @@ public class DataReceiverClient {
         });
     }
 
-	private static void receivedData(PlayerEntity player, PlayerDataPayload playerData) {
+	private static void receivedData(Player player, PlayerDataPayload playerData) {
 			PlayerDataClient.EMC = playerData.emc();
 			PlayerDataClient.LEARNED_ITEMS_SIZE = playerData.learnedItemsSize();
 			PlayerDataClient.LEARNED_ITEMS_TOTAL_SIZE = playerData.learnedItemsTotalSize();

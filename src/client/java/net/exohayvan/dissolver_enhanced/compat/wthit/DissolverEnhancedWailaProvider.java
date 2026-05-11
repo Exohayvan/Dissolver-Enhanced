@@ -7,13 +7,13 @@ import mcp.mobius.waila.api.ITooltip;
 import mcp.mobius.waila.api.component.GrowingComponent;
 import mcp.mobius.waila.api.component.WrappedComponent;
 import mcp.mobius.waila.plugin.harvest.component.ToolComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.text.Text;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerDataClient;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.NumberHelpers;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public class DissolverEnhancedWailaProvider implements IBlockComponentProvider {
     @Override
@@ -31,9 +31,9 @@ public class DissolverEnhancedWailaProvider implements IBlockComponentProvider {
 
         boolean learned = PlayerDataClient.LEARNED_ITEMS.contains(itemId) || PlayerDataClient.LEARNED_ITEMS.contains(EMCKey.baseItemId(itemId));
         tooltip.addLine()
-            .with(new WrappedComponent(Text.literal("EMC: " + NumberHelpers.format(emc))))
+            .with(new WrappedComponent(Component.literal("EMC: " + NumberHelpers.format(emc))))
             .with(GrowingComponent.INSTANCE)
-            .with(new ToolComponent(Items.BOOK.getDefaultStack(), learned))
-            .with(new WrappedComponent(Text.literal(learned ? " ✓" : " ✕")));
+            .with(new ToolComponent(Items.BOOK.getDefaultInstance(), learned))
+            .with(new WrappedComponent(Component.literal(learned ? " ✓" : " ✕")));
     }
 }

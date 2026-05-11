@@ -2,24 +2,23 @@ package net.exohayvan.dissolver_enhanced.packets.clientbound;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-public record EMCValuesPayload(int version, List<String> values) implements CustomPayload {
-	public static final CustomPayload.Id<EMCValuesPayload> ID = new CustomPayload.Id<>(Identifier.of(DissolverEnhanced.MOD_ID, "emc_values_to_client_payload"));
-	public static final PacketCodec<RegistryByteBuf, EMCValuesPayload> CODEC = PacketCodec.tuple(
-		PacketCodecs.INTEGER, EMCValuesPayload::version,
-		PacketCodecs.STRING.collect(PacketCodecs.toCollection(ArrayList::new)), EMCValuesPayload::values,
+public record EMCValuesPayload(int version, List<String> values) implements CustomPacketPayload {
+	public static final CustomPacketPayload.Type<EMCValuesPayload> ID = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "emc_values_to_client_payload"));
+	public static final StreamCodec<RegistryFriendlyByteBuf, EMCValuesPayload> CODEC = StreamCodec.composite(
+		ByteBufCodecs.INT, EMCValuesPayload::version,
+		ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.collection(ArrayList::new)), EMCValuesPayload::values,
 		EMCValuesPayload::new
 	);
 
 	@Override
-	public Id<? extends CustomPayload> getId() {
+	public Type<? extends CustomPacketPayload> type() {
 		return ID;
 	}
 }

@@ -3,93 +3,92 @@ package net.exohayvan.dissolver_enhanced.block.entity;
 import java.util.Iterator;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.component.ComponentMap;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.ContainerLock;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SidedInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.sound.SoundCategory;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Component.Serializer;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.text.Text.Serialization;
-import net.minecraft.util.Nameable;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Container;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.LockCode;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.Nameable;
+import net.minecraft.world.WorldlyContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 
-public abstract class CustomBlockEntity extends BlockEntity implements SidedInventory, NamedScreenHandlerFactory, Nameable {
-    private ContainerLock lock;
+public abstract class CustomBlockEntity extends BlockEntity implements WorldlyContainer, MenuProvider, Nameable {
+    private LockCode lock;
     @Nullable
-    private Text customName;
+    private Component customName;
 
     protected CustomBlockEntity(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState) {
         super(blockEntityType, blockPos, blockState);
-        this.lock = ContainerLock.EMPTY;
+        this.lock = LockCode.NO_LOCK;
     }
 
-    protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-        super.readNbt(nbt, registryLookup);
-        this.lock = ContainerLock.fromNbt(nbt);
+    protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider registryLookup) {
+        super.loadAdditional(nbt, registryLookup);
+        this.lock = LockCode.fromTag(nbt);
         if (nbt.contains("CustomName", 8)) {
-            this.customName = tryParseCustomName(nbt.getString("CustomName"), registryLookup);
+            this.customName = parseCustomNameSafe(nbt.getString("CustomName"), registryLookup);
         }
 
     }
 
-    protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-        super.writeNbt(nbt, registryLookup);
-        this.lock.writeNbt(nbt);
+    protected void saveAdditional(CompoundTag nbt, HolderLookup.Provider registryLookup) {
+        super.saveAdditional(nbt, registryLookup);
+        this.lock.addToTag(nbt);
         if (this.customName != null) {
-            nbt.putString("CustomName", Serialization.toJsonString(this.customName, registryLookup));
+            nbt.putString("CustomName", Serializer.toJson(this.customName, registryLookup));
         }
 
     }
 
-    public Text getName() {
+    public Component getName() {
         return this.customName != null ? this.customName : this.getContainerName();
     }
 
-    public Text getDisplayName() {
+    public Component getDisplayName() {
         return this.getName();
     }
 
     @Nullable
-    public Text getCustomName() {
+    public Component getCustomName() {
         return this.customName;
     }
 
-    protected abstract Text getContainerName();
+    protected abstract Component getContainerName();
 
-    public boolean checkUnlocked(PlayerEntity player) {
+    public boolean checkUnlocked(Player player) {
         return checkUnlocked(player, this.lock, this.getDisplayName());
     }
 
-    public static boolean checkUnlocked(PlayerEntity player, ContainerLock lock, Text containerName) {
-        if (!player.isSpectator() && !lock.canOpen(player.getMainHandStack())) {
-            player.sendMessage(Text.translatable("container.isLocked", new Object[]{containerName}), true);
-            player.playSoundToPlayer(SoundEvents.BLOCK_CHEST_LOCKED, SoundCategory.BLOCKS, 1.0F, 1.0F);
+    public static boolean checkUnlocked(Player player, LockCode lock, Component containerName) {
+        if (!player.isSpectator() && !lock.unlocksWith(player.getMainHandItem())) {
+            player.displayClientMessage(Component.translatable("container.isLocked", new Object[]{containerName}), true);
+            player.playNotifySound(SoundEvents.BLOCK_CHEST_LOCKED, SoundSource.BLOCKS, 1.0F, 1.0F);
             return false;
         } else {
             return true;
         }
     }
 
-    protected abstract DefaultedList<ItemStack> getHeldStacks();
+    protected abstract NonNullList<ItemStack> getHeldStacks();
 
-    protected abstract void setHeldStacks(DefaultedList<ItemStack> inventory);
+    protected abstract void setHeldStacks(NonNullList<ItemStack> inventory);
 
     public boolean isEmpty() {
         Iterator<ItemStack> var1 = this.getHeldStacks().iterator();
@@ -106,62 +105,62 @@ public abstract class CustomBlockEntity extends BlockEntity implements SidedInve
         return false;
     }
 
-    public ItemStack getStack(int slot) {
+    public ItemStack getItem(int slot) {
         return (ItemStack)this.getHeldStacks().get(slot);
     }
 
-    public ItemStack removeStack(int slot, int amount) {
-        ItemStack itemStack = Inventories.splitStack(this.getHeldStacks(), slot, amount);
+    public ItemStack removeItem(int slot, int amount) {
+        ItemStack itemStack = ContainerHelper.removeItem(this.getHeldStacks(), slot, amount);
         if (!itemStack.isEmpty()) {
-            this.markDirty();
+            this.setChanged();
         }
 
         return itemStack;
     }
 
-    public ItemStack removeStack(int slot) {
-        return Inventories.removeStack(this.getHeldStacks(), slot);
+    public ItemStack removeItemNoUpdate(int slot) {
+        return ContainerHelper.takeItem(this.getHeldStacks(), slot);
     }
 
-    public void setStack(int slot, ItemStack stack) {
+    public void setItem(int slot, ItemStack stack) {
         this.getHeldStacks().set(slot, stack);
-        stack.capCount(this.getMaxCount(stack));
-        this.markDirty();
+        stack.limitSize(this.getMaxStackSize(stack));
+        this.setChanged();
     }
 
-    public boolean canPlayerUse(PlayerEntity player) {
-        return Inventory.canPlayerUse(this, player);
+    public boolean stillValid(Player player) {
+        return Container.stillValidBlockEntity(this, player);
     }
 
-    public void clear() {
+    public void clearContent() {
         this.getHeldStacks().clear();
     }
 
     @Nullable
-    public ScreenHandler createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
+    public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
         return this.checkUnlocked(playerEntity) ? this.createScreenHandler(i, playerInventory) : null;
     }
 
-    protected abstract ScreenHandler createScreenHandler(int syncId, PlayerInventory playerInventory);
+    protected abstract AbstractContainerMenu createScreenHandler(int syncId, Inventory playerInventory);
 
-    protected void readComponents(BlockEntity.ComponentsAccess components) {
-        super.readComponents(components);
-        this.customName = (Text)components.get(DataComponentTypes.CUSTOM_NAME);
-        this.lock = (ContainerLock)components.getOrDefault(DataComponentTypes.LOCK, ContainerLock.EMPTY);
-        ((ContainerComponent)components.getOrDefault(DataComponentTypes.CONTAINER, ContainerComponent.DEFAULT)).copyTo(this.getHeldStacks());
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput components) {
+        super.applyImplicitComponents(components);
+        this.customName = (Component)components.get(DataComponents.CUSTOM_NAME);
+        this.lock = (LockCode)components.getOrDefault(DataComponents.LOCK, LockCode.NO_LOCK);
+        ((ItemContainerContents)components.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY)).copyInto(this.getHeldStacks());
     }
 
-    protected void addComponents(ComponentMap.Builder componentMapBuilder) {
-        super.addComponents(componentMapBuilder);
-        componentMapBuilder.add(DataComponentTypes.CUSTOM_NAME, this.customName);
-        if (!this.lock.equals(ContainerLock.EMPTY)) {
-            componentMapBuilder.add(DataComponentTypes.LOCK, this.lock);
+    protected void collectImplicitComponents(DataComponentMap.Builder componentMapBuilder) {
+        super.collectImplicitComponents(componentMapBuilder);
+        componentMapBuilder.set(DataComponents.CUSTOM_NAME, this.customName);
+        if (!this.lock.equals(LockCode.NO_LOCK)) {
+            componentMapBuilder.set(DataComponents.LOCK, this.lock);
         }
 
-        componentMapBuilder.add(DataComponentTypes.CONTAINER, ContainerComponent.fromStacks(this.getHeldStacks()));
+        componentMapBuilder.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(this.getHeldStacks()));
     }
 
-    public void removeFromCopiedStackNbt(NbtCompound nbt) {
+    public void removeComponentsFromTag(CompoundTag nbt) {
         nbt.remove("CustomName");
         nbt.remove("Lock");
         nbt.remove("Items");
@@ -170,7 +169,7 @@ public abstract class CustomBlockEntity extends BlockEntity implements SidedInve
     // HOPPER/DROPPER INSERT
     
     @Override
-    public int[] getAvailableSlots(Direction side) {
+    public int[] getSlotsForFace(Direction side) {
         return new int[0];
     }
 }

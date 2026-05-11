@@ -1,63 +1,61 @@
 package net.exohayvan.dissolver_enhanced.screen;
 
 import java.util.Objects;
-
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
-
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerDataClient;
 import net.exohayvan.dissolver_enhanced.helpers.NumberHelpers;
 import net.exohayvan.dissolver_enhanced.packets.DataSenderClient;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Inventory;
 
-public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
-    private static final Identifier TEXTURE = Identifier.of(DissolverEnhanced.MOD_ID, "textures/gui/dissolver_block_gui.png");
+public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHandler> {
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "textures/gui/dissolver_block_gui.png");
     
     // scroll
-    private static final Identifier SCROLLER_TEXTURE = Identifier.ofVanilla("container/creative_inventory/scroller");
-    private static final Identifier SCROLLER_DISABLED_TEXTURE = Identifier.ofVanilla("container/creative_inventory/scroller_disabled");
+    private static final ResourceLocation SCROLLER_TEXTURE = ResourceLocation.withDefaultNamespace("container/creative_inventory/scroller");
+    private static final ResourceLocation SCROLLER_DISABLED_TEXTURE = ResourceLocation.withDefaultNamespace("container/creative_inventory/scroller_disabled");
     private float scrollPosition;
     private boolean scrolling;
 
     // search
-    private TextFieldWidget searchBox;
+    private EditBox searchBox;
     private boolean ignoreTypedCharacter;
 
-    public DissolverScreen(DissolverScreenHandler handler, PlayerInventory inventory, Text title) {
+    public DissolverScreen(DissolverScreenHandler handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
     }
 
     @Override
     protected void init() {
         super.init();
-        this.backgroundWidth = 217;
-        this.backgroundHeight = 221;
-        this.x = (this.width - this.backgroundWidth) / 2;
-        this.y = (this.height - this.backgroundHeight) / 2;
+        this.imageWidth = 217;
+        this.imageHeight = 221;
+        this.leftPos = (this.width - this.imageWidth) / 2;
+        this.topPos = (this.height - this.imageHeight) / 2;
 
         // titleY = 1000;
         // this.titleX = (this.backgroundWidth - this.textRenderer.getWidth(this.title)) / 2;
-		this.playerInventoryTitleX = 31;
-		this.playerInventoryTitleY = this.backgroundHeight - 93;
+		this.inventoryLabelX = 31;
+		this.inventoryLabelY = this.imageHeight - 93;
         
         // search box
-        this.searchBox = new TextFieldWidget(this.textRenderer, this.x + 104, this.y + 6, 80, 9, Text.translatable("itemGroup.search"));
+        this.searchBox = new EditBox(this.font, this.leftPos + 104, this.topPos + 6, 80, 9, Component.translatable("itemGroup.search"));
         this.searchBox.setMaxLength(50);
-        this.searchBox.setDrawsBackground(false);
+        this.searchBox.setBordered(false);
         this.searchBox.setVisible(true);
-        this.searchBox.setEditableColor(16777215);
+        this.searchBox.setTextColor(16777215);
         // this.searchBox.setFocusUnlocked(false);
         this.searchBox.setFocused(true);
-        this.addSelectableChild(this.searchBox);
+        this.addWidget(this.searchBox);
     }
 
     // DRAW
@@ -68,48 +66,48 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
     int MOUSE_SCROLL_AREA_HEIGHT = 106;
     int SCROLL_AREA_HEIGHT = 108;
     @Override
-    protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
+    protected void renderBg(GuiGraphics context, float delta, int mouseX, int mouseY) {
         RenderSystem.setShader(GameRenderer::getPositionTexProgram);
         RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
         RenderSystem.setShaderTexture(0, TEXTURE);
-        int x = (width - backgroundWidth) / 2;
-        int y = (height - backgroundHeight) / 2;
+        int x = (width - imageWidth) / 2;
+        int y = (height - imageHeight) / 2;
 
         // custom text
-        context.drawTexture(TEXTURE, x, y, 0, 0, backgroundWidth, backgroundHeight);
+        context.blit(TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
 
         // search box
         this.searchBox.render(context, mouseX, mouseY, delta);
 
         // scroll bar
-        int i = this.x + SCROLL_BAR_X;
-        int j = this.y + SCROLL_BAR_Y;
+        int i = this.leftPos + SCROLL_BAR_X;
+        int j = this.topPos + SCROLL_BAR_Y;
         int k = j + SCROLL_AREA_HEIGHT;
-        boolean scrollActive = PlayerDataClient.LEARNED_ITEMS_SIZE > this.handler.CUSTOM_INV_SIZE;
-        Identifier identifier = scrollActive ? SCROLLER_TEXTURE : SCROLLER_DISABLED_TEXTURE;
-        context.drawGuiTexture(identifier, i, j + (int)((float)(k - j - 17) * this.scrollPosition), 12, 15);
+        boolean scrollActive = PlayerDataClient.LEARNED_ITEMS_SIZE > this.menu.CUSTOM_INV_SIZE;
+        ResourceLocation identifier = scrollActive ? SCROLLER_TEXTURE : SCROLLER_DISABLED_TEXTURE;
+        context.blitSprite(identifier, i, j + (int)((float)(k - j - 17) * this.scrollPosition), 12, 15);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
-        drawMouseoverTooltip(context, mouseX, mouseY);
+        renderTooltip(context, mouseX, mouseY);
     }
 
     @Override
-    protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
+    protected void renderLabels(GuiGraphics context, int mouseX, int mouseY) {
         // context.drawText(this.textRenderer, this.title, this.titleX, this.titleY, 4210752, false);
-        context.drawText(this.textRenderer, this.playerInventoryTitle, this.playerInventoryTitleX, this.playerInventoryTitleY, 4210752, false);
+        context.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 4210752, false);
         renderLearnedSummary(context);
 
         renderText(context, 33, 6);
     }
 
-    private void renderLearnedSummary(DrawContext context) {
+    private void renderLearnedSummary(GuiGraphics context) {
         String learnedSummary = getLearnedSummary();
-        int summaryX = this.backgroundWidth - 19 - this.textRenderer.getWidth(learnedSummary);
-        context.drawText(this.textRenderer, learnedSummary, Math.max(84, summaryX), this.playerInventoryTitleY, 4210752, false);
+        int summaryX = this.imageWidth - 19 - this.font.width(learnedSummary);
+        context.drawString(this.font, learnedSummary, Math.max(84, summaryX), this.inventoryLabelY, 4210752, false);
     }
 
     private String getLearnedSummary() {
@@ -120,25 +118,25 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
         return learned + "/" + learnable + " (" + String.format("%.1f%%", percent) + ")";
     }
 
-    private void renderText(DrawContext context, int x, int y) {
+    private void renderText(GuiGraphics context, int x, int y) {
         // https://learn.microsoft.com/en-us/office/vba/api/word.wdcolor
         String MESSAGE = getMessage();
-        context.drawText(this.textRenderer, MESSAGE, x, y, 16777215, false);
+        context.drawString(this.font, MESSAGE, x, y, 16777215, false);
     }
 
     private String getMessage() {
         String CUSTOM_MSG = PlayerDataClient.MESSAGE;
         if (CUSTOM_MSG.isEmpty()) {
             if (PlayerDataClient.EMC == 0) {
-                return Text.translatable("emc.empty").getString();
+                return Component.translatable("emc.empty").getString();
             }
 
             String emc = NumberHelpers.format(PlayerDataClient.EMC);
-            Text text = Text.translatable("emc.title", emc);
+            Component text = Component.translatable("emc.title", emc);
             return text.getString();
         }
 
-        Text text = Text.translatable(CUSTOM_MSG);
+        Component text = Component.translatable(CUSTOM_MSG);
         return text.getString();
     }
 
@@ -149,16 +147,16 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
             return false;
         }
         
-        String string = this.searchBox.getText();
+        String string = this.searchBox.getValue();
         // close screen if pressing "e" & nothing is searched
         if (string == "" && chr == "e".charAt(0)) {
-            this.close();
+            this.onClose();
             return false;
         }
 
         if (!this.searchBox.charTyped(chr, modifiers)) return false;
         
-        if (!Objects.equals(string, this.searchBox.getText())) {
+        if (!Objects.equals(string, this.searchBox.getValue())) {
             this.search();
         }
 
@@ -168,15 +166,15 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         this.ignoreTypedCharacter = false;
         
-        boolean bl = this.focusedSlot == null ? false : this.focusedSlot.hasStack();
-        boolean bl2 = InputUtil.fromKeyCode(keyCode, scanCode).toInt().isPresent();
-        if (bl && bl2 && this.handleHotbarKeyPressed(keyCode, scanCode)) {
+        boolean bl = this.hoveredSlot == null ? false : this.hoveredSlot.hasItem();
+        boolean bl2 = InputConstants.getKey(keyCode, scanCode).getNumericKeyValue().isPresent();
+        if (bl && bl2 && this.checkHotbarKeyPressed(keyCode, scanCode)) {
             this.ignoreTypedCharacter = true;
             return true;
         } else {
-            String string = this.searchBox.getText();
+            String string = this.searchBox.getValue();
             if (this.searchBox.keyPressed(keyCode, scanCode, modifiers)) {
-                if (!Objects.equals(string, this.searchBox.getText())) {
+                if (!Objects.equals(string, this.searchBox.getValue())) {
                     this.search();
                 }
 
@@ -193,7 +191,7 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
     }
 
     private void search() {
-        String string = this.searchBox.getText();
+        String string = this.searchBox.getValue();
         DataSenderClient.sendDataToServer("search", string.isEmpty() ? "" : string);
 
         // reset scroll on search
@@ -206,7 +204,7 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
 
-        if (mouseX >= x + SCROLL_BAR_X && mouseY >= y + SCROLL_BAR_Y && mouseX < x + SCROLL_BAR_X + MOUSE_SCROLL_AREA_WIDTH && mouseY < y + SCROLL_BAR_Y + MOUSE_SCROLL_AREA_HEIGHT) {
+        if (mouseX >= leftPos + SCROLL_BAR_X && mouseY >= topPos + SCROLL_BAR_Y && mouseX < leftPos + SCROLL_BAR_X + MOUSE_SCROLL_AREA_WIDTH && mouseY < topPos + SCROLL_BAR_Y + MOUSE_SCROLL_AREA_HEIGHT) {
             this.scrolling = true;
         } else {
             return super.mouseClicked(mouseX, mouseY, button);
@@ -232,23 +230,23 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
 	}
 
     protected float getScrollPosition(float current, double amount) {
-        return MathHelper.clamp(current - (float)(amount / (double)this.getOverflowRows()), 0.0F, 1.0F);
+        return Mth.clamp(current - (float)(amount / (double)this.getOverflowRows()), 0.0F, 1.0F);
     }
 
     protected int getOverflowRows() {
-        return MathHelper.ceilDiv(PlayerDataClient.LEARNED_ITEMS_SIZE, 9) - 6;
+        return Mth.positiveCeilDiv(PlayerDataClient.LEARNED_ITEMS_SIZE, 9) - 6;
     }
 
 	@Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        boolean scrollActive = PlayerDataClient.LEARNED_ITEMS_SIZE > this.handler.CUSTOM_INV_SIZE;
+        boolean scrollActive = PlayerDataClient.LEARNED_ITEMS_SIZE > this.menu.CUSTOM_INV_SIZE;
 
         if (!this.scrolling || !scrollActive) return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
 
-        float i = this.y + SCROLL_BAR_Y;
+        float i = this.topPos + SCROLL_BAR_Y;
         float j = i + MOUSE_SCROLL_AREA_HEIGHT;
         scrollPosition = (float)(mouseY - i - 7.5F) / ((j - i) - 15.0F);
-        scrollPosition = MathHelper.clamp(scrollPosition, 0.0F, 1F);
+        scrollPosition = Mth.clamp(scrollPosition, 0.0F, 1F);
         DataSenderClient.sendDataToServer("scroll", Float.toString(scrollPosition));
         
         return true;

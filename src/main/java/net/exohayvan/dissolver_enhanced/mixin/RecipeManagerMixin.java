@@ -17,50 +17,49 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.JsonOps;
-
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeManager;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.profiler.Profiler;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeType;
 
 @Mixin(RecipeManager.class)
 public class RecipeManagerMixin {
-    @Shadow @Final private RegistryWrapper.WrapperLookup registryLookup;
+    @Shadow @Final private HolderLookup.Provider registryLookup;
 
     // CUSTOM RECIPE
     @Inject(method = "apply", at = @At("HEAD"))
-    public void interceptApply(Map<Identifier, JsonElement> map, ResourceManager resourceManager, Profiler profiler, CallbackInfo info) {
+    public void interceptApply(Map<ResourceLocation, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
         if (RecipeGenerator.DISSOLVER_RECIPE != null) {
-            map.put(Identifier.of(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
+            map.put(ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
         }
     }
 
     @Inject(method = "apply", at = @At("HEAD"))
-    private void applyMixin(Map<Identifier, JsonElement> map, ResourceManager resourceManager, Profiler profiler, CallbackInfo info) {
+    private void applyMixin(Map<ResourceLocation, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
         EMCValues.beginStartup(map.size());
         RECIPES.clear();
         RECIPE_SOURCES.clear();
         RECIPE_JSON.clear();
         STONE_CUTTER_LIST.clear();
-        RegistryOps<JsonElement> registryOps = this.registryLookup.getOps(JsonOps.INSTANCE);
+        RegistryOps<JsonElement> registryOps = this.registryLookup.createSerializationContext(JsonOps.INSTANCE);
 
         // let tag items load before looking through recipes
         new Thread(() -> {
             wait(800);
 
-            Iterator<Map.Entry<Identifier, JsonElement>> recipeIterator = map.entrySet().iterator();
+            Iterator<Map.Entry<ResourceLocation, JsonElement>> recipeIterator = map.entrySet().iterator();
             while (recipeIterator.hasNext()) {
-                Map.Entry<Identifier, JsonElement> entry = recipeIterator.next();
+                Map.Entry<ResourceLocation, JsonElement> entry = recipeIterator.next();
                 try {
                     getRecipe(entry, registryOps);
                 }catch (Exception e) {
@@ -78,8 +77,8 @@ public class RecipeManagerMixin {
     private static final HashMap<String, String> RECIPE_SOURCES = new HashMap<String, String>();
     private static final HashMap<String, String> RECIPE_JSON = new HashMap<String, String>();
     private static final List<String> STONE_CUTTER_LIST = new ArrayList<>();
-    private void getRecipe(Map.Entry<Identifier, JsonElement> entry, RegistryOps<JsonElement> registryOps) {
-        Identifier identifier = entry.getKey(); // JSON RECIPE FILE NAME
+    private void getRecipe(Map.Entry<ResourceLocation, JsonElement> entry, RegistryOps<JsonElement> registryOps) {
+        ResourceLocation identifier = entry.getKey(); // JSON RECIPE FILE NAME
         String recipeId = identifier.toString();
         Recipe<?> recipe = Recipe.CODEC.parse(registryOps, entry.getValue()).getOrThrow(JsonParseException::new);
 
@@ -92,7 +91,7 @@ public class RecipeManagerMixin {
             return;
         }
         
-        ItemStack resultItem = recipe.getResult(this.registryLookup);
+        ItemStack resultItem = recipe.getResultItem(this.registryLookup);
         String resultId = resultItem.getItem().toString();
         int resultCount = resultItem.getCount();
 
@@ -109,8 +108,8 @@ public class RecipeManagerMixin {
             ingredientIndex++;
             // mostly just one ingredient (per slot) - but e.g. stone cutter can have multiple!
             int index = -1;
-            for (int rawId : ingredient.getMatchingItemIds()) {
-                String itemId = Item.byRawId(rawId).toString();
+            for (int rawId : ingredient.getStackingIds()) {
+                String itemId = Item.byId(rawId).toString();
                 index++;
 
                 if (index == 0) {
@@ -126,7 +125,7 @@ public class RecipeManagerMixin {
                 } else {
                     // example: TNT is normally sand, but slot can also contain red_sand
                     // wool should only add white wool
-                    String rootItemId = Item.byRawId(ingredient.getMatchingItemIds().getInt(0)).toString();
+                    String rootItemId = Item.byId(ingredient.getStackingIds().getInt(0)).toString();
                     if (!resultId.contains("wool") || itemId.contains("dye")) {
                         List<String> REPLACE = new ArrayList<>();
                         if (REPLACE_INGREDIENTS.containsKey(rootItemId)) REPLACE = REPLACE_INGREDIENTS.get(rootItemId);
@@ -260,7 +259,7 @@ public class RecipeManagerMixin {
         return itemIds;
     }
 
-    private static boolean getJsonRecipe(Map.Entry<Identifier, JsonElement> entry) {
+    private static boolean getJsonRecipe(Map.Entry<ResourceLocation, JsonElement> entry) {
         if (!entry.getValue().isJsonObject()) return false;
 
         JsonObject recipeObject = entry.getValue().getAsJsonObject();

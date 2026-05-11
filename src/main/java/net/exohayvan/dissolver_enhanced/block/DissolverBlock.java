@@ -5,106 +5,105 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.MapCodec;
-
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
 import net.exohayvan.dissolver_enhanced.block.entity.DissolverBlockEntity;
 import net.exohayvan.dissolver_enhanced.entity.CrystalEntity;
 import net.exohayvan.dissolver_enhanced.entity.ModEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 
-public class DissolverBlock extends BlockWithEntity {
-	public static final MapCodec<DissolverBlock> CODEC = createCodec(DissolverBlock::new);
+public class DissolverBlock extends BaseEntityBlock {
+	public static final MapCodec<DissolverBlock> CODEC = simpleCodec(DissolverBlock::new);
 
-    public DissolverBlock(Settings settings) {
+    public DissolverBlock(Properties settings) {
 		super(settings);
 	}
 
     @Override
-    protected MapCodec<DissolverBlock> getCodec() {
+    protected MapCodec<DissolverBlock> codec() {
         return CODEC;
     }
 
     @Override
-    public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         DissolverBlockEntity blockEntity = new DissolverBlockEntity(pos, state);
         return blockEntity;
     }
 
     @Override
-    public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
         spawnEntity(world, pos);
     }
     
     @Override
-	public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
-        if (world instanceof ServerWorld) {
-            List<Entity> list = blockEntityList((World)world, pos);
+	public void destroy(LevelAccessor world, BlockPos pos, BlockState state) {
+        if (world instanceof ServerLevel) {
+            List<Entity> list = blockEntityList((Level)world, pos);
             if (!list.isEmpty()) list.get(0).remove(Entity.RemovalReason.DISCARDED);
         }
 	}
 
     @Override
-    protected BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
     }
 
     @Override
-    protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-        if (world.isClient) {
-            return ActionResult.SUCCESS;
-        } else if (!player.getAbilities().allowModifyWorld) {
-            return ActionResult.PASS;
+    protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+        if (world.isClientSide) {
+            return InteractionResult.SUCCESS;
+        } else if (!player.getAbilities().mayBuild) {
+            return InteractionResult.PASS;
         } else {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof DissolverBlockEntity) {
-                player.openHandledScreen((DissolverBlockEntity)blockEntity);
+                player.openMenu((DissolverBlockEntity)blockEntity);
             }
 
             // check for entity
             List<Entity> list = blockEntityList(world, pos);
             if (list.isEmpty()) spawnEntity(world, pos);
 
-            return ActionResult.CONSUME;
+            return InteractionResult.CONSUME;
         }
     }
 
-    private void spawnEntity(World world, BlockPos pos) {
-        if (!(world instanceof ServerWorld)) return;
+    private void spawnEntity(Level world, BlockPos pos) {
+        if (!(world instanceof ServerLevel)) return;
 
         CrystalEntity crystalEntity = new CrystalEntity(ModEntities.CRYSTAL_ENTITY, world);
-        crystalEntity.setPosition(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
-        world.spawnEntity(crystalEntity);
+        crystalEntity.setPos(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+        world.addFreshEntity(crystalEntity);
     }
 
-    private List<Entity> blockEntityList(World world, BlockPos pos) {
+    private List<Entity> blockEntityList(Level world, BlockPos pos) {
         double x = pos.getX();
         double y = pos.getY();
         double z = pos.getZ();
         
-        return world.getOtherEntities(null, new Box(x, y, z, x + 1.0F, y + 1.0F, z + 1.0F));
+        return world.getEntities(null, new AABB(x, y, z, x + 1.0F, y + 1.0F, z + 1.0F));
     }
 
     // PARTICLE
     private float offset = 1.1F;
     private float velocity = 0.01F;
 	@Override
-	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-		super.randomDisplayTick(state, world, pos, random);
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
+		super.animateTick(state, world, pos, random);
 
         if (random.nextInt(12) != 0) return;
 

@@ -1,13 +1,13 @@
 package net.exohayvan.dissolver_enhanced.inventory;
 
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public class DissolverSlotInput extends Slot {
     public int id;
 
-    public DissolverSlotInput(Inventory inventory, int index, int x, int y) {
+    public DissolverSlotInput(Container inventory, int index, int x, int y) {
         super(inventory, index, x, y);
     }
 
@@ -28,18 +28,18 @@ public class DissolverSlotInput extends Slot {
     //     return this.insertStack(stack, stack.getCount());
     // }
 
-    public ItemStack insertStack(ItemStack stack, int count) {
-        if (stack.isEmpty() || !this.canInsert(stack)) return stack;
+    public ItemStack safeInsert(ItemStack stack, int count) {
+        if (stack.isEmpty() || !this.mayPlace(stack)) return stack;
 
-        ItemStack itemStack = this.getStack();
-        int i = Math.min(Math.min(count, stack.getCount()), this.getMaxItemCount(stack) - itemStack.getCount());
+        ItemStack itemStack = this.getItem();
+        int i = Math.min(Math.min(count, stack.getCount()), this.getMaxStackSize(stack) - itemStack.getCount());
 
         if (itemStack.isEmpty()) {
-            this.setStack(stack.split(i));
-        } else if (ItemStack.areItemsAndComponentsEqual(itemStack, stack)) {
-            stack.decrement(i);
-            itemStack.increment(i);
-            this.setStack(itemStack);
+            this.setByPlayer(stack.split(i));
+        } else if (ItemStack.isSameItemSameComponents(itemStack, stack)) {
+            stack.shrink(i);
+            itemStack.grow(i);
+            this.setByPlayer(itemStack);
         }
 
         return stack;

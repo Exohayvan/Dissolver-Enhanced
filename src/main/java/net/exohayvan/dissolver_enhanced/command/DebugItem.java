@@ -14,26 +14,24 @@ import java.util.Map;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 public class DebugItem {
     private static final DateTimeFormatter REPORT_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
-    public static int summary(CommandContext<ServerCommandSource> context, String command) {
-        List<Item> items = Registries.ITEM
+    public static int summary(CommandContext<CommandSourceStack> context, String command) {
+        List<Item> items = BuiltInRegistries.ITEM
             .stream()
-            .filter(item -> !item.getDefaultStack().isEmpty())
+            .filter(item -> !item.getDefaultInstance().isEmpty())
             .toList();
 
         int totalItems = items.size();
@@ -51,10 +49,10 @@ public class DebugItem {
             }
 
             itemsWithoutEMC++;
-            item.getDefaultStack()
-                .streamTags()
-                .map(TagKey::id)
-                .map(Identifier::toString)
+            item.getDefaultInstance()
+                .getTags()
+                .map(TagKey::location)
+                .map(ResourceLocation::toString)
                 .filter(tagId -> !EMCValues.EMC_TAG_VALUES.containsKey(tagId))
                 .forEach(tagId -> missingTagCounts.put(tagId, missingTagCounts.getOrDefault(tagId, 0) + 1));
         }
@@ -114,18 +112,18 @@ public class DebugItem {
         return 1;
     }
 
-    public static int namespace(CommandContext<ServerCommandSource> context, String command) {
+    public static int namespace(CommandContext<CommandSourceStack> context, String command) {
         return namespaceSummary(context, null);
     }
 
-    public static int namespaceFiltered(CommandContext<ServerCommandSource> context, String command) {
+    public static int namespaceFiltered(CommandContext<CommandSourceStack> context, String command) {
         return namespaceSummary(context, StringArgumentType.getString(context, "namespace"));
     }
 
-    private static int namespaceSummary(CommandContext<ServerCommandSource> context, String namespace) {
-        List<Item> items = Registries.ITEM
+    private static int namespaceSummary(CommandContext<CommandSourceStack> context, String namespace) {
+        List<Item> items = BuiltInRegistries.ITEM
             .stream()
-            .filter(item -> !item.getDefaultStack().isEmpty())
+            .filter(item -> !item.getDefaultInstance().isEmpty())
             .filter(item -> namespace == null || getNamespace(item.toString()).equals(namespace))
             .toList();
 
@@ -156,10 +154,10 @@ public class DebugItem {
             missingItems.add(itemId);
             missingItemsByNamespace.put(itemNamespace, missingItems);
 
-            item.getDefaultStack()
-                .streamTags()
-                .map(TagKey::id)
-                .map(Identifier::toString)
+            item.getDefaultInstance()
+                .getTags()
+                .map(TagKey::location)
+                .map(ResourceLocation::toString)
                 .filter(tagId -> !EMCValues.EMC_TAG_VALUES.containsKey(tagId))
                 .forEach(tagId -> missingTagCounts.put(tagId, missingTagCounts.getOrDefault(tagId, 0) + 1));
         }
@@ -232,14 +230,14 @@ public class DebugItem {
         return 1;
     }
 
-    public static int item(CommandContext<ServerCommandSource> context, String command) {
-        ServerPlayerEntity player = context.getSource().getPlayer();
+    public static int item(CommandContext<CommandSourceStack> context, String command) {
+        ServerPlayer player = context.getSource().getPlayer();
         if (player == null) {
             ModCommands.feedback(context, "This command must be run by a player.");
             return 0;
         }
 
-        ItemStack stack = player.getMainHandStack();
+        ItemStack stack = player.getMainHandItem();
         if (stack.isEmpty()) {
             ModCommands.feedback(context, "Hold an item to debug it.");
             return 0;
@@ -252,9 +250,9 @@ public class DebugItem {
         String stackEmcText = emc > 0 ? String.valueOf(emc * stack.getCount()) : "None";
         boolean configOverride = EMCValues.isConfigOverridden(emcKey) || EMCValues.isConfigOverridden(itemId);
 
-        List<TagKey<Item>> tags = stack.streamTags().toList();
+        List<TagKey<Item>> tags = stack.getTags().toList();
         List<String> lines = new ArrayList<>(List.of(
-            "Name: " + stack.getName().getString(),
+            "Name: " + stack.getHoverName().getString(),
             "ID: " + itemId,
             "EMC Key: " + emcKey,
             "Count: " + stack.getCount(),
@@ -266,7 +264,7 @@ public class DebugItem {
             "EMC Source: " + EMCValues.getSource(emcKey),
             "EMC Source Detail: " + EMCValues.getSourceDetail(emcKey),
             "Config Override: " + (configOverride ? "Yes" : "No"),
-            "Has Components: " + (!stack.getComponentChanges().isEmpty() ? "Yes" : "No"),
+            "Has Components: " + (!stack.getComponentsPatch().isEmpty() ? "Yes" : "No"),
             "Learnable: " + (emc > 0 ? "Yes" : "No")
         ));
         List<String> componentLines = EMCKey.describe(stack);
@@ -282,14 +280,14 @@ public class DebugItem {
         return 1;
     }
 
-    public static int recipe(CommandContext<ServerCommandSource> context, String command) {
-        ServerPlayerEntity player = context.getSource().getPlayer();
+    public static int recipe(CommandContext<CommandSourceStack> context, String command) {
+        ServerPlayer player = context.getSource().getPlayer();
         if (player == null) {
             ModCommands.feedback(context, "This command must be run by a player.");
             return 0;
         }
 
-        ItemStack stack = player.getMainHandStack();
+        ItemStack stack = player.getMainHandItem();
         if (stack.isEmpty()) {
             ModCommands.feedback(context, "Hold an item to debug its recipes.");
             return 0;
@@ -314,7 +312,7 @@ public class DebugItem {
     private static String formatTags(List<TagKey<Item>> tags, String namespace) {
         String result = tags
             .stream()
-            .map(TagKey::id)
+            .map(TagKey::location)
             .filter(id -> id.getNamespace().equals(namespace))
             .map(DebugItem::formatTag)
             .collect(joining(", "));
@@ -325,7 +323,7 @@ public class DebugItem {
     private static String formatOtherTags(List<TagKey<Item>> tags) {
         String result = tags
             .stream()
-            .map(TagKey::id)
+            .map(TagKey::location)
             .filter(id -> !id.getNamespace().equals("minecraft") && !id.getNamespace().equals("c"))
             .map(DebugItem::formatTag)
             .collect(joining(", "));
@@ -333,7 +331,7 @@ public class DebugItem {
         return result.isEmpty() ? "None" : result;
     }
 
-    private static String formatTag(Identifier id) {
+    private static String formatTag(ResourceLocation id) {
         return "#" + id;
     }
 

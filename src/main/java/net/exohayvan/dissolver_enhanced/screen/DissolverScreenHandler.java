@@ -4,15 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
@@ -23,21 +14,29 @@ import net.exohayvan.dissolver_enhanced.inventory.DissolverInventory;
 import net.exohayvan.dissolver_enhanced.inventory.DissolverInventoryInput;
 import net.exohayvan.dissolver_enhanced.inventory.DissolverSlot;
 import net.exohayvan.dissolver_enhanced.packets.DataSender;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
-public class DissolverScreenHandler extends ScreenHandler {
+public class DissolverScreenHandler extends AbstractContainerMenu {
     private final int WIDTH_SIZE = 9;
     private final int HEIGHT_SIZE = 6;
     public final int CUSTOM_INV_SIZE = WIDTH_SIZE * HEIGHT_SIZE;
     private final int PLAYER_INV_SIZE = 36; // player inventory size (9 * 4)
 
-    private final PlayerEntity player;
+    private final Player player;
 
     private final DissolverInventory inventory;
     private final DissolverInventoryInput inventoryInput;
 
     public List<Item> itemList = new ArrayList<>();
 
-    public DissolverScreenHandler(int syncId, PlayerInventory playerInventory) {
+    public DissolverScreenHandler(int syncId, Inventory playerInventory) {
         super(ModScreenHandlers.DISSOLVER_SCREEN_HANDLER_TYPE, syncId);
 
         this.player = playerInventory.player;
@@ -58,7 +57,7 @@ public class DissolverScreenHandler extends ScreenHandler {
 
     int PLAYER_START_X_POS = 31; // 8
     int PLAYER_START_Y_POS = 140; // 84
-    private void addPlayerInventory(PlayerInventory playerInventory) {
+    private void addPlayerInventory(Inventory playerInventory) {
         for (int i = 0; i < 3; ++i) {
             for (int l = 0; l < 9; ++l) {
                 this.addSlot(new Slot(playerInventory, l + i * 9 + 9, PLAYER_START_X_POS + l * 18, PLAYER_START_Y_POS + i * 18));
@@ -66,7 +65,7 @@ public class DissolverScreenHandler extends ScreenHandler {
         }
     }
 
-    private void addPlayerHotbar(PlayerInventory playerInventory) {
+    private void addPlayerHotbar(Inventory playerInventory) {
         for (int i = 0; i < 9; ++i) {
             this.addSlot(new Slot(playerInventory, i, PLAYER_START_X_POS + i * 18, PLAYER_START_Y_POS + 58));
         }
@@ -91,8 +90,8 @@ public class DissolverScreenHandler extends ScreenHandler {
             this.addSlot(customSlot);
 
             // set to air
-            ItemStack stack = Items.AIR.getDefaultStack();
-            inventory.setStack(index, stack);
+            ItemStack stack = Items.AIR.getDefaultInstance();
+            inventory.setItem(index, stack);
         }
 
         addItems();
@@ -114,7 +113,7 @@ public class DissolverScreenHandler extends ScreenHandler {
         List<String> newItems = new ArrayList<>();
         for (String itemId : items) {
             Item item = ItemHelper.getById(itemId);
-            String itemName = item.getName().getString().toLowerCase();
+            String itemName = item.getDescription().getString().toLowerCase();
             if (itemName.contains(searchValue.toLowerCase())) newItems.add(itemId);
         }
         
@@ -163,18 +162,18 @@ public class DissolverScreenHandler extends ScreenHandler {
 
         int maxItems = playerEMC / emcValue; // auto floored
         stack.setCount(maxItems);
-        stack.capCount(stack.getMaxCount());
+        stack.limitSize(stack.getMaxStackSize());
 
         return stack;
     }
 
     private void clearItems() {
         this.slots.forEach((Slot slot) -> {
-            int slotIndex = slot.getIndex();
+            int slotIndex = slot.getContainerSlot();
             if (slotIndex <= PLAYER_INV_SIZE) return; // player inv
             if (slotIndex == this.slots.size() - 1) return; // input slot
 
-            slot.setStack(Items.AIR.getDefaultStack());
+            slot.setByPlayer(Items.AIR.getDefaultInstance());
         });
     }
 
@@ -261,7 +260,7 @@ public class DissolverScreenHandler extends ScreenHandler {
         for (int k = 0; k < 6; ++k) {
             for (int l = 0; l < 9; ++l) {
                 int m = l + (k + j) * 9;
-                inventory.setStack(l + k * 9, m >= 0 && m < this.itemList.size() ? getHighestStack(this.itemList.get(m).getDefaultStack()) : ItemStack.EMPTY);
+                inventory.setItem(l + k * 9, m >= 0 && m < this.itemList.size() ? getHighestStack(this.itemList.get(m).getDefaultInstance()) : ItemStack.EMPTY);
             }
         }
     }
@@ -275,43 +274,43 @@ public class DissolverScreenHandler extends ScreenHandler {
 
     // only take items from inv, not add
     @Override
-    public ItemStack quickMove(PlayerEntity player, int invSlot) {
+    public ItemStack quickMoveStack(Player player, int invSlot) {
         ItemStack newStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(invSlot);
 
-        if (slot == null || !slot.hasStack()) return newStack;
+        if (slot == null || !slot.hasItem()) return newStack;
 
         // getting double stack if server is not checked
         if (player.getServer() == null) return ItemStack.EMPTY;
 
         if (invSlot < PLAYER_INV_SIZE) {
-            if (!EMCHelper.canAddItem(slot.getStack(), player)) return newStack;
+            if (!EMCHelper.canAddItem(slot.getItem(), player)) return newStack;
         }
 
         int inputSlotsStartIndex = this.slots.size() - this.inventoryInput.slots();
         // click in custom inventory
         if (invSlot >= PLAYER_INV_SIZE && invSlot < inputSlotsStartIndex) {
-            boolean CANT_GET_ITEM = !EMCHelper.getItem(player, slot.getStack(), this, slot.getStack().getCount());
+            boolean CANT_GET_ITEM = !EMCHelper.getItem(player, slot.getItem(), this, slot.getItem().getCount());
             if (CANT_GET_ITEM) return newStack;
         }
 
-        ItemStack originalStack = slot.getStack();
+        ItemStack originalStack = slot.getItem();
         newStack = originalStack.copy();
 
         if (invSlot < PLAYER_INV_SIZE) { // default inventory
             // always quick move to input slot
             int lastSlotIndex = this.slots.size() - 1;
-            boolean itemInserted = this.insertItem(originalStack, lastSlotIndex, this.slots.size(), true);
+            boolean itemInserted = this.moveItemStackTo(originalStack, lastSlotIndex, this.slots.size(), true);
             if (!itemInserted) return ItemStack.EMPTY;
         } else { // input slots or custom inventory
-            boolean itemInserted = this.insertItem(originalStack, 0, PLAYER_INV_SIZE, false);
+            boolean itemInserted = this.moveItemStackTo(originalStack, 0, PLAYER_INV_SIZE, false);
             if (!itemInserted) return ItemStack.EMPTY;
         }
 
         if (originalStack.isEmpty()) {
-            slot.setStack(ItemStack.EMPTY);
+            slot.setByPlayer(ItemStack.EMPTY);
         } else {
-            slot.markDirty();
+            slot.setChanged();
         }
 
         return newStack;
@@ -320,10 +319,10 @@ public class DissolverScreenHandler extends ScreenHandler {
     // CLOSING
     
     @Override
-	public void onClosed(PlayerEntity player) {
-        super.onClosed(player);
+	public void removed(Player player) {
+        super.removed(player);
 
-		if (player instanceof ServerPlayerEntity) {
+		if (player instanceof ServerPlayer) {
             int adderSlotIndex = this.slots.size() - 2;
             int removerSlotIndex = this.slots.size() - 3;
             dropStackInSlot(adderSlotIndex);
@@ -332,21 +331,21 @@ public class DissolverScreenHandler extends ScreenHandler {
 	}
 
     private void dropStackInSlot(int slotIndex) {
-        ItemStack itemStack = this.slots.get(slotIndex).getStack();
+        ItemStack itemStack = this.slots.get(slotIndex).getItem();
 
         if (!itemStack.isEmpty()) {
-            if (player.isAlive() && !((ServerPlayerEntity)player).isDisconnected()) {
-                player.getInventory().offerOrDrop(itemStack);
+            if (player.isAlive() && !((ServerPlayer)player).hasDisconnected()) {
+                player.getInventory().placeItemBackInInventory(itemStack);
             } else {
-                player.dropItem(itemStack, false);
+                player.drop(itemStack, false);
             }
         }
     }
 
     // EXTRA
 
-    public boolean canUse(PlayerEntity player) {
-        return this.inventory.canPlayerUse(player);
+    public boolean stillValid(Player player) {
+        return this.inventory.stillValid(player);
     }
 
     public DissolverInventory getInventory() {

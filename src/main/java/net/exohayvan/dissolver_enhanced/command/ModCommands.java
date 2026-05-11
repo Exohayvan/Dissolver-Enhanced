@@ -2,9 +2,9 @@ package net.exohayvan.dissolver_enhanced.command;
 
 // import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 // import static com.mojang.brigadier.arguments.StringArgumentType.word;
-import static net.minecraft.server.command.CommandManager.argument;
+import static net.minecraft.commands.Commands.argument;
 // import static net.minecraft.server.command.CommandManager.*;
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.literal;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -13,17 +13,17 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.argument.ItemStackArgumentType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.item.ItemArgument;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.helpers.WirelessDissolver;
 
 public class ModCommands {
-    private static void registerCommand(LiteralArgumentBuilder<ServerCommandSource> command) {
+    private static void registerCommand(LiteralArgumentBuilder<CommandSourceStack> command) {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(command));
     }
 
@@ -37,11 +37,11 @@ public class ModCommands {
         );
     }
 
-    private static LiteralArgumentBuilder<ServerCommandSource> createRootCommand(String command) {
-        return literal(command).requires(source -> source.hasPermissionLevel(2)); // requires OP
+    private static LiteralArgumentBuilder<CommandSourceStack> createRootCommand(String command) {
+        return literal(command).requires(source -> source.hasPermission(2)); // requires OP
     }
 
-    private static LiteralArgumentBuilder<ServerCommandSource> createCommandWithPlayerArg(String command, ArgumentType<?> argType, CommandMethodInterface func, CommandMethodPlayerInterface playerFunc) {
+    private static LiteralArgumentBuilder<CommandSourceStack> createCommandWithPlayerArg(String command, ArgumentType<?> argType, CommandMethodInterface func, CommandMethodPlayerInterface playerFunc) {
         return literal(command).executes((context) -> executeCommand(context, command, func)).then(argument("player", StringArgumentType.string()).executes((context) -> executePlayerCommand(context, command, playerFunc)));
     }
 
@@ -49,53 +49,53 @@ public class ModCommands {
     //     return literal(command).then(argument(argId, argType).executes((context) -> executeCommand(context, command, func)));
     // }
 
-    private static LiteralArgumentBuilder<ServerCommandSource> createPlayerSubCommand(String command, CommandMethodInterface func) {
+    private static LiteralArgumentBuilder<CommandSourceStack> createPlayerSubCommand(String command, CommandMethodInterface func) {
         return literal(command).then(argument("player", StringArgumentType.string()).suggests(new PlayerSuggestionProvider()).executes((context) -> executeCommand(context, command, func)));
     }
 
-    private static LiteralArgumentBuilder<ServerCommandSource> createSubCommandWithPlayerArg(String command, String argId, ArgumentType<?> argType, CommandMethodInterface func, CommandMethodPlayerInterface playerFunc) {
+    private static LiteralArgumentBuilder<CommandSourceStack> createSubCommandWithPlayerArg(String command, String argId, ArgumentType<?> argType, CommandMethodInterface func, CommandMethodPlayerInterface playerFunc) {
         return literal(command).then(argument(argId, argType).executes((context) -> executeCommand(context, command, func)).then(argument("player", StringArgumentType.string()).suggests(new PlayerSuggestionProvider()).executes((context) -> executePlayerCommand(context, command, playerFunc))));
     }
 
-    private static LiteralArgumentBuilder<ServerCommandSource> createItemSubCommandWithPlayerArg(String command, CommandRegistryAccess registryAccess, CommandMethodInterface func, CommandMethodPlayerInterface playerFunc) {
-        return literal(command).then(argument("item", ItemStackArgumentType.itemStack(registryAccess)).suggests(new ItemSuggestionProvider()).executes((context) -> executeCommand(context, command, func)).then(argument("player", StringArgumentType.string()).suggests(new PlayerSuggestionProvider()).executes((context) -> executePlayerCommand(context, command, playerFunc))));
+    private static LiteralArgumentBuilder<CommandSourceStack> createItemSubCommandWithPlayerArg(String command, CommandBuildContext registryAccess, CommandMethodInterface func, CommandMethodPlayerInterface playerFunc) {
+        return literal(command).then(argument("item", ItemArgument.item(registryAccess)).suggests(new ItemSuggestionProvider()).executes((context) -> executeCommand(context, command, func)).then(argument("player", StringArgumentType.string()).suggests(new PlayerSuggestionProvider()).executes((context) -> executePlayerCommand(context, command, playerFunc))));
     }
     
     // special example: msg = "\"%s × %s = %s\".formatted(value, value, result)"
-    public static void feedback(CommandContext<ServerCommandSource> context, String msg) {
-        context.getSource().sendFeedback(() -> Text.literal(msg), false);
+    public static void feedback(CommandContext<CommandSourceStack> context, String msg) {
+        context.getSource().sendSuccess(() -> Component.literal(msg), false);
     }
     
     // HELPERS
     
-    public static PlayerEntity playerFromName(CommandContext<ServerCommandSource> context, String playerName) {
-        return context.getSource().getServer().getPlayerManager().getPlayer(playerName);
+    public static Player playerFromName(CommandContext<CommandSourceStack> context, String playerName) {
+        return context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
     }
 
     // EXECUTE
 
     private interface CommandMethodInterface {
-        int execute(CommandContext<ServerCommandSource> context, String command);
+        int execute(CommandContext<CommandSourceStack> context, String command);
     }
 
-    private static int executeCommand(CommandContext<ServerCommandSource> context, String command, CommandMethodInterface func) {
+    private static int executeCommand(CommandContext<CommandSourceStack> context, String command, CommandMethodInterface func) {
         DissolverEnhanced.LOGGER.info("Executed command: " + command);
         return func.execute(context, command);
     }
 
     private interface CommandMethodPlayerInterface {
-        int execute(CommandContext<ServerCommandSource> context, String command, PlayerEntity player);
+        int execute(CommandContext<CommandSourceStack> context, String command, Player player);
     }
 
-    private static int executePlayerCommand(CommandContext<ServerCommandSource> context, String command, CommandMethodPlayerInterface func) {
+    private static int executePlayerCommand(CommandContext<CommandSourceStack> context, String command, CommandMethodPlayerInterface func) {
         final String playerName = StringArgumentType.getString(context, "player");
-        PlayerEntity player = playerFromName(context, playerName);
+        Player player = playerFromName(context, playerName);
 
         // Player currently has to be logged on to the server,
         // but it is possible to find & update the player state based on the stored name
 
         if (player == null) {
-            feedback(context, Text.translatable("command.feedback.player.not_found", playerName).getString());
+            feedback(context, Component.translatable("command.feedback.player.not_found", playerName).getString());
             return -1;
         }
 
@@ -134,18 +134,18 @@ public class ModCommands {
         // LEARNED (unlock all, learn specific items, unlearn)
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(
             createRootCommand("emcmemory")
-            .then(createCommandWithPlayerArg("fill", ItemStackArgumentType.itemStack(registryAccess), LearnItems::everything, LearnItems::everythingPlayer))
-            .then(createCommandWithPlayerArg("clear", ItemStackArgumentType.itemStack(registryAccess), LearnItems::forget, LearnItems::forgetPlayer))
+            .then(createCommandWithPlayerArg("fill", ItemArgument.item(registryAccess), LearnItems::everything, LearnItems::everythingPlayer))
+            .then(createCommandWithPlayerArg("clear", ItemArgument.item(registryAccess), LearnItems::forget, LearnItems::forgetPlayer))
             .then(createItemSubCommandWithPlayerArg("add", registryAccess, LearnItems::add, LearnItems::addPlayer))
             .then(createItemSubCommandWithPlayerArg("remove", registryAccess, LearnItems::remove, LearnItems::removePlayer))
         ));
 
         createCustomCommand("opendissolver", (context, command) -> {
-            PlayerEntity player = context.getSource().getPlayer();
-            World world = context.getSource().getWorld();
+            Player player = context.getSource().getPlayer();
+            Level world = context.getSource().getLevel();
 
             if (!WirelessDissolver.open(player, world)) {
-                ModCommands.feedback(context, Text.translatable("wireless_open.fail", WirelessDissolver.radius).getString());
+                ModCommands.feedback(context, Component.translatable("wireless_open.fail", WirelessDissolver.radius).getString());
             }
 
             return 1;

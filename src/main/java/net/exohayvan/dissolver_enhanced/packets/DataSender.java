@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.packets.clientbound.EMCValuesPayload;
@@ -16,9 +16,9 @@ import net.exohayvan.dissolver_enhanced.packets.clientbound.PlayerDataPayload;
 public class DataSender {
     private static final Map<UUID, Integer> EMC_SYNC_VERSIONS = new HashMap<>();
 
-    public static void sendPlayerData(PlayerEntity player, PlayerData data) {
+    public static void sendPlayerData(Player player, PlayerData data) {
         MinecraftServer server = player.getServer();
-        ServerPlayerEntity playerEntity = getServerPlayer(server, player);
+        ServerPlayer playerEntity = getServerPlayer(server, player);
         if (playerEntity == null) return;
 
         int learnedItemsTotalSize = data.LEARNED_ITEMS_TOTAL_SIZE > 0 ? data.LEARNED_ITEMS_TOTAL_SIZE : data.LEARNED_ITEMS.size();
@@ -35,24 +35,24 @@ public class DataSender {
 
     // HELPERS
 
-    private static ServerPlayerEntity getServerPlayer(MinecraftServer server, PlayerEntity player) {
-        if (player instanceof ServerPlayerEntity) return (ServerPlayerEntity)player;
-        if (server == null || !(player instanceof PlayerEntity)) return null;
+    private static ServerPlayer getServerPlayer(MinecraftServer server, Player player) {
+        if (player instanceof ServerPlayer) return (ServerPlayer)player;
+        if (server == null || !(player instanceof Player)) return null;
 
-        ServerPlayerEntity playerEntity = server.getPlayerManager().getPlayer(player.getUuid());
-        if (!(playerEntity instanceof ServerPlayerEntity)) return null;
+        ServerPlayer playerEntity = server.getPlayerList().getPlayer(player.getUUID());
+        if (!(playerEntity instanceof ServerPlayer)) return null;
 
         return playerEntity;
     }
 
-    private static EMCValuesPayload getEMCValuesPayload(ServerPlayerEntity player) {
+    private static EMCValuesPayload getEMCValuesPayload(ServerPlayer player) {
         int syncVersion = EMCValues.getSyncVersion();
         if (syncVersion <= 0) return null;
 
-        Integer playerSyncVersion = EMC_SYNC_VERSIONS.get(player.getUuid());
+        Integer playerSyncVersion = EMC_SYNC_VERSIONS.get(player.getUUID());
         if (playerSyncVersion != null && playerSyncVersion == syncVersion) return null;
 
-        EMC_SYNC_VERSIONS.put(player.getUuid(), syncVersion);
+        EMC_SYNC_VERSIONS.put(player.getUUID(), syncVersion);
         return new EMCValuesPayload(syncVersion, EMCValues.getSyncValues());
     }
 

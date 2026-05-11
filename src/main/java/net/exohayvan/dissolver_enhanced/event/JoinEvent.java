@@ -5,8 +5,8 @@ import org.slf4j.LoggerFactory;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
@@ -18,7 +18,7 @@ public class JoinEvent {
 
     public static void init() {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-			ServerPlayerEntity playerEntity = handler.getPlayer();
+			ServerPlayer playerEntity = handler.getPlayer();
 
             if (ServerPlayNetworking.canSend(playerEntity, PlayerDataPayload.ID)) {
                 PlayerData playerState = StateSaverAndLoader.getPlayerState(playerEntity);
@@ -26,12 +26,12 @@ public class JoinEvent {
                 sendPlayerDataWhenEMCValuesReady(playerEntity);
             } else {
                 LOGGER.error("Client cannot receive packet. This probably means that DissolverEnhanced is not installed on the client.");
-                handler.disconnect(Text.literal("Please install the DissolverEnhanced mod to play on this server."));
+                handler.disconnect(Component.literal("Please install the DissolverEnhanced mod to play on this server."));
             }
         });
     }
 
-    private static void sendPlayerDataWhenEMCValuesReady(ServerPlayerEntity playerEntity) {
+    private static void sendPlayerDataWhenEMCValuesReady(ServerPlayer playerEntity) {
         new Thread(() -> {
             for (int i = 0; i < 100; i++) {
                 if (EMCValues.getSyncVersion() > 0) {

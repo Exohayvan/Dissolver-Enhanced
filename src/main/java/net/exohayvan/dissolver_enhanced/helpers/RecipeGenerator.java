@@ -5,10 +5,9 @@ import java.util.ArrayList;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-
-import net.minecraft.util.Identifier;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
+import net.minecraft.resources.ResourceLocation;
 
 public class RecipeGenerator {
     public static JsonObject DISSOLVER_RECIPE;
@@ -16,14 +15,14 @@ public class RecipeGenerator {
     public static void init() {
         String craftingDifficulty = ModConfig.DIFFICULTY.toLowerCase();
         // hard
-        Identifier frameItem = Identifier.of(DissolverEnhanced.MOD_ID, "crystal_frame_item");
-        Identifier centerItem = Identifier.ofVanilla("nether_star");
+        ResourceLocation frameItem = ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "crystal_frame_item");
+        ResourceLocation centerItem = ResourceLocation.withDefaultNamespace("nether_star");
 
         if (craftingDifficulty.contains("easy")) {
-            frameItem = Identifier.ofVanilla("glass_pane");
-            centerItem = Identifier.ofVanilla("redstone");
+            frameItem = ResourceLocation.withDefaultNamespace("glass_pane");
+            centerItem = ResourceLocation.withDefaultNamespace("redstone");
         } else if (craftingDifficulty.contains("normal")) {
-            centerItem = Identifier.ofVanilla("phantom_membrane");
+            centerItem = ResourceLocation.withDefaultNamespace("phantom_membrane");
         }
 
         DISSOLVER_RECIPE = createShapedRecipeJson(
@@ -35,12 +34,12 @@ public class RecipeGenerator {
                 "C#C",
                 "CCC"
             ),
-            Identifier.of(DissolverEnhanced.MOD_ID, "dissolver_block")
+            ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block")
         );
     }
 
     // source: https://fabricmc.net/wiki/tutorial:dynamic_recipe_generation
-    public static JsonObject createShapedRecipeJson(ArrayList<Character> keys, ArrayList<Identifier> items, ArrayList<String> type, ArrayList<String> pattern, Identifier output) {
+    public static JsonObject createShapedRecipeJson(ArrayList<Character> keys, ArrayList<ResourceLocation> items, ArrayList<String> type, ArrayList<String> pattern, ResourceLocation output) {
         JsonObject json = new JsonObject();
         json.addProperty("type", "minecraft:crafting_shaped");
 

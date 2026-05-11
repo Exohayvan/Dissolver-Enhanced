@@ -2,32 +2,31 @@ package net.exohayvan.dissolver_enhanced.inventory;
 
 import java.util.Iterator;
 import java.util.List;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.Container;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.util.collection.DefaultedList;
-
-public class DissolverInventory implements Inventory {
-    private final DefaultedList<ItemStack> stacks;
+public class DissolverInventory implements Container {
+    private final NonNullList<ItemStack> stacks;
     private final int width;
     private final int height;
-    private final ScreenHandler handler;
+    private final AbstractContainerMenu handler;
 
-    public DissolverInventory(ScreenHandler handler, int width, int height) {
-        this(handler, width, height, DefaultedList.ofSize(width * height, ItemStack.EMPTY));
+    public DissolverInventory(AbstractContainerMenu handler, int width, int height) {
+        this(handler, width, height, NonNullList.withSize(width * height, ItemStack.EMPTY));
     }
 
-    public DissolverInventory(ScreenHandler handler, int width, int height, DefaultedList<ItemStack> stacks) {
+    public DissolverInventory(AbstractContainerMenu handler, int width, int height, NonNullList<ItemStack> stacks) {
         this.stacks = stacks;
         this.handler = handler;
         this.width = width;
         this.height = height;
     }
 
-    public int size() {
+    public int getContainerSize() {
         return this.stacks.size();
     }
 
@@ -46,36 +45,36 @@ public class DissolverInventory implements Inventory {
         return false;
     }
 
-    public ItemStack getStack(int slot) {
-        return slot >= this.size() ? ItemStack.EMPTY : (ItemStack)this.stacks.get(slot);
+    public ItemStack getItem(int slot) {
+        return slot >= this.getContainerSize() ? ItemStack.EMPTY : (ItemStack)this.stacks.get(slot);
     }
 
-    public ItemStack removeStack(int slot) {
-        return Inventories.removeStack(this.stacks, slot);
+    public ItemStack removeItemNoUpdate(int slot) {
+        return ContainerHelper.takeItem(this.stacks, slot);
     }
 
-    public ItemStack removeStack(int slot, int amount) {
-        ItemStack itemStack = Inventories.splitStack(this.stacks, slot, amount);
+    public ItemStack removeItem(int slot, int amount) {
+        ItemStack itemStack = ContainerHelper.removeItem(this.stacks, slot, amount);
         if (!itemStack.isEmpty()) {
-            this.handler.onContentChanged(this);
+            this.handler.slotsChanged(this);
         }
 
         return itemStack;
     }
 
-    public void setStack(int slot, ItemStack stack) {
+    public void setItem(int slot, ItemStack stack) {
         this.stacks.set(slot, stack);
-        this.handler.onContentChanged(this);
+        this.handler.slotsChanged(this);
     }
 
-    public void markDirty() {
+    public void setChanged() {
     }
 
-    public boolean canPlayerUse(PlayerEntity player) {
+    public boolean stillValid(Player player) {
         return true;
     }
 
-    public void clear() {
+    public void clearContent() {
         this.stacks.clear();
     }
 

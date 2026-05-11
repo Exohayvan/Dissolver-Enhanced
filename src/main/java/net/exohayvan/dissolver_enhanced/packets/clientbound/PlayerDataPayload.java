@@ -2,27 +2,26 @@ package net.exohayvan.dissolver_enhanced.packets.clientbound;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-public record PlayerDataPayload(int emc, int learnedItemsSize, int learnedItemsTotalSize, String message, List<String> learnedItems) implements CustomPayload {
-	public static final CustomPayload.Id<PlayerDataPayload> ID = new CustomPayload.Id<>(Identifier.of(DissolverEnhanced.MOD_ID, "playerdata_to_client_payload"));
-	public static final PacketCodec<RegistryByteBuf, PlayerDataPayload> CODEC = PacketCodec.tuple(
-		PacketCodecs.INTEGER, PlayerDataPayload::emc,
-        PacketCodecs.INTEGER, PlayerDataPayload::learnedItemsSize,
-        PacketCodecs.INTEGER, PlayerDataPayload::learnedItemsTotalSize,
-        PacketCodecs.STRING, PlayerDataPayload::message,
-        PacketCodecs.STRING.collect(PacketCodecs.toCollection(ArrayList::new)), PlayerDataPayload::learnedItems,
+public record PlayerDataPayload(int emc, int learnedItemsSize, int learnedItemsTotalSize, String message, List<String> learnedItems) implements CustomPacketPayload {
+	public static final CustomPacketPayload.Type<PlayerDataPayload> ID = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "playerdata_to_client_payload"));
+	public static final StreamCodec<RegistryFriendlyByteBuf, PlayerDataPayload> CODEC = StreamCodec.composite(
+		ByteBufCodecs.INT, PlayerDataPayload::emc,
+        ByteBufCodecs.INT, PlayerDataPayload::learnedItemsSize,
+        ByteBufCodecs.INT, PlayerDataPayload::learnedItemsTotalSize,
+        ByteBufCodecs.STRING_UTF8, PlayerDataPayload::message,
+        ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.collection(ArrayList::new)), PlayerDataPayload::learnedItems,
 		PlayerDataPayload::new
 	);
 
 	@Override
-	public Id<? extends CustomPayload> getId() {
+	public Type<? extends CustomPacketPayload> type() {
 		return ID;
 	}
 }

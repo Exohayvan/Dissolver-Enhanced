@@ -12,14 +12,13 @@ import java.util.Set;
 import net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValues;
 import net.exohayvan.dissolver_enhanced.common.values.EmcValueSet;
 import net.exohayvan.dissolver_enhanced.data.model.EMCRecord;
-
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.Item;
 
 public class EMCValues {
     protected static final Set<String> CONFIG_OVERRIDDEN = new HashSet<>();
@@ -543,9 +542,9 @@ public class EMCValues {
                 }
             }
 
-            for (RegistryKey<Item> item : Registries.ITEM.getKeys()) {
+            for (ResourceKey<Item> item : BuiltInRegistries.ITEM.registryKeySet()) {
                 String itemId = item
-                    .getValue()
+                    .location()
                     .toString();
                 if (!checkItem(itemId)) {itemsWithoutEMC++;}
             }

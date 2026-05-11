@@ -1,29 +1,28 @@
 package net.exohayvan.dissolver_enhanced.item;
 
 import java.util.List;
-
-import net.minecraft.block.Block;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.block.Block;
 
 public class DissolverBlockItem extends BlockItem {
     private static String TOOLTIP_TEXT = "item_tooltip.dissolver_enhanced.dissolver_block_item";
-    private static Formatting TOOLTIP_FORMAT = Formatting.GOLD;
+    private static ChatFormatting TOOLTIP_FORMAT = ChatFormatting.GOLD;
 
-    public DissolverBlockItem(Block block, Settings settings) {
+    public DissolverBlockItem(Block block, Properties settings) {
 		super(block, settings);
 	}
 
     @Override
-    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
-        tooltip.add(Text.translatable(TOOLTIP_TEXT).formatted(TOOLTIP_FORMAT));
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+        tooltip.add(Component.translatable(TOOLTIP_TEXT).withStyle(TOOLTIP_FORMAT));
     }
     
     @Override
-	public boolean hasGlint(ItemStack stack) {
+	public boolean isFoil(ItemStack stack) {
 		return true;
 	}
 }

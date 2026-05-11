@@ -1,10 +1,10 @@
 package net.exohayvan.dissolver_enhanced.particle;
 
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
-import net.minecraft.particle.SimpleParticleType;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 
 public class ModParticles {
@@ -14,7 +14,7 @@ public class ModParticles {
     // HELPERS
 
     private static SimpleParticleType registerParticle(String id, SimpleParticleType particle) {
-        return Registry.register(Registries.PARTICLE_TYPE, Identifier.of(DissolverEnhanced.MOD_ID, id), particle);
+        return Registry.register(BuiltInRegistries.PARTICLE_TYPE, ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, id), particle);
     }
 
     // INITIALIZE

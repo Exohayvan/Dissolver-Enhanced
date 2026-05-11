@@ -4,27 +4,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateManager;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.migration.LegacyNamespaceMigration;
 
 // https://fabricmc.net/wiki/tutorial:persistent_states#player_specific_persistent_state
-public class StateSaverAndLoader extends PersistentState {
+public class StateSaverAndLoader extends SavedData {
     public PlayerData sharedData = new PlayerData();
     public HashMap<UUID, PlayerData> players = new HashMap<>();
 
-    private static NbtCompound storeData(NbtCompound playerNbt, PlayerData playerData) {
+    private static CompoundTag storeData(CompoundTag playerNbt, PlayerData playerData) {
         if (playerData.NAME != "") playerNbt.putString("NAME", playerData.NAME);
         playerNbt.putInt("EMC", playerData.EMC);
         playerNbt = storeList(playerNbt, "LEARNED_ITEMS", playerData.LEARNED_ITEMS);
@@ -32,7 +31,7 @@ public class StateSaverAndLoader extends PersistentState {
         return playerNbt;
     }
 
-    private static PlayerData getData(NbtCompound playerNbt, PlayerData playerData) {
+    private static PlayerData getData(CompoundTag playerNbt, PlayerData playerData) {
         playerData.NAME = playerNbt.getString("NAME");
         playerData.EMC = playerNbt.getInt("EMC");
         playerData.LEARNED_ITEMS = migrateLearnedItemIds(getList(playerNbt, "LEARNED_ITEMS"));
@@ -59,7 +58,7 @@ public class StateSaverAndLoader extends PersistentState {
 
     // STRING LISTS
 
-    private static NbtCompound storeList(NbtCompound playerNbt, String key, List<String> list) {
+    private static CompoundTag storeList(CompoundTag playerNbt, String key, List<String> list) {
         int listLength = list.size();
         playerNbt.putInt(key + "_SIZE", listLength);
 
@@ -72,7 +71,7 @@ public class StateSaverAndLoader extends PersistentState {
         return playerNbt;
     }
 
-    private static List<String> getList(NbtCompound playerNbt, String key) {
+    private static List<String> getList(CompoundTag playerNbt, String key) {
         int listLength = playerNbt.getInt(key + "_SIZE");
         List<String> list = new ArrayList<>();
 
@@ -86,23 +85,23 @@ public class StateSaverAndLoader extends PersistentState {
     // STORE DATA
 
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+    public CompoundTag save(CompoundTag nbt, HolderLookup.Provider registryLookup) {
         nbt = storePlayersData(nbt, StateSaverAndLoader::storeData);
 
         return nbt;
     }
 
     private interface StoreDataInterface {
-        NbtCompound store(NbtCompound playerNbt, PlayerData playerData);
+        CompoundTag store(CompoundTag playerNbt, PlayerData playerData);
     }
 
-    private NbtCompound storePlayersData(NbtCompound nbt, StoreDataInterface func) {
+    private CompoundTag storePlayersData(CompoundTag nbt, StoreDataInterface func) {
         // PLAYER SPECIFIC
 
-        NbtCompound playersNbt = nbt.contains("players") ? nbt.getCompound("players") : new NbtCompound();
+        CompoundTag playersNbt = nbt.contains("players") ? nbt.getCompound("players") : new CompoundTag();
         
         players.forEach((uuid, playerData) -> {
-            NbtCompound playerNbt = new NbtCompound();
+            CompoundTag playerNbt = new CompoundTag();
             playerNbt = func.store(playerNbt, playerData);
             playersNbt.put(uuid.toString(), playerNbt);
         });
@@ -111,7 +110,7 @@ public class StateSaverAndLoader extends PersistentState {
 
         // GLOBAL DATA
         
-        NbtCompound globalNbt = new NbtCompound();
+        CompoundTag globalNbt = new CompoundTag();
         globalNbt = func.store(globalNbt, sharedData);
         nbt.put("globalData", globalNbt);
 
@@ -120,7 +119,7 @@ public class StateSaverAndLoader extends PersistentState {
 
     // GET DATA
 
-    public static StateSaverAndLoader createFromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+    public static StateSaverAndLoader createFromNbt(CompoundTag nbt, HolderLookup.Provider registryLookup) {
         StateSaverAndLoader state = new StateSaverAndLoader();
 
         state = getPlayersData(nbt, state, StateSaverAndLoader::getData);
@@ -129,17 +128,17 @@ public class StateSaverAndLoader extends PersistentState {
     }
 
     private interface GetDataInterface {
-        PlayerData get(NbtCompound playerNbt, PlayerData playerData);
+        PlayerData get(CompoundTag playerNbt, PlayerData playerData);
     }
 
-    private static StateSaverAndLoader getPlayersData(NbtCompound nbt, StateSaverAndLoader state, GetDataInterface func) {
+    private static StateSaverAndLoader getPlayersData(CompoundTag nbt, StateSaverAndLoader state, GetDataInterface func) {
         // PLAYER SPECIFIC
 
-        NbtCompound playersNbt = nbt.getCompound("players");
+        CompoundTag playersNbt = nbt.getCompound("players");
         
-        playersNbt.getKeys().forEach(key -> {
+        playersNbt.getAllKeys().forEach(key -> {
             PlayerData playerData = new PlayerData();
-            NbtCompound playerNbt = playersNbt.getCompound(key);
+            CompoundTag playerNbt = playersNbt.getCompound(key);
 
             playerData = func.get(playerNbt, playerData);
 
@@ -149,7 +148,7 @@ public class StateSaverAndLoader extends PersistentState {
 
         // GLOBAL DATA
         
-        NbtCompound globalNbt = nbt.getCompound("globalData");
+        CompoundTag globalNbt = nbt.getCompound("globalData");
         PlayerData playerData = new PlayerData();
 
         playerData = func.get(globalNbt, playerData);
@@ -187,14 +186,14 @@ public class StateSaverAndLoader extends PersistentState {
     }
 
     private static void updateAllServerPlayers(MinecraftServer server) {
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            EMCHelper.sendStateToClient((PlayerEntity)player);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            EMCHelper.sendStateToClient((Player)player);
         }
     }
 
     // PLAYER MANAGER
 
-    private static Type<StateSaverAndLoader> type = new Type<>(
+    private static Factory<StateSaverAndLoader> type = new Factory<>(
             StateSaverAndLoader::new, // If there's no 'StateSaverAndLoader' yet create one
             StateSaverAndLoader::createFromNbt, // If there is a 'StateSaverAndLoader' NBT, parse it with 'createFromNbt'
             null // Supposed to be an 'DataFixTypes' enum, but we can just pass null
@@ -202,7 +201,7 @@ public class StateSaverAndLoader extends PersistentState {
 
     public static StateSaverAndLoader getServerState(MinecraftServer server) {
         // (Note: arbitrary choice to use 'World.OVERWORLD' instead of 'World.END' or 'World.NETHER'.  Any work)
-        PersistentStateManager persistentStateManager = server.getWorld(World.OVERWORLD).getPersistentStateManager();
+        DimensionDataStorage persistentStateManager = server.getLevel(Level.OVERWORLD).getDataStorage();
 
         // The first time the following 'getOrCreate' function is called, it creates a brand new 'StateSaverAndLoader' and
         // stores it inside the 'PersistentStateManager'. The subsequent calls to 'getOrCreate' pass in the saved
@@ -220,7 +219,7 @@ public class StateSaverAndLoader extends PersistentState {
         }
 
         // If state is not marked dirty, when Minecraft closes, 'writeNbt' won't be called and therefore nothing will be saved.
-        state.markDirty();
+        state.setDirty();
 
         return state;
     }
@@ -241,7 +240,7 @@ public class StateSaverAndLoader extends PersistentState {
 
     // this can also return server state if mod config is not set to "private emc"
     private static PlayerData getPlayerState(LivingEntity player, StateSaverAndLoader serverState) {
-        if (ModConfig.PRIVATE_EMC) return serverState.players.computeIfAbsent(player.getUuid(), uuid -> new PlayerData());
+        if (ModConfig.PRIVATE_EMC) return serverState.players.computeIfAbsent(player.getUUID(), uuid -> new PlayerData());
         return serverState.sharedData;
     }
 
@@ -273,8 +272,8 @@ public class StateSaverAndLoader extends PersistentState {
 
     private static void updateState(LivingEntity player, StateSaverAndLoader serverState, PlayerData playerState) {
         if (ModConfig.PRIVATE_EMC) {
-            serverState.players.put(player.getUuid(), playerState);
-            EMCHelper.sendStateToClient((PlayerEntity)player);
+            serverState.players.put(player.getUUID(), playerState);
+            EMCHelper.sendStateToClient((Player)player);
         } else {
             serverState.sharedData = playerState;
             updateAllServerPlayers(player.getServer());

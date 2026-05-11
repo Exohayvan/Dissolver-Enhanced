@@ -1,8 +1,8 @@
 package net.exohayvan.dissolver_enhanced.packets;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.player.Player;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.packets.serverbound.ClientPayload;
 import net.exohayvan.dissolver_enhanced.screen.ModScreenHandlers;
@@ -11,7 +11,7 @@ public class DataReceiver {
     public static void init() {
         ServerPlayNetworking.registerGlobalReceiver(ClientPayload.ID, (payload, context) -> {
 			MinecraftServer server = context.server();
-			PlayerEntity player = context.player();
+			Player player = context.player();
             String messageId = payload.messageId();
             String data = payload.data();
 
@@ -24,11 +24,11 @@ public class DataReceiver {
         });
     }
 
-	private static void receivedData(PlayerEntity player, String messageId, String data) {
+	private static void receivedData(Player player, String messageId, String data) {
         if (messageId.contains("search")) {
-            ModScreenHandlers.activeHandlers.get(player.getUuid()).search(data);
+            ModScreenHandlers.activeHandlers.get(player.getUUID()).search(data);
         } else if (messageId.contains("scroll")) {
-            ModScreenHandlers.activeHandlers.get(player.getUuid()).scrollItems(stringToFloat(data));
+            ModScreenHandlers.activeHandlers.get(player.getUUID()).scrollItems(stringToFloat(data));
         } else {
             DissolverEnhanced.LOGGER.info("RECEIVED MESSAGE FROM CLIENT: " + messageId);
         }

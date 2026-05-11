@@ -4,16 +4,15 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ItemEnchantmentsComponent;
-import net.minecraft.component.type.PotionContentsComponent;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.potion.Potion;
-import net.minecraft.registry.entry.RegistryEntry;
 
 public class EMCKey {
     public static String fromStack(ItemStack stack) {
@@ -44,7 +43,7 @@ public class EMCKey {
     public static List<String> describe(ItemStack stack) {
         List<String> lines = new ArrayList<>();
 
-        PotionContentsComponent potionContents = stack.get(DataComponentTypes.POTION_CONTENTS);
+        PotionContents potionContents = stack.get(DataComponents.POTION_CONTENTS);
         if (potionContents != null) {
             lines.add("Potion: " + potionId(potionContents).orElse("custom"));
             if (!potionContents.customEffects().isEmpty()) {
@@ -52,7 +51,7 @@ public class EMCKey {
             }
         }
 
-        ItemEnchantmentsComponent storedEnchantments = stack.get(DataComponentTypes.STORED_ENCHANTMENTS);
+        ItemEnchantments storedEnchantments = stack.get(DataComponents.STORED_ENCHANTMENTS);
         if (storedEnchantments != null && !storedEnchantments.isEmpty()) {
             lines.add("Stored Enchantments: " + formatEnchantments(storedEnchantments));
         }
@@ -61,12 +60,12 @@ public class EMCKey {
     }
 
     private static String potionKey(ItemStack stack, String itemId) {
-        if (!stack.isOf(Items.POTION) && !stack.isOf(Items.SPLASH_POTION) && !stack.isOf(Items.LINGERING_POTION) &&
-            !stack.isOf(Items.TIPPED_ARROW)) {
+        if (!stack.is(Items.POTION) && !stack.is(Items.SPLASH_POTION) && !stack.is(Items.LINGERING_POTION) &&
+            !stack.is(Items.TIPPED_ARROW)) {
             return null;
         }
 
-        PotionContentsComponent potionContents = stack.get(DataComponentTypes.POTION_CONTENTS);
+        PotionContents potionContents = stack.get(DataComponents.POTION_CONTENTS);
         if (potionContents == null) {
             return null;
         }
@@ -79,19 +78,19 @@ public class EMCKey {
         return itemId + "|potion=" + potionId.get();
     }
 
-    private static Optional<String> potionId(PotionContentsComponent potionContents) {
+    private static Optional<String> potionId(PotionContents potionContents) {
         return potionContents
             .potion()
-            .flatMap(RegistryEntry<Potion>::getKey)
-            .map(key -> key.getValue().toString());
+            .flatMap(Holder<Potion>::unwrapKey)
+            .map(key -> key.location().toString());
     }
 
     private static String storedEnchantmentsKey(ItemStack stack, String itemId) {
-        if (!stack.isOf(Items.ENCHANTED_BOOK)) {
+        if (!stack.is(Items.ENCHANTED_BOOK)) {
             return null;
         }
 
-        ItemEnchantmentsComponent enchantments = stack.get(DataComponentTypes.STORED_ENCHANTMENTS);
+        ItemEnchantments enchantments = stack.get(DataComponents.STORED_ENCHANTMENTS);
         if (enchantments == null || enchantments.isEmpty()) {
             return null;
         }
@@ -99,9 +98,9 @@ public class EMCKey {
         return itemId + "|ench=" + formatEnchantments(enchantments);
     }
 
-    private static String formatEnchantments(ItemEnchantmentsComponent enchantments) {
+    private static String formatEnchantments(ItemEnchantments enchantments) {
         return enchantments
-            .getEnchantmentEntries()
+            .entrySet()
             .stream()
             .map(EMCKey::formatEnchantment)
             .sorted(Comparator.naturalOrder())
@@ -109,11 +108,11 @@ public class EMCKey {
             .orElse("none");
     }
 
-    private static String formatEnchantment(Object2IntMap.Entry<RegistryEntry<Enchantment>> entry) {
+    private static String formatEnchantment(Object2IntMap.Entry<Holder<Enchantment>> entry) {
         String enchantmentId = entry
             .getKey()
-            .getKey()
-            .map(key -> key.getValue().toString())
+            .unwrapKey()
+            .map(key -> key.location().toString())
             .orElse("unknown");
 
         return enchantmentId + ":" + entry.getIntValue();

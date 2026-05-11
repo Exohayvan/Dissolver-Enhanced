@@ -2,20 +2,18 @@ package net.exohayvan.dissolver_enhanced.command;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-
+import net.minecraft.commands.CommandSourceStack;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
-import net.minecraft.server.command.ServerCommandSource;
-
-public class PlayerSuggestionProvider implements SuggestionProvider<ServerCommandSource> {
+public class PlayerSuggestionProvider implements SuggestionProvider<CommandSourceStack> {
 	@Override
-	public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-		ServerCommandSource source = context.getSource();
-		Collection<String> playerNames = source.getPlayerNames();
+	public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+		CommandSourceStack source = context.getSource();
+		Collection<String> playerNames = source.getOnlinePlayerNames();
 
 		for (String playerName : playerNames) {
 			builder.suggest(playerName);

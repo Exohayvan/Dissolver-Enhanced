@@ -1,72 +1,72 @@
 package net.exohayvan.dissolver_enhanced.block.entity;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.text.Text;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
 import net.exohayvan.dissolver_enhanced.screen.ModScreenHandlers;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class DissolverBlockEntity extends CustomBlockEntity {
-    private DefaultedList<ItemStack> inputStacks;
+    private NonNullList<ItemStack> inputStacks;
 
     public DissolverBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.DISSOLVER_BLOCK_ENTITY, pos, state);
         // redstone input slot
-        this.inputStacks = DefaultedList.ofSize(1, ItemStack.EMPTY); 
+        this.inputStacks = NonNullList.withSize(1, ItemStack.EMPTY); 
     }
 
-    public ScreenHandler createScreenHandler(int syncId, PlayerInventory playerInventory) {
+    public AbstractContainerMenu createScreenHandler(int syncId, Inventory playerInventory) {
         DissolverScreenHandler handler = new DissolverScreenHandler(syncId, playerInventory);
-        ModScreenHandlers.activeHandlers.put(playerInventory.player.getUuid(), handler);
+        ModScreenHandlers.activeHandlers.put(playerInventory.player.getUUID(), handler);
         return handler;
     }
 
-    protected void setHeldStacks(DefaultedList<ItemStack> itemList) {
+    protected void setHeldStacks(NonNullList<ItemStack> itemList) {
         if (ModConfig.PRIVATE_EMC) return;
         
-        EMCHelper.addItem(itemList.get(0), this.world);
+        EMCHelper.addItem(itemList.get(0), this.level);
         this.inputStacks = itemList;
     }
 
-    public DefaultedList<ItemStack> getHeldStacks() {
+    public NonNullList<ItemStack> getHeldStacks() {
         return this.inputStacks;
     }
 
-    protected Text getContainerName() {
-        return Text.translatable("block.dissolver_enhanced.dissolver_block");
+    protected Component getContainerName() {
+        return Component.translatable("block.dissolver_enhanced.dissolver_block");
     }
 
-    public int size() {
+    public int getContainerSize() {
         // redstone input slot size
         return 1;
     }
 
     public ItemStack getRenderStack() {
-        return this.getStack(0);
+        return this.getItem(0);
     }
 
     // HOPPER/DROPPER INSERT (WIP not working)
     
     @Override
-    public int[] getAvailableSlots(Direction side) {
+    public int[] getSlotsForFace(Direction side) {
         // DissolverEnhanced.LOGGER.info("INSERTING........");
         return new int[0];
     }
 
     @Override
-    public boolean canInsert(int slot, ItemStack stack, Direction direction) {
+    public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction direction) {
         return true;
     }
 
     @Override
-    public boolean canExtract(int slot, ItemStack stack, Direction direction) {
+    public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction direction) {
         return false;
     }
 

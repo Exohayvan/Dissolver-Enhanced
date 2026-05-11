@@ -1,13 +1,13 @@
 package net.exohayvan.dissolver_enhanced.item;
 
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 
 public class ModItems {
-    public static final Item CRYSTAL_FRAME_ITEM = registerItem("crystal_frame_item", new CrystalFrameItem(new Item.Settings()));
+    public static final Item CRYSTAL_FRAME_ITEM = registerItem("crystal_frame_item", new CrystalFrameItem(new Item.Properties()));
 
     // private static void addToVanillaTools(FabricItemGroupEntries entries) {
     //     entries.add(MAGIC_ITEM);
@@ -16,8 +16,8 @@ public class ModItems {
     // HELPERS
 
 	private static Item registerItem(String id, Item item) {
-		Identifier itemID = Identifier.of(DissolverEnhanced.MOD_ID, id);
-		Item registeredItem = Registry.register(Registries.ITEM, itemID, item);
+		ResourceLocation itemID = ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, id);
+		Item registeredItem = Registry.register(BuiltInRegistries.ITEM, itemID, item);
 
 		return registeredItem;
     }
