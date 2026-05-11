@@ -9,7 +9,8 @@
         },
         "description": {
             "translate": "advancements.story.place_dissolver.description"
-        }
+        },
+        "background": "dissolver_enhanced:textures/block/dissolver_block.png"
     },
     "criteria": {
         "dissolver": {

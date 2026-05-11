@@ -1,5 +1,5 @@
 {
-  "parent": "dissolver_enhanced:story/place_dissolver",
+  "parent": "dissolver_enhanced:root",
   "display": {
     "icon": {
       "id": "minecraft:dirt",

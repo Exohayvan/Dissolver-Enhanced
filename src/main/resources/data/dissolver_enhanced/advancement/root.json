@@ -10,7 +10,7 @@
     "description": {
       "translate": "advancements.dissolver_enhanced.root.description"
     },
-    "background": "minecraft:textures/block/deepslate_tiles.png",
+    "background": "dissolver_enhanced:textures/block/dissolver_block.png",
     "show_toast": true,
     "announce_to_chat": false
   },
