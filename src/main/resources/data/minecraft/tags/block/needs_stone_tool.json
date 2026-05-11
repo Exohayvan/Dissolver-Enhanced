@@ -1,4 +1,6 @@
 {
     "replace": false,
-    "values": ["vanillaemc:dissolver_block"]
+    "values": [
+        "dissolver_enhanced:dissolver_block"
+    ]
 }

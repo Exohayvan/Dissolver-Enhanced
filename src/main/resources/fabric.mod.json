@@ -1,26 +1,26 @@
 {
     "schemaVersion": 1,
-    "id": "vanillaemc",
+    "id": "dissolver_enhanced",
     "version": "${version}",
-    "name": "Dissolver",
+    "name": "Dissolver Enhanced",
     "description": "Convert items into any other stored items based on its value (EMC).",
-    "authors": ["Vassbo"],
+    "authors": ["ExoHayvan"],
     "contact": {
-        "homepage": "https://github.com/vassbo/Dissolver",
-        "sources": "https://github.com/vassbo/Dissolver",
-        "issues": "https://github.com/vassbo/Dissolver/issues"
+        "homepage": "https://github.com/ExoHayvan/Dissolver-Enhanced",
+        "sources": "https://github.com/ExoHayvan/Dissolver-Enhanced",
+        "issues": "https://github.com/ExoHayvan/Dissolver-Enhanced/issues"
     },
     "license": "CC0-1.0",
-    "icon": "assets/vanillaemc/icon.png",
+    "icon": "assets/dissolver_enhanced/icon.png",
     "environment": "*",
     "entrypoints": {
-        "main": ["net.vassbo.vanillaemc.VanillaEMC"],
-        "client": ["net.vassbo.vanillaemc.VanillaEMCClient"]
+        "main": ["net.exohayvan.dissolver_enhanced.DissolverEnhanced"],
+        "client": ["net.exohayvan.dissolver_enhanced.DissolverEnhancedClient"]
     },
     "mixins": [
-        "vanillaemc.mixins.json",
+        "dissolver_enhanced.mixins.json",
         {
-            "config": "vanillaemc.client.mixins.json",
+            "config": "dissolver_enhanced.client.mixins.json",
             "environment": "client"
         }
     ],

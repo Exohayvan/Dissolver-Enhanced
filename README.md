@@ -1,6 +1,6 @@
 # Dissolver Enhanced
 
-Dissolver Enhanced is a Fabric mod forked from [Dissolver / VanillaEMC](https://github.com/vassbo/Dissolver). The original mod adds a Dissolver block that lets players convert items into EMC, then spend that EMC to recreate stored items.
+Dissolver Enhanced is a Fabric mod forked from [Dissolver](https://github.com/ExoHayvan/Dissolver-Enhanced). The original mod adds a Dissolver block that lets players convert items into EMC, then spend that EMC to recreate stored items.
 
 This fork is currently early in development. The goal is to keep the simple ProjectE-style transmutation feel while improving balance, compatibility, admin controls, and support for item variants that the original mod does not value well yet.
 
@@ -119,7 +119,7 @@ These may be reorganized as Dissolver Enhanced adds better custom value and comp
 
 ## Credits
 
-Dissolver Enhanced is based on [Dissolver / VanillaEMC](https://github.com/vassbo/Dissolver) by vassbo.
+Dissolver Enhanced is based on [Dissolver](https://github.com/ExoHayvan/Dissolver-Enhanced) by ExoHayvan.
 
 The mod is inspired by the Transmutation Table from ProjectE / Equivalent Exchange, with a focus on a simple standalone transmutation system for modern Minecraft.
 

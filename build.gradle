@@ -6,6 +6,18 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
+def commonPropertiesFile = file("../Dissolver Enhanced (Common)/gradle.properties")
+if (!commonPropertiesFile.exists()) {
+	throw new GradleException("Common gradle.properties not found at ${commonPropertiesFile}. Check out the Common worktree beside this Fabric worktree.")
+}
+
+def commonProperties = new Properties()
+commonPropertiesFile.withInputStream { commonProperties.load(it) }
+def commonVersion = commonProperties.getProperty("common_version")
+if (commonVersion == null || commonVersion.isBlank()) {
+	throw new GradleException("common_version is missing from ${commonPropertiesFile}.")
+}
+
 base {
 	archivesName = project.archives_base_name
 }
@@ -15,11 +27,7 @@ test {
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+	mavenCentral()
 	maven {
 		name = "Modrinth"
 		url = "https://api.modrinth.com/maven"
@@ -30,7 +38,7 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"vanillaemc" {
+		"dissolver_enhanced" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
@@ -47,6 +55,8 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modCompileOnly "maven.modrinth:wthit:fabric-12.10.2"
+	implementation "net.exohayvan:dissolver-enhanced-common:${commonVersion}"
+	include "net.exohayvan:dissolver-enhanced-common:${commonVersion}"
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'

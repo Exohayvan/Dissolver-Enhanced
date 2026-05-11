@@ -1,7 +1,7 @@
 {
-  "vanillaemc:emc_tooltip": {
+  "dissolver_enhanced:emc_tooltip": {
     "entrypoints": {
-      "client": "net.vassbo.vanillaemc.compat.wthit.VanillaEMCWailaPlugin"
+      "client": "net.exohayvan.dissolver_enhanced.compat.wthit.DissolverEnhancedWailaPlugin"
     },
     "side": "client"
   }
