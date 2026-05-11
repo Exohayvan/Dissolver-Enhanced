@@ -1,20 +1,19 @@
 package net.exohayvan.dissolver_enhanced.entity;
 
-import net.minecraft.block.piston.PistonBehavior;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.phys.Vec3;
 
 public class CrystalEntity extends Entity {
 	public int crystalAge;
 
-	public CrystalEntity(EntityType<? extends CrystalEntity> entityType, World world) {
+	public CrystalEntity(EntityType<? extends CrystalEntity> entityType, Level world) {
 		super(entityType, world);
-		this.intersectionChecked = true;
+		this.blocksBuilding = true;
 		this.crystalAge = this.random.nextInt(100000);
 	}
 
@@ -24,50 +23,49 @@ public class CrystalEntity extends Entity {
 	// }
 
 	public boolean isPowered() {
-		Vec3d pos = this.getPos();
-		World world = this.getWorld();
+		Vec3 pos = this.position();
+		Level world = this.level();
 		BlockPos blockPos = new BlockPos((int)pos.x - 1, (int)pos.y - 1, (int)pos.z - 1);
 
-		return world.isReceivingRedstonePower(blockPos);
+		return world.hasNeighborSignal(blockPos);
 	}
 
 	@Override
-	protected Entity.MoveEffect getMoveEffect() {
-		return Entity.MoveEffect.NONE;
+	protected Entity.MovementEmission getMovementEmission() {
+		return Entity.MovementEmission.NONE;
 	}
 
 	@Override
-	protected void initDataTracker(DataTracker.Builder builder) {
+	protected void defineSynchedData() {
 	}
 
 	@Override
 	public void tick() {
 		this.crystalAge++;
-		this.checkBlockCollision();
-		this.tickPortalTeleportation();
+		this.checkInsideBlocks();
 		// this.isPowered();
 	}
 
 	@Override
-	protected void writeCustomDataToNbt(NbtCompound nbt) {
+	protected void addAdditionalSaveData(CompoundTag nbt) {
 	}
 
 	@Override
-	protected void readCustomDataFromNbt(NbtCompound nbt) {
+	protected void readAdditionalSaveData(CompoundTag nbt) {
 	}
 
 	@Override
-	public boolean canHit() {
+	public boolean isPickable() {
 		return false;
 	}
 
 	@Override
-	public boolean shouldRender(double distance) {
-		return super.shouldRender(distance);
+	public boolean shouldRenderAtSqrDistance(double distance) {
+		return super.shouldRenderAtSqrDistance(distance);
 	}
 
 	@Override
-	public PistonBehavior getPistonBehavior() {
-		return PistonBehavior.IGNORE;
+	public PushReaction getPistonPushReaction() {
+		return PushReaction.IGNORE;
 	}
 }

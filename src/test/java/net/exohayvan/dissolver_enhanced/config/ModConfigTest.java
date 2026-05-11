@@ -1,14 +1,11 @@
 package net.exohayvan.dissolver_enhanced.config;
 
-import net.fabricmc.loader.api.FabricLoader;
 import net.exohayvan.dissolver_enhanced.TestConstants;
 import net.exohayvan.dissolver_enhanced.config.model.ConfigConstants;
 import net.exohayvan.dissolver_enhanced.config.model.ConfigEntry;
 import net.exohayvan.dissolver_enhanced.data.model.EMCRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,8 +15,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
-
 class ModConfigTest {
     class VisibilityModifier
         extends ModConfig {
@@ -49,6 +44,7 @@ class ModConfigTest {
         VisibilityModifier.CREATIVE_ITEMS = false;
         VisibilityModifier.EMC_ON_HUD = false;
         VisibilityModifier.PRIVATE_EMC = false;
+        SimpleConfig.configDirSupplier = net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR::get;
     }
 
     @Test
@@ -158,35 +154,33 @@ class ModConfigTest {
         TestConstants.Configs.Directories directory,
         boolean shouldDeleteExistingConfig
     ) throws IOException {
-        try (MockedStatic<FabricLoader> staticMock = mockFabricConfigDirectory(
-            directory, shouldDeleteExistingConfig);) {
+        setUpConfigDirectory(directory, shouldDeleteExistingConfig);
 
-            ModConfigProvider expected = new ModConfigProvider();
-            expected.addKeyValuePair(new ConfigEntry<>("emc_on_hud", false),
-                "Display current EMC on HUD (top left corner)"
-            );
-            // WIP not added (Note: Turning this on will disable redstone integration.)
+        ModConfigProvider expected = new ModConfigProvider();
+        expected.addKeyValuePair(new ConfigEntry<>("emc_on_hud", false),
+            "Display current EMC on HUD (top left corner)"
+        );
+        // WIP not added (Note: Turning this on will disable redstone integration.)
 
-            expected.addKeyValuePair(new ConfigEntry<>("private_emc", false),
-                "Should each player have their own EMC storage?"
-            );
-            expected.addKeyValuePair(new ConfigEntry<>("creative_items", false), "Should creative items have EMC?");
+        expected.addKeyValuePair(new ConfigEntry<>("private_emc", false),
+            "Should each player have their own EMC storage?"
+        );
+        expected.addKeyValuePair(new ConfigEntry<>("creative_items", false), "Should creative items have EMC?");
 
-            expected.addKeyValuePair(
-                new ConfigEntry<>("difficulty", "hard"),
-                "easy | normal | hard - Changes crafting recipe for Dissolver block."
-            );
+        expected.addKeyValuePair(
+            new ConfigEntry<>("difficulty", "hard"),
+            "easy | normal | hard - Changes crafting recipe for Dissolver block."
+        );
 
-            expected.addKeyValuePair(new ConfigEntry<>("mode", "default"),
-                "default | skyblock - Changes some EMC values."
-            );
+        expected.addKeyValuePair(new ConfigEntry<>("mode", "default"),
+            "default | skyblock - Changes some EMC values."
+        );
 
-            ModConfig.init();
+        ModConfig.init();
 
-            ModConfigProvider actual = underTest.configs();
+        ModConfigProvider actual = underTest.configs();
 
-            assertThat(actual.getConfigsList()).containsAll(expected.getConfigsList());
-        }
+        assertThat(actual.getConfigsList()).containsAll(expected.getConfigsList());
 
         verifyDefaultFile(directory);
     }
@@ -198,22 +192,7 @@ class ModConfigTest {
             directory.getExpectedConfig());
     }
 
-    private static MockedStatic<FabricLoader> mockFabricConfigDirectory(
-        TestConstants.Configs.Directories directories,
-        boolean shouldDelete
-    ) {
-        return mockFabric(setUpFabricMock(directories, shouldDelete));
-    }
-
-    private static MockedStatic<FabricLoader> mockFabric(FabricLoader mockFabric) {
-        MockedStatic<FabricLoader> staticMock = Mockito.mockStatic(FabricLoader.class);
-        staticMock
-            .when(FabricLoader::getInstance)
-            .thenReturn(mockFabric);
-        return staticMock;
-    }
-
-    private static FabricLoader setUpFabricMock(
+    private static void setUpConfigDirectory(
         TestConstants.Configs.Directories directories,
         boolean shouldDelete
     ) {
@@ -233,9 +212,7 @@ class ModConfigTest {
                 .isTrue();
         }
 
-        FabricLoader mockFabric = Mockito.mock(FabricLoader.class);
-        when(mockFabric.getConfigDir()).thenReturn(path);
-        return mockFabric;
+        SimpleConfig.configDirSupplier = () -> path;
     }
 
     private static Configuration getMyConfigLocation(TestConstants.Configs.Directories directories) {

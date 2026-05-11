@@ -24,7 +24,7 @@ package net.exohayvan.dissolver_enhanced.config;
  * THE SOFTWARE.
  */
 
-import net.fabricmc.loader.api.FabricLoader;
+import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,10 +35,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.function.Supplier;
 
 public class SimpleConfig {
 
     private static final Logger LOGGER = LogManager.getLogger("SimpleConfig");
+    static Supplier<Path> configDirSupplier = FMLPaths.CONFIGDIR::get;
     private final HashMap<String, String> config = new HashMap<>();
     private final ConfigRequest request;
     private boolean broken = false;
@@ -100,7 +102,7 @@ public class SimpleConfig {
      * @return new config request object
      */
     public static ConfigRequest of( String filename ) {
-        Path path = FabricLoader.getInstance().getConfigDir();
+        Path path = configDirSupplier.get();
         return new ConfigRequest( path.resolve( filename + ".properties" ).toFile(), filename );
     }
 

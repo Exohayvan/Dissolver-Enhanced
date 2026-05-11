@@ -2,19 +2,18 @@ package net.exohayvan.dissolver_enhanced.screen;
 
 import java.util.HashMap;
 import java.util.UUID;
-
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.resource.featuretoggle.FeatureFlags;
-import net.minecraft.screen.ScreenHandlerType;
-import net.minecraft.util.Identifier;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.inventory.MenuType;
 
 public class ModScreenHandlers {
     public static HashMap<UUID, DissolverScreenHandler> activeHandlers = new HashMap<>();
 
-    private static final ScreenHandlerType<DissolverScreenHandler> DISSOLVER_SCREEN = new ScreenHandlerType<>((syncId, playerInventory) -> new DissolverScreenHandler(syncId, playerInventory), FeatureFlags.VANILLA_FEATURES);
-    public static final ScreenHandlerType<DissolverScreenHandler> DISSOLVER_SCREEN_HANDLER_TYPE = Registry.register(Registries.SCREEN_HANDLER, Identifier.of(DissolverEnhanced.MOD_ID, "dissolver_screen_handler"), DISSOLVER_SCREEN);
+    private static final MenuType<DissolverScreenHandler> DISSOLVER_SCREEN = new MenuType<>((syncId, playerInventory) -> new DissolverScreenHandler(syncId, playerInventory), FeatureFlags.VANILLA_SET);
+    public static final MenuType<DissolverScreenHandler> DISSOLVER_SCREEN_HANDLER_TYPE = Registry.register(BuiltInRegistries.MENU, new ResourceLocation(DissolverEnhanced.MOD_ID, "dissolver_screen_handler"), DISSOLVER_SCREEN);
 
     public static void init() {
     }

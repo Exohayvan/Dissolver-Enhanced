@@ -8,17 +8,15 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.tag.TagKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
@@ -27,9 +25,10 @@ import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
 import net.exohayvan.dissolver_enhanced.packets.DataSender;
 import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
+import net.minecraftforge.fml.ModList;
 
 public class EMCHelper {
-    public static boolean serverAddItem(World world, String itemId, int addedValue) {
+    public static boolean serverAddItem(Level world, String itemId, int addedValue) {
         MinecraftServer server = world.getServer();
         
         PlayerData globalData = StateSaverAndLoader.getGlobalData(server);
@@ -47,7 +46,7 @@ public class EMCHelper {
         return true;
     }
 
-    public static void addEMCValue(PlayerEntity player, int addedValue) {
+    public static void addEMCValue(Player player, int addedValue) {
         if (player.getServer() == null) return;
 
         int currentValue = getEMCValue(player);
@@ -56,7 +55,7 @@ public class EMCHelper {
         setEMCValue(player, newValue);
     }
 
-    public static boolean removeEMCValue(PlayerEntity player, int removedValue) {
+    public static boolean removeEMCValue(Player player, int removedValue) {
         if (player.getServer() == null) return false;
 
         int currentValue = getEMCValue(player);
@@ -68,11 +67,11 @@ public class EMCHelper {
         return true;
     }
 
-    public static int getEMCValue(PlayerEntity player) {
+    public static int getEMCValue(Player player) {
         return StateSaverAndLoader.getPlayerState(player).EMC;
     }
 
-    public static void setEMCValue(PlayerEntity player, int value) {
+    public static void setEMCValue(Player player, int value) {
         StateSaverAndLoader.setPlayerEMC(player, value);
     }
 
@@ -98,7 +97,7 @@ public class EMCHelper {
 
     // GET
 
-    public static boolean getItem(PlayerEntity player, ItemStack itemStack, DissolverScreenHandler handler, int items) {
+    public static boolean getItem(Player player, ItemStack itemStack, DissolverScreenHandler handler, int items) {
         String itemId = EMCKey.fromStack(itemStack);
         int emcValue = EMCValues.get(itemId) * items;
 
@@ -126,7 +125,7 @@ public class EMCHelper {
         return checkValidEMC(emcValue, itemId, Action.ADD);
     }
 
-    public static boolean canAddItem(ItemStack itemStack, PlayerEntity player) {
+    public static boolean canAddItem(ItemStack itemStack, Player player) {
         String itemId = EMCKey.fromStack(itemStack);
         int emcValue = EMCValues.get(itemId);
 
@@ -141,7 +140,7 @@ public class EMCHelper {
     // ADD
 
     // added from another inventory & not private EMC
-    public static boolean addItem(ItemStack itemStack, World world) {
+    public static boolean addItem(ItemStack itemStack, Level world) {
         String itemId = EMCKey.fromStack(itemStack);
         int emcValue = EMCValues.get(itemId);
 
@@ -153,7 +152,7 @@ public class EMCHelper {
         return serverAddItem(world, storageKey(itemId), addedEmcValue);
     }
 
-    public static boolean addItem(ItemStack itemStack, PlayerEntity player, DissolverScreenHandler handler) {
+    public static boolean addItem(ItemStack itemStack, Player player, DissolverScreenHandler handler) {
         String itemId = EMCKey.fromStack(itemStack);
         int emcValue = EMCValues.get(itemId);
 
@@ -183,7 +182,7 @@ public class EMCHelper {
 
     // LEARN
 
-    public static boolean learnItem(PlayerEntity player, String itemId) {
+    public static boolean learnItem(Player player, String itemId) {
         List<String> learnedList = StateSaverAndLoader.getPlayerState(player).LEARNED_ITEMS;
         if (learnedList.contains(itemId)) return false;
 
@@ -199,11 +198,11 @@ public class EMCHelper {
         return true;
     }
 
-    public static void reportMissingItemValue(PlayerEntity player, ItemStack itemStack) {
+    public static void reportMissingItemValue(Player player, ItemStack itemStack) {
         reportMissingItemValue(player, itemStack, EMCKey.fromStack(itemStack));
     }
 
-    private static void reportMissingItemValue(PlayerEntity player, ItemStack itemStack, String itemId) {
+    private static void reportMissingItemValue(Player player, ItemStack itemStack, String itemId) {
         String namespace = namespace(itemId);
         long now = System.currentTimeMillis();
         Long lastReportTime = MISSING_ITEM_REPORT_TIMES.get(namespace);
@@ -215,31 +214,31 @@ public class EMCHelper {
         MISSING_ITEM_REPORT_TIMES.put(namespace, now);
 
         String reportUrl = missingItemReportUrl(itemStack, itemId, namespace);
-        String itemName = itemStack.getName().getString();
+        String itemName = itemStack.getHoverName().getString();
 
         DissolverEnhanced.LOGGER.warn("Missing EMC value for item '{}' ({}) from namespace '{}'. Report link: {}", itemName, itemId, namespace, reportUrl);
 
-        Text message = Text.literal("Dissolver could not determine an EMC value for " + itemName + " (" + itemId + "). ")
-            .append(Text.literal("Open report")
-                .styled(style -> style
-                    .withColor(Formatting.AQUA)
-                    .withUnderline(true)
+        Component message = Component.literal("Dissolver could not determine an EMC value for " + itemName + " (" + itemId + "). ")
+            .append(Component.literal("Open report")
+                .withStyle(style -> style
+                    .withColor(ChatFormatting.AQUA)
+                    .withUnderlined(true)
                     .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, reportUrl))));
 
-        player.sendMessage(message, false);
+        player.sendSystemMessage(message);
     }
 
     private static String missingItemReportUrl(ItemStack itemStack, String itemId, String namespace) {
         return MISSING_ITEM_TEMPLATE_URL
             + "&title=" + urlEncode("[Missing Item]: " + itemId)
             + "&item_id=" + urlEncode(itemId)
-            + "&item_name=" + urlEncode(itemStack.getName().getString())
+            + "&item_name=" + urlEncode(itemStack.getHoverName().getString())
             + "&item_count=" + urlEncode(String.valueOf(itemStack.getCount()))
             + "&source_namespace=" + urlEncode(namespace)
-            + "&minecraft_version=" + urlEncode(SharedConstants.getGameVersion().getName())
+            + "&minecraft_version=" + urlEncode(SharedConstants.getCurrentVersion().getName())
             + "&mod_version=" + urlEncode(modVersion(DissolverEnhanced.MOD_ID))
-            + "&mod_loader=" + urlEncode("Fabric")
-            + "&loader_version=" + urlEncode(modVersion("fabricloader"))
+            + "&mod_loader=" + urlEncode("Forge")
+            + "&loader_version=" + urlEncode(modVersion("forge"))
             + "&modpack=" + urlEncode(modpackDetails())
             + "&item_data=" + urlEncode(limitReportField(itemData(itemStack, itemId, namespace)))
             + "&item_tags=" + urlEncode(limitReportField(itemTags(itemStack)))
@@ -254,13 +253,13 @@ public class EMCHelper {
         return "{\n"
             + "  \"reason\": \"missing_emc_value\",\n"
             + "  \"itemId\": \"" + jsonEscape(itemId) + "\",\n"
-            + "  \"itemName\": \"" + jsonEscape(itemStack.getName().getString()) + "\",\n"
+            + "  \"itemName\": \"" + jsonEscape(itemStack.getHoverName().getString()) + "\",\n"
             + "  \"count\": " + itemStack.getCount() + ",\n"
             + "  \"sourceNamespace\": \"" + jsonEscape(namespace) + "\",\n"
-            + "  \"minecraftVersion\": \"" + jsonEscape(SharedConstants.getGameVersion().getName()) + "\",\n"
+            + "  \"minecraftVersion\": \"" + jsonEscape(SharedConstants.getCurrentVersion().getName()) + "\",\n"
             + "  \"modVersion\": \"" + jsonEscape(modVersion(DissolverEnhanced.MOD_ID)) + "\",\n"
-            + "  \"loader\": \"Fabric\",\n"
-            + "  \"loaderVersion\": \"" + jsonEscape(modVersion("fabricloader")) + "\",\n"
+            + "  \"loader\": \"Forge\",\n"
+            + "  \"loaderVersion\": \"" + jsonEscape(modVersion("forge")) + "\",\n"
             + "  \"modpack\": \"" + jsonEscape(modpackDetails()) + "\",\n"
             + "  \"itemTags\": \"" + jsonEscape(itemTags(itemStack)) + "\",\n"
             + "  \"recipeDiagnostics\": \"" + jsonEscape(recipeDiagnostics(itemId)) + "\",\n"
@@ -272,17 +271,17 @@ public class EMCHelper {
         return "{\n"
             + "  \"id\": \"" + jsonEscape(itemId) + "\",\n"
             + "  \"baseItemId\": \"" + jsonEscape(EMCKey.baseItemId(itemId)) + "\",\n"
-            + "  \"name\": \"" + jsonEscape(itemStack.getName().getString()) + "\",\n"
+            + "  \"name\": \"" + jsonEscape(itemStack.getHoverName().getString()) + "\",\n"
             + "  \"count\": " + itemStack.getCount() + ",\n"
             + "  \"sourceNamespace\": \"" + jsonEscape(namespace) + "\",\n"
-            + "  \"components\": \"" + jsonEscape(itemStack.getComponentChanges().toString()) + "\"\n"
+            + "  \"tag\": \"" + jsonEscape(String.valueOf(itemStack.getTag())) + "\"\n"
             + "}";
     }
 
     private static String itemTags(ItemStack itemStack) {
         String tags = itemStack
-            .streamTags()
-            .map(TagKey::id)
+            .getTags()
+            .map(TagKey::location)
             .map(id -> "#" + id)
             .sorted()
             .collect(Collectors.joining("\n"));
@@ -307,15 +306,15 @@ public class EMCHelper {
     }
 
     private static String loadedMods() {
-        return FabricLoader.getInstance()
-            .getAllMods()
+        return ModList.get()
+            .getMods()
             .stream()
-            .sorted(Comparator.comparing(container -> container.getMetadata().getId()))
-            .map(container -> container.getMetadata().getId()
+            .sorted(Comparator.comparing(mod -> mod.getModId()))
+            .map(mod -> mod.getModId()
                 + " "
-                + container.getMetadata().getVersion().getFriendlyString()
+                + mod.getVersion()
                 + " - "
-                + container.getMetadata().getName())
+                + mod.getDisplayName())
             .collect(Collectors.joining("\n"));
     }
 
@@ -331,13 +330,13 @@ public class EMCHelper {
     }
 
     private static String logExcerpt(ItemStack itemStack, String itemId, String namespace) {
-        return "Missing EMC value for item '" + itemStack.getName().getString() + "' (" + itemId + ") from namespace '" + namespace + "'.\n"
+        return "Missing EMC value for item '" + itemStack.getHoverName().getString() + "' (" + itemId + ") from namespace '" + namespace + "'.\n"
             + "Cooldown key: " + namespace + "\n"
             + "Cooldown seconds: " + (MISSING_ITEM_REPORT_COOLDOWN_MS / 1000);
     }
 
     private static String modpackDetails() {
-        return "Not detected automatically by Fabric Loader";
+        return "Not detected automatically by Forge";
     }
 
     private static String namespace(String itemId) {
@@ -347,9 +346,9 @@ public class EMCHelper {
     }
 
     private static String modVersion(String modId) {
-        return FabricLoader.getInstance()
-            .getModContainer(modId)
-            .map(container -> container.getMetadata().getVersion().getFriendlyString())
+        return ModList.get()
+            .getModContainerById(modId)
+            .map(container -> container.getModInfo().getVersion().toString())
             .orElse("unknown");
     }
 
@@ -379,7 +378,7 @@ public class EMCHelper {
         return EMCKey.baseItemId(itemId);
     }
 
-    public static boolean forgetItem(PlayerEntity player, String itemId) {
+    public static boolean forgetItem(Player player, String itemId) {
         List<String> learnedList = StateSaverAndLoader.getPlayerState(player).LEARNED_ITEMS;
         if (!learnedList.contains(itemId)) return false;
 
@@ -395,7 +394,7 @@ public class EMCHelper {
         return true;
     }
 
-    public static void learnAllItems(PlayerEntity player) {
+    public static void learnAllItems(Player player) {
         List<String> learnedList = new ArrayList<>();
 
         for (String key : EMCValues.getList()) {
@@ -405,24 +404,24 @@ public class EMCHelper {
         StateSaverAndLoader.setPlayerLearned(player, learnedList);
     }
 
-    public static void forgetAllItems(PlayerEntity player) {
+    public static void forgetAllItems(Player player) {
         StateSaverAndLoader.setPlayerLearned(player, new ArrayList<>());
     }
 
     // SEND
 
-    public static void sendStateToClient(PlayerEntity player) {
+    public static void sendStateToClient(Player player) {
         PlayerData playerState = StateSaverAndLoader.getPlayerState(player);
         DataSender.sendPlayerData(player, playerState);
     }
     
     private static final HashMap<String, Integer> TIMEOUT_IDs = new HashMap<String, Integer>();
-    public static void sendMessageToClient(PlayerEntity player, String message) {
+    public static void sendMessageToClient(Player player, String message) {
         PlayerData playerState = StateSaverAndLoader.getPlayerState(player);
         playerState.MESSAGE = message;
         DataSender.sendPlayerData(player, playerState);
 
-        String playerId = player.getUuid().toString();
+        String playerId = player.getUUID().toString();
         if (!TIMEOUT_IDs.containsKey(playerId)) TIMEOUT_IDs.put(playerId, 0);
         int currentId = TIMEOUT_IDs.get(playerId) + 1;
         TIMEOUT_IDs.put(playerId, currentId);
@@ -442,16 +441,16 @@ public class EMCHelper {
 
     // TOOLTIP
 
-    public static Text tooltipValue(String key) {
+    public static Component tooltipValue(String key) {
         return tooltipValue(key, 1);
     }
 
-    public static Text tooltipValue(String key, double reducedEmc) {
+    public static Component tooltipValue(String key, double reducedEmc) {
         Integer EMC = EMCValues.getDisplay(key);
-        Text text = Text.literal("");
+        Component text = Component.literal("");
         if (EMC == 0) return text;
 
-        return Text.translatable("item_tooltip.dissolver_enhanced.emc", (int)(EMC * reducedEmc));
+        return Component.translatable("item_tooltip.dissolver_enhanced.emc", (int)(EMC * reducedEmc));
     }
 
     // HELPERS

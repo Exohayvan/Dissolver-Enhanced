@@ -2,33 +2,30 @@ package net.exohayvan.dissolver_enhanced.render;
 
 import org.joml.Quaternionf;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.client.model.ModelData;
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.model.ModelPartBuilder;
-import net.minecraft.client.model.ModelPartData;
-import net.minecraft.client.model.ModelTransform;
-import net.minecraft.client.model.TexturedModelData;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.model.EntityModelLayers;
-import net.minecraft.client.render.entity.model.EntityModelPartNames;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.RotationAxis;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartNames;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.entity.CrystalEntity;
 
-@Environment(EnvType.CLIENT)
 public class CrystalEntityRenderer extends EntityRenderer<CrystalEntity> {
-	private static final Identifier TEXTURE = Identifier.of(DissolverEnhanced.MOD_ID, "textures/entity/crystal_entity.png");
-	private static final RenderLayer CRYSTAL_RENDER = RenderLayer.getEntityCutoutNoCull(TEXTURE);
+	private static final ResourceLocation TEXTURE = new ResourceLocation(DissolverEnhanced.MOD_ID, "textures/entity/crystal_entity.png");
+	private static final RenderType CRYSTAL_RENDER = RenderType.entityCutoutNoCull(TEXTURE);
 	private static final float SINE_45_DEGREES = (float)Math.sin(Math.PI / 4);
 	// private static final String GLASS = "glass";
 	// private static final String BASE = "base";
@@ -38,41 +35,41 @@ public class CrystalEntityRenderer extends EntityRenderer<CrystalEntity> {
 	private final float SCALE = 0.8F;
 	private final float SPEED = 0.5F;
 
-	public CrystalEntityRenderer(EntityRendererFactory.Context context) {
+	public CrystalEntityRenderer(EntityRendererProvider.Context context) {
 		super(context);
-		ModelPart modelPart = context.getPart(EntityModelLayers.END_CRYSTAL);
+		ModelPart modelPart = context.bakeLayer(ModelLayers.END_CRYSTAL);
 		this.frame = modelPart.getChild("glass");
-		this.core = modelPart.getChild(EntityModelPartNames.CUBE);
+		this.core = modelPart.getChild(PartNames.CUBE);
 		// this.bottom = modelPart.getChild("base");
 		
 		this.shadowRadius = 0.0F;
-		this.shadowOpacity = 0.0F;
+		this.shadowStrength = 0.0F;
 	}
 
-	public static TexturedModelData getTexturedModelData() {
-		ModelData modelData = new ModelData();
-		ModelPartData modelPartData = modelData.getRoot();
-		modelPartData.addChild("glass", ModelPartBuilder.create().uv(0, 0).cuboid(-4.0F, -4.0F, -4.0F, 8.0F, 8.0F, 8.0F), ModelTransform.NONE);
-		modelPartData.addChild(EntityModelPartNames.CUBE, ModelPartBuilder.create().uv(32, 0).cuboid(-4.0F, -4.0F, -4.0F, 8.0F, 8.0F, 8.0F), ModelTransform.NONE);
-		return TexturedModelData.of(modelData, 64, 32);
+	public static LayerDefinition getTexturedModelData() {
+		MeshDefinition modelData = new MeshDefinition();
+		PartDefinition modelPartData = modelData.getRoot();
+		modelPartData.addOrReplaceChild("glass", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, -4.0F, -4.0F, 8.0F, 8.0F, 8.0F), PartPose.ZERO);
+		modelPartData.addOrReplaceChild(PartNames.CUBE, CubeListBuilder.create().texOffs(32, 0).addBox(-4.0F, -4.0F, -4.0F, 8.0F, 8.0F, 8.0F), PartPose.ZERO);
+		return LayerDefinition.create(modelData, 64, 32);
 	}
 
-	public void render(CrystalEntity crystalEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
+	public void render(CrystalEntity crystalEntity, float f, float g, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int i) {
 		float customSpeed = SPEED;
 		if (crystalEntity.isPowered()) customSpeed = 4.0F;
 
-		matrixStack.push();
+		matrixStack.pushPose();
 		float j = ((float)crystalEntity.crystalAge + g) * customSpeed;
 		VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(CRYSTAL_RENDER);
-		matrixStack.push();
+		matrixStack.pushPose();
 		
-		int k = OverlayTexture.DEFAULT_UV;
+		int k = OverlayTexture.NO_OVERLAY;
 		
 		matrixStack.scale(SCALE, SCALE, SCALE);
 		for (int index = 0; index < 3; index++) {
 			matrixStack.scale(0.8F, 0.8F, 0.8F);
-			matrixStack.multiply(new Quaternionf().setAngleAxis((float) (Math.PI / 3), SINE_45_DEGREES, 0.0F, SINE_45_DEGREES));
-			matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(j));
+			matrixStack.mulPose(new Quaternionf().setAngleAxis((float) (Math.PI / 3), SINE_45_DEGREES, 0.0F, SINE_45_DEGREES));
+			matrixStack.mulPose(Axis.YP.rotationDegrees(j));
 			this.frame.render(matrixStack, vertexConsumer, i, k);
 		}
 
@@ -101,17 +98,17 @@ public class CrystalEntityRenderer extends EntityRenderer<CrystalEntity> {
 		// 	matrixStack.pop();
 		// }
 
-		matrixStack.multiply(new Quaternionf().setAngleAxis((float) (Math.PI / 3), SINE_45_DEGREES, 0.0F, SINE_45_DEGREES));
-		matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(j));
+		matrixStack.mulPose(new Quaternionf().setAngleAxis((float) (Math.PI / 3), SINE_45_DEGREES, 0.0F, SINE_45_DEGREES));
+		matrixStack.mulPose(Axis.YP.rotationDegrees(j));
 		this.core.render(matrixStack, vertexConsumer, i, k);
 
-		matrixStack.pop();
-		matrixStack.pop();
+		matrixStack.popPose();
+		matrixStack.popPose();
 
 		super.render(crystalEntity, f, g, matrixStack, vertexConsumerProvider, i);
 	}
 
-	public Identifier getTexture(CrystalEntity crystalEntity) {
+	public ResourceLocation getTextureLocation(CrystalEntity crystalEntity) {
 		return TEXTURE;
 	}
 

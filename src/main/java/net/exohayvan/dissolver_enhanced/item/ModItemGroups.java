@@ -1,36 +1,35 @@
 package net.exohayvan.dissolver_enhanced.item;
 
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemGroup.DisplayContext;
-import net.minecraft.item.ItemGroup.Entries;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTab.ItemDisplayParameters;
+import net.minecraft.world.item.CreativeModeTab.Output;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.block.ModBlocks;
 
 public class ModItemGroups {
-    public static final ItemGroup VANILLAEMC_GROUP = registerItemGroup("dissolver_enhanced_group", "dissolver_enhanced.modname", ModItems.CRYSTAL_FRAME_ITEM, ModItemGroups::addToCustomInventory);
+    public static final CreativeModeTab VANILLAEMC_GROUP = registerItemGroup("dissolver_enhanced_group", "dissolver_enhanced.modname", ModItems.CRYSTAL_FRAME_ITEM, ModItemGroups::addToCustomInventory);
 
-    private static void addToCustomInventory(DisplayContext displayContext, Entries entries) {
-        entries.add(ModItems.CRYSTAL_FRAME_ITEM);
-        entries.add(ModBlocks.DISSOLVER_BLOCK);
+    private static void addToCustomInventory(ItemDisplayParameters displayContext, Output entries) {
+        entries.accept(ModItems.CRYSTAL_FRAME_ITEM);
+        entries.accept(ModBlocks.DISSOLVER_BLOCK);
     }
 
     // HELPERS
 
-	private static ItemGroup registerItemGroup(String id, String name, Item icon, ItemGroup.EntryCollector entryList) {
+	private static CreativeModeTab registerItemGroup(String id, String name, Item icon, CreativeModeTab.DisplayItemsGenerator entryList) {
 		return Registry.register(
-            Registries.ITEM_GROUP,
-            Identifier.of(DissolverEnhanced.MOD_ID, id),
-            FabricItemGroup.builder()
-            .displayName(Text.translatable(name))
+            BuiltInRegistries.CREATIVE_MODE_TAB,
+            new ResourceLocation(DissolverEnhanced.MOD_ID, id),
+            CreativeModeTab.builder()
+            .title(Component.translatable(name))
             .icon(() -> new ItemStack(icon))
-            .entries(entryList)
+            .displayItems(entryList)
             .build()
         );
     }

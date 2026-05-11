@@ -1,12 +1,12 @@
 package net.exohayvan.dissolver_enhanced.inventory;
 
-import net.minecraft.inventory.Inventory;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
 
 public class DissolverSlotAdd extends Slot {
     public int id;
 
-    public DissolverSlotAdd(Inventory inventory, int index, int x, int y) {
+    public DissolverSlotAdd(Container inventory, int index, int x, int y) {
         super(inventory, index, x, y);
     }
 

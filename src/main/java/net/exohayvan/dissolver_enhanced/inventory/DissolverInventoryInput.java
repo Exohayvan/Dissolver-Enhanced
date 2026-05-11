@@ -2,31 +2,30 @@ package net.exohayvan.dissolver_enhanced.inventory;
 
 import java.util.Iterator;
 import java.util.List;
-
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.util.collection.DefaultedList;
 import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.Container;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
-public class DissolverInventoryInput implements Inventory {
-    private final DefaultedList<ItemStack> stacks;
+public class DissolverInventoryInput implements Container {
+    private final NonNullList<ItemStack> stacks;
     private final int width;
     private final int height;
     private final DissolverScreenHandler handler;
-    private PlayerEntity player;
+    private Player player;
 
     private int SLOTS = 3;
 
-    public DissolverInventoryInput(DissolverScreenHandler handler, PlayerEntity player) {
-        this.stacks = DefaultedList.ofSize(SLOTS, ItemStack.EMPTY);
+    public DissolverInventoryInput(DissolverScreenHandler handler, Player player) {
+        this.stacks = NonNullList.withSize(SLOTS, ItemStack.EMPTY);
         this.handler = handler;
         this.player = player;
         this.width = SLOTS;
@@ -49,7 +48,7 @@ public class DissolverInventoryInput implements Inventory {
         return this.SLOTS;
     }
 
-    public int size() {
+    public int getContainerSize() {
         return this.stacks.size();
     }
 
@@ -68,40 +67,40 @@ public class DissolverInventoryInput implements Inventory {
         return false;
     }
 
-    public ItemStack getStack(int slot) {
-        return slot >= this.size() ? ItemStack.EMPTY : (ItemStack)this.stacks.get(slot);
+    public ItemStack getItem(int slot) {
+        return slot >= this.getContainerSize() ? ItemStack.EMPTY : (ItemStack)this.stacks.get(slot);
     }
 
-    public ItemStack removeStack(int slot) {
-        return Inventories.removeStack(this.stacks, slot);
+    public ItemStack removeItemNoUpdate(int slot) {
+        return ContainerHelper.takeItem(this.stacks, slot);
     }
 
-    public ItemStack removeStack(int slot, int amount) {
-        ItemStack itemStack = Inventories.splitStack(this.stacks, slot, amount);
+    public ItemStack removeItem(int slot, int amount) {
+        ItemStack itemStack = ContainerHelper.removeItem(this.stacks, slot, amount);
         if (!itemStack.isEmpty()) {
-            this.handler.onContentChanged(this);
+            this.handler.slotsChanged(this);
         }
 
         return itemStack;
     }
 
-    public void setStack(int slot, ItemStack stack) {
+    public void setItem(int slot, ItemStack stack) {
         if (player == null) return;
 
         boolean NOT_HOLDING_ITEM = stack.getItem() == Items.AIR;
         if (NOT_HOLDING_ITEM) return;
 
-        if (!player.getWorld().isClient()) {
+        if (!player.level().isClientSide()) {
             if (slot == 0) {
                 if (!EMCHelper.addItem(stack, player, this.handler)) {
-                    player.getInventory().offerOrDrop(stack);
+                    player.getInventory().placeItemBackInInventory(stack);
                 }
                 return;
             } else if (slot == 1) {
                 String itemId = EMCKey.fromStack(stack);
                 if (EMCValues.get(itemId) == 0) {
                     EMCHelper.reportMissingItemValue(player, stack);
-                    player.getInventory().offerOrDrop(stack);
+                    player.getInventory().placeItemBackInInventory(stack);
                     return;
                 }
 
@@ -115,20 +114,20 @@ public class DissolverInventoryInput implements Inventory {
             }
         }
 
-        if (slot == 0 && player.getWorld().isClient()) return;
+        if (slot == 0 && player.level().isClientSide()) return;
 
         this.stacks.set(slot, stack);
-        this.handler.onContentChanged(this);
+        this.handler.slotsChanged(this);
     }
 
-    public void markDirty() {
+    public void setChanged() {
     }
 
-    public boolean canPlayerUse(PlayerEntity player) {
+    public boolean stillValid(Player player) {
         return true;
     }
 
-    public void clear() {
+    public void clearContent() {
         this.stacks.clear();
     }
 

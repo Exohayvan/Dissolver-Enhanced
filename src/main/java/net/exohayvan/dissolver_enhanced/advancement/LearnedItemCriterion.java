@@ -1,51 +1,51 @@
 package net.exohayvan.dissolver_enhanced.advancement;
 
-import java.util.List;
-import java.util.Optional;
-
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-
+import com.google.gson.JsonObject;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
-import net.minecraft.advancement.criterion.AbstractCriterion;
-import net.minecraft.predicate.entity.EntityPredicate;
-import net.minecraft.predicate.entity.LootContextPredicate;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.advancements.critereon.AbstractCriterionTriggerInstance;
+import net.minecraft.advancements.critereon.ContextAwarePredicate;
+import net.minecraft.advancements.critereon.DeserializationContext;
+import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 
-public class LearnedItemCriterion extends AbstractCriterion<LearnedItemCriterion.Conditions> {
+public class LearnedItemCriterion extends SimpleCriterionTrigger<LearnedItemCriterion.Conditions> {
+    public static final ResourceLocation ID = new ResourceLocation("dissolver_enhanced", "learned_item");
+
     @Override
-    public Codec<Conditions> getConditionsCodec() {
-        return Conditions.CODEC;
+    public ResourceLocation getId() {
+        return ID;
     }
 
-    public void trigger(ServerPlayerEntity player, String itemId) {
+    @Override
+    protected Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate player, DeserializationContext context) {
+        String item = jsonObject.has("item") ? jsonObject.get("item").getAsString() : null;
+        boolean hasExternalNamespace = jsonObject.has("external_namespace");
+        Boolean externalNamespace = hasExternalNamespace ? jsonObject.get("external_namespace").getAsBoolean() : null;
+        return new Conditions(player, item, externalNamespace);
+    }
+
+    public void trigger(ServerPlayer player, String itemId) {
         String baseItemId = EMCKey.baseItemId(itemId);
         trigger(player, conditions -> conditions.matches(baseItemId));
     }
 
-    public record Conditions(
-        Optional<LootContextPredicate> player,
-        Optional<String> item,
-        Optional<List<String>> items,
-        Optional<Boolean> externalNamespace
-    ) implements AbstractCriterion.Conditions {
-        public static final Codec<Conditions> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            EntityPredicate.LOOT_CONTEXT_PREDICATE_CODEC.optionalFieldOf("player").forGetter(Conditions::player),
-            Codec.STRING.optionalFieldOf("item").forGetter(Conditions::item),
-            Codec.STRING.listOf().optionalFieldOf("items").forGetter(Conditions::items),
-            Codec.BOOL.optionalFieldOf("external_namespace").forGetter(Conditions::externalNamespace)
-        ).apply(instance, Conditions::new));
+    public static class Conditions extends AbstractCriterionTriggerInstance {
+        private final String item;
+        private final Boolean externalNamespace;
+
+        public Conditions(ContextAwarePredicate player, String item, Boolean externalNamespace) {
+            super(ID, player);
+            this.item = item;
+            this.externalNamespace = externalNamespace;
+        }
 
         public boolean matches(String itemId) {
-            if (item.isPresent() && !item.get().equals(itemId)) {
+            if (item != null && !item.equals(itemId)) {
                 return false;
             }
 
-            if (items.isPresent() && !items.get().contains(itemId)) {
-                return false;
-            }
-
-            if (externalNamespace.isPresent() && externalNamespace.get() != isExternalNamespace(itemId)) {
+            if (externalNamespace != null && externalNamespace != isExternalNamespace(itemId)) {
                 return false;
             }
 

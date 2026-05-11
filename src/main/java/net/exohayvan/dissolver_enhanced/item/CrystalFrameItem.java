@@ -1,42 +1,41 @@
 package net.exohayvan.dissolver_enhanced.item;
 
 import java.util.List;
-
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.world.World;
 import net.exohayvan.dissolver_enhanced.helpers.WirelessDissolver;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 
 public class CrystalFrameItem extends Item {
     private static String TOOLTIP_TEXT = "item_tooltip.dissolver_enhanced.crystal_frame_item";
-    private static Formatting TOOLTIP_FORMAT = Formatting.GOLD;
+    private static ChatFormatting TOOLTIP_FORMAT = ChatFormatting.GOLD;
 
-    public CrystalFrameItem(Settings settings) {
+    public CrystalFrameItem(Properties settings) {
 		super(settings);
-	}
+    }
 
     @Override
-    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
-        tooltip.add(Text.translatable(TOOLTIP_TEXT).formatted(TOOLTIP_FORMAT));
+    public void appendHoverText(ItemStack stack, Level world, List<Component> tooltip, TooltipFlag type) {
+        tooltip.add(Component.translatable(TOOLTIP_TEXT).withStyle(TOOLTIP_FORMAT));
     }
     
     @Override
-	public boolean hasGlint(ItemStack stack) {
+	public boolean isFoil(ItemStack stack) {
 		return true;
 	}
     
     @Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        if (!world.isClient() && !WirelessDissolver.open(user, world)) {
-            user.sendMessage(Text.translatable("wireless_open.fail", WirelessDissolver.radius), true);
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+        if (!world.isClientSide() && !WirelessDissolver.open(user, world)) {
+            user.displayClientMessage(Component.translatable("wireless_open.fail", WirelessDissolver.radius), true);
         }
 
-        return TypedActionResult.pass(user.getStackInHand(hand));
+        return InteractionResultHolder.pass(user.getItemInHand(hand));
 	}
 }

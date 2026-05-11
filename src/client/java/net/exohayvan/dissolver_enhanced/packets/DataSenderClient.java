@@ -2,14 +2,13 @@ package net.exohayvan.dissolver_enhanced.packets;
 
 import java.util.List;
 
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.exohayvan.dissolver_enhanced.packets.Packets;
 import net.exohayvan.dissolver_enhanced.packets.serverbound.ClientPayload;
 
 public class DataSenderClient {
 	public static void sendDataToServer(String messageId, String data) {
         ClientPayload payload = new ClientPayload(messageId, data);
-		ClientPlayNetworking.send(payload);
-        // client.execute(() -> ClientPlayNetworking.send(payload));
+		Packets.CHANNEL.sendToServer(payload);
 	}
 
 	// HELPERS

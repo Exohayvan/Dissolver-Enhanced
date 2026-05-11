@@ -1,19 +1,18 @@
 package net.exohayvan.dissolver_enhanced.inventory;
 
 import java.util.Optional;
-
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public class DissolverSlot extends Slot {
     public int id;
     public final DissolverScreenHandler handler;
 
-    public DissolverSlot(Inventory inventory, int index, int x, int y, DissolverScreenHandler handler) {
+    public DissolverSlot(Container inventory, int index, int x, int y, DissolverScreenHandler handler) {
         super(inventory, index, x, y);
         // this.inventory = inventory;
         // this.index = index;
@@ -37,7 +36,7 @@ public class DissolverSlot extends Slot {
     // }
 
     @Override
-    public boolean canInsert(ItemStack stack) {
+    public boolean mayPlace(ItemStack stack) {
         return false;
     }
 
@@ -53,24 +52,24 @@ public class DissolverSlot extends Slot {
     //     return true;
     // }
 
-    public Optional<ItemStack> tryTakeStackRange(int min, int max, PlayerEntity player) {
-        if (!this.canTakeItems(player)) {
+    public Optional<ItemStack> tryRemove(int min, int max, Player player) {
+        if (!this.mayPickup(player)) {
             return Optional.empty();
-        } else if (!this.canTakePartial(player) && max < this.getStack().getCount()) {
+        } else if (!this.allowModification(player) && max < this.getItem().getCount()) {
             return Optional.empty();
         } else {
             if (player.getServer() != null) { // getting double stack if this is not checked
-                boolean CANT_GET_ITEM = !EMCHelper.getItem(player, this.getStack(), this.handler, min);
+                boolean CANT_GET_ITEM = !EMCHelper.getItem(player, this.getItem(), this.handler, min);
                 if (CANT_GET_ITEM) return Optional.empty();
             }
 
             min = Math.min(min, max);
-            ItemStack itemStack = this.takeStack(min);
+            ItemStack itemStack = this.remove(min);
             if (itemStack.isEmpty()) {
                 return Optional.empty();
             } else {
-                if (this.getStack().isEmpty()) {
-                    this.setStack(ItemStack.EMPTY, itemStack);
+                if (this.getItem().isEmpty()) {
+                    this.setByPlayer(ItemStack.EMPTY);
                 }
 
                 return Optional.of(itemStack);
@@ -79,12 +78,12 @@ public class DissolverSlot extends Slot {
     }
 
     // often called by double clicking from another inventory
-    public ItemStack takeStackRange(int min, int max, PlayerEntity player) {
+    public ItemStack safeTake(int min, int max, Player player) {
         if (player.getServer() == null) return ItemStack.EMPTY;
         
-        Optional<ItemStack> optional = this.tryTakeStackRange(min, max, player);
+        Optional<ItemStack> optional = this.tryRemove(min, max, player);
         optional.ifPresent((stack) -> {
-            this.onTakeItem(player, stack);
+            this.onTake(player, stack);
         });
         return (ItemStack)optional.orElse(ItemStack.EMPTY);
     }
