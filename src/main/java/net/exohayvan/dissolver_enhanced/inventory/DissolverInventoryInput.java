@@ -14,6 +14,7 @@ import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
+import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
 
 public class DissolverInventoryInput implements Inventory {
@@ -92,6 +93,19 @@ public class DissolverInventoryInput implements Inventory {
         if (NOT_HOLDING_ITEM) return;
 
         if (!player.getWorld().isClient()) {
+            if (EMCOrbItem.isEMCOrb(stack)) {
+                int emc = EMCOrbItem.getEMC(stack);
+                if (emc > 0) {
+                    EMCHelper.addEMCValue(player, emc);
+                    this.stacks.set(slot, ItemStack.EMPTY);
+                    this.handler.onContentChanged(this);
+                    this.handler.refresh();
+                } else {
+                    player.getInventory().offerOrDrop(stack);
+                }
+                return;
+            }
+
             if (slot == 0) {
                 if (!EMCHelper.addItem(stack, player, this.handler)) {
                     player.getInventory().offerOrDrop(stack);

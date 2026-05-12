@@ -22,6 +22,7 @@ import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.exohayvan.dissolver_enhanced.inventory.DissolverInventory;
 import net.exohayvan.dissolver_enhanced.inventory.DissolverInventoryInput;
 import net.exohayvan.dissolver_enhanced.inventory.DissolverSlot;
+import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.packets.DataSender;
 
 public class DissolverScreenHandler extends ScreenHandler {
@@ -285,6 +286,21 @@ public class DissolverScreenHandler extends ScreenHandler {
         if (player.getServer() == null) return ItemStack.EMPTY;
 
         if (invSlot < PLAYER_INV_SIZE) {
+            if (EMCOrbItem.isEMCOrb(slot.getStack())) {
+                int emc = EMCOrbItem.getEMC(slot.getStack());
+                if (emc <= 0) return ItemStack.EMPTY;
+
+                EMCHelper.addEMCValue(player, emc);
+                slot.getStack().decrement(1);
+                if (slot.getStack().isEmpty()) {
+                    slot.setStack(ItemStack.EMPTY);
+                } else {
+                    slot.markDirty();
+                }
+                refresh();
+                return ItemStack.EMPTY;
+            }
+
             if (!EMCHelper.canAddItem(slot.getStack(), player)) return newStack;
         }
 

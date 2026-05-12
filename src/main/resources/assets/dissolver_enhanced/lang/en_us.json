@@ -2,10 +2,14 @@
     "dissolver_enhanced.modname": "Dissolver",
 
     "item.dissolver_enhanced.crystal_frame_item": "Crystal Frame",
+    "item.dissolver_enhanced.emc_orb": "EMC Orb",
     "block.dissolver_enhanced.dissolver_block": "Dissolver",
+    "block.dissolver_enhanced.condenser_block": "Condenser WIP",
+    "block.dissolver_enhanced.materializer_block": "Materializer WIP",
     "entity.dissolver_enhanced.crystal_entity": "Crystal Entity",
 
     "item_tooltip.dissolver_enhanced.emc": "§dEMC:§r %d",
+    "item_tooltip.dissolver_enhanced.emc_orb": "Stored EMC: %d",
     "item_tooltip.dissolver_enhanced.crystal_frame_item": "Something's missing, I just can't frame it...",
     "item_tooltip.dissolver_enhanced.dissolver_block_item": "Dissolving & Reassembling!",
 

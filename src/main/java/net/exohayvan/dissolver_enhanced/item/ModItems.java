@@ -8,6 +8,7 @@ import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 
 public class ModItems {
     public static final Item CRYSTAL_FRAME_ITEM = registerItem("crystal_frame_item", new CrystalFrameItem(new Item.Settings()));
+    public static final Item EMC_ORB = registerItem("emc_orb", new EMCOrbItem(new Item.Settings().maxCount(1)));
 
     // private static void addToVanillaTools(FabricItemGroupEntries entries) {
     //     entries.add(MAGIC_ITEM);

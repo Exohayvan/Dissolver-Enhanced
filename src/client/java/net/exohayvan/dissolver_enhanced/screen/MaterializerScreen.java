@@ -1,0 +1,131 @@
+package net.exohayvan.dissolver_enhanced.screen;
+
+import com.mojang.blaze3d.systems.RenderSystem;
+
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+
+public class MaterializerScreen extends HandledScreen<MaterializerScreenHandler> {
+    private static final Identifier TEXTURE = Identifier.ofVanilla("textures/gui/container/furnace.png");
+    private static final int FLAME_X = 56;
+    private static final int FLAME_Y = 36;
+    private static final int FLAME_WIDTH = 14;
+    private static final int FLAME_HEIGHT = 14;
+    private static final int ARROW_X = 79;
+    private static final int ARROW_Y = 34;
+    private static final int ARROW_WIDTH = 24;
+    private static final int GUI_BACKGROUND = 0xFFC6C6C6;
+    private static final int SLOT_DARK = 0xFF373737;
+    private static final int SLOT_LIGHT = 0xFFFFFFFF;
+    private static final int SLOT_FILL = 0xFF8B8B8B;
+    private static final int ARROW_FILL = 0xFF59A8FF;
+    private static final int ARROW_HIGHLIGHT = 0xFF91CCFF;
+    private static final int STATUS_X = 78;
+    private static final int STORED_Y = 54;
+    private static final int INPUT_Y = 64;
+    private static final int STATUS_COLOR = 0xFF404040;
+
+    public MaterializerScreen(MaterializerScreenHandler handler, PlayerInventory inventory, Text title) {
+        super(handler, inventory, title);
+        this.backgroundWidth = 176;
+        this.backgroundHeight = 166;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        this.titleX = 8;
+        this.titleY = 6;
+        this.playerInventoryTitleX = 8;
+        this.playerInventoryTitleY = 72;
+    }
+
+    @Override
+    protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
+        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
+        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+        RenderSystem.setShaderTexture(0, TEXTURE);
+
+        context.drawTexture(TEXTURE, this.x, this.y, 0, 0, this.backgroundWidth, this.backgroundHeight);
+
+        hideFuelArea(context);
+        drawSlotBackground(context, 38, 53);
+        drawSlotBackground(context, 56, 53);
+        drawProgressArrow(context);
+    }
+
+    private void hideFuelArea(DrawContext context) {
+        context.fill(
+                this.x + FLAME_X - 20,
+                this.y + FLAME_Y,
+                this.x + FLAME_X + FLAME_WIDTH + 20,
+                this.y + FLAME_Y + FLAME_HEIGHT + 18,
+                GUI_BACKGROUND
+        );
+    }
+
+    private void drawSlotBackground(DrawContext context, int slotX, int slotY) {
+        int left = this.x + slotX - 1;
+        int top = this.y + slotY - 1;
+        context.fill(left, top, left + 18, top + 18, SLOT_DARK);
+        context.fill(left + 1, top + 1, left + 18, top + 18, SLOT_LIGHT);
+        context.fill(left + 1, top + 1, left + 17, top + 17, SLOT_FILL);
+    }
+
+    private void drawProgressArrow(DrawContext context) {
+        int progress = this.handler.getScaledProgress();
+        int width = Math.min(ARROW_WIDTH, progress);
+
+        for (int xOffset = 0; xOffset < width; xOffset++) {
+            int top = 5;
+            int bottom = 11;
+
+            if (xOffset >= 18) {
+                int tipOffset = xOffset - 18;
+                top = 2 + tipOffset;
+                bottom = 14 - tipOffset;
+            }
+
+            context.fill(
+                    this.x + ARROW_X + xOffset,
+                    this.y + ARROW_Y + top,
+                    this.x + ARROW_X + xOffset + 1,
+                    this.y + ARROW_Y + bottom,
+                    ARROW_FILL
+            );
+        }
+
+        if (width > 2) {
+            int highlightWidth = Math.min(width, 18);
+            context.fill(
+                    this.x + ARROW_X + 1,
+                    this.y + ARROW_Y + 6,
+                    this.x + ARROW_X + highlightWidth,
+                    this.y + ARROW_Y + 7,
+                    ARROW_HIGHLIGHT
+            );
+        }
+    }
+
+    @Override
+    protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
+        super.drawForeground(context, mouseX, mouseY);
+        context.drawText(this.textRenderer, "Stored: " + format(this.handler.getStoredEmc()) + " / " + format(this.handler.getTargetValue()), STATUS_X, STORED_Y, STATUS_COLOR, false);
+        context.drawText(this.textRenderer, "Input: +" + format(this.handler.getInputValue()) + " EMC", STATUS_X, INPUT_Y, STATUS_COLOR, false);
+    }
+
+    private String format(int value) {
+        return String.format("%,d", value);
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        renderBackground(context, mouseX, mouseY, delta);
+        super.render(context, mouseX, mouseY, delta);
+        drawMouseoverTooltip(context, mouseX, mouseY);
+    }
+}

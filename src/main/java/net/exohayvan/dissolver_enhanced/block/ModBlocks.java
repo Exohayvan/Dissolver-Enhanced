@@ -21,11 +21,27 @@ public class ModBlocks {
     private static final Block _DISSOLVER_BLOCK = createDissolverBlock();
     public static final DissolverBlockItem DISSOLVER_BLOCK_ITEM = new DissolverBlockItem(_DISSOLVER_BLOCK, new Item.Settings().rarity(Rarity.RARE));
     public static final Block DISSOLVER_BLOCK = registerBlock("dissolver_block", _DISSOLVER_BLOCK, DISSOLVER_BLOCK_ITEM);
+
+    // CONDENSER
+    private static final Block _CONDENSER_BLOCK = createCondenserBlock();
+    public static final Block CONDENSER_BLOCK = registerBlock("condenser_block", _CONDENSER_BLOCK, new BlockItem(_CONDENSER_BLOCK, new Item.Settings().rarity(Rarity.UNCOMMON)));
+
+    // MATERIALIZER
+    private static final Block _MATERIALIZER_BLOCK = createMaterializerBlock();
+    public static final Block MATERIALIZER_BLOCK = registerBlock("materializer_block", _MATERIALIZER_BLOCK, new BlockItem(_MATERIALIZER_BLOCK, new Item.Settings().rarity(Rarity.UNCOMMON)));
     
     // HELPERS
 
     private static Block createDissolverBlock() {
         return new DissolverBlock(AbstractBlock.Settings.copy(Blocks.NETHERITE_BLOCK).sounds(BlockSoundGroup.AMETHYST_BLOCK).luminance(getLuminance(12)).nonOpaque());
+    }
+
+    private static Block createCondenserBlock() {
+        return new CondenserBlock(AbstractBlock.Settings.copy(Blocks.NETHERITE_BLOCK).sounds(BlockSoundGroup.AMETHYST_BLOCK).luminance(getLuminance(8)).nonOpaque());
+    }
+
+    private static Block createMaterializerBlock() {
+        return new MaterializerBlock(AbstractBlock.Settings.copy(Blocks.NETHERITE_BLOCK).sounds(BlockSoundGroup.AMETHYST_BLOCK).luminance(getLuminance(8)).nonOpaque());
     }
     
     private static Block registerBlock(String id, Block block, BlockItem blockItem) {

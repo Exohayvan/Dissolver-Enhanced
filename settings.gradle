@@ -11,4 +11,4 @@ pluginManagement {
 
 rootProject.name = 'dissolver-enhanced-fabric-1.21.1'
 
-includeBuild("../Dissolver Enhanced (Common)")
+includeBuild("../Common")
