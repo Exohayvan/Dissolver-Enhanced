@@ -6,7 +6,7 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
-def commonPropertiesFile = file("../Dissolver Enhanced (Common)/gradle.properties")
+def commonPropertiesFile = file("../Common/gradle.properties")
 if (!commonPropertiesFile.exists()) {
 	throw new GradleException("Common gradle.properties not found at ${commonPropertiesFile}. Check out the Common worktree beside this Fabric worktree.")
 }
