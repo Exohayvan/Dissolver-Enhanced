@@ -6,7 +6,7 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
-def commonPropertiesFile = file("../Dissolver Enhanced (Common)/gradle.properties")
+def commonPropertiesFile = file("../Common/gradle.properties")
 if (!commonPropertiesFile.exists()) {
 	throw new GradleException("Common gradle.properties not found at ${commonPropertiesFile}. Check out the Common worktree beside this Forge worktree.")
 }
@@ -61,11 +61,11 @@ sourceSets {
 	main {
 		java {
 			srcDirs += ['src/client/java']
-			srcDirs += ['../Dissolver Enhanced (Common)/src/main/java']
+			srcDirs += ['../Common/src/main/java']
 		}
 		resources {
 			srcDirs += ['src/client/resources']
-			srcDir '../Dissolver Enhanced (Common)'
+			srcDir '../Common'
 			include 'emc-values/**'
 		}
 	}
