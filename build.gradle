@@ -70,7 +70,7 @@ sourceSets {
 	main {
 		java {
 			srcDirs += ['src/client/java']
-			srcDirs += ['../Common/src/main/java']
+			srcDirs += ["${commonDir}/src/main/java"]
 		}
 		resources {
 			srcDirs += ['src/client/resources']
