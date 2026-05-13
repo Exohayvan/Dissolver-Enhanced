@@ -1,0 +1,30 @@
+{
+  "parent": "dissolver_enhanced:root",
+  "display": {
+    "icon": {
+      "id": "minecraft:bookshelf",
+      "count": 1
+    },
+    "title": {
+      "text": "The Table Remembers"
+    },
+    "description": {
+      "text": "Learn 100 items. Memory is just organized hoarding."
+    },
+    "x": 2,
+    "y": 4
+  },
+  "criteria": {
+    "learned_count": {
+      "trigger": "dissolver_enhanced:learned_count",
+      "conditions": {
+        "min_items": 100
+      }
+    }
+  },
+  "requirements": [
+    [
+      "learned_count"
+    ]
+  ]
+}

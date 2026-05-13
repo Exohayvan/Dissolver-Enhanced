@@ -76,7 +76,10 @@ public final class DefaultEmcValueUpdateMonitor {
             Files.writeString(localDefaultValuesFile, desiredContent, StandardCharsets.UTF_8);
             UPDATE_AVAILABLE.set(true);
             infoLogger.accept(UPDATE_MESSAGE);
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            warningLogger.accept("Interrupted while checking GitHub for Dissolver Enhanced default EMC value updates.", e);
+        } catch (IOException e) {
             warningLogger.accept("Unable to check GitHub for Dissolver Enhanced default EMC value updates.", e);
         }
     }

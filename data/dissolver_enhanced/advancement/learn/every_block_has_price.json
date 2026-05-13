@@ -1,0 +1,30 @@
+{
+  "parent": "dissolver_enhanced:learn/hoarder_organized",
+  "display": {
+    "icon": {
+      "id": "minecraft:netherite_block",
+      "count": 1
+    },
+    "title": {
+      "text": "Every Block Has a Price"
+    },
+    "description": {
+      "text": "Learn 1,000 items. The catalog has become the product."
+    },
+    "x": 4,
+    "y": 4
+  },
+  "criteria": {
+    "learned_count": {
+      "trigger": "dissolver_enhanced:learned_count",
+      "conditions": {
+        "min_items": 1000
+      }
+    }
+  },
+  "requirements": [
+    [
+      "learned_count"
+    ]
+  ]
+}

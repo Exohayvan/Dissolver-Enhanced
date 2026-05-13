@@ -1,0 +1,53 @@
+{
+  "parent": "dissolver_enhanced:learn/grass",
+  "display": {
+    "icon": {
+      "id": "minecraft:red_dye",
+      "count": 1
+    },
+    "title": {
+      "text": "The Color Wheel Has Value"
+    },
+    "description": {
+      "text": "Learn every dye color. The spreadsheet is now festive."
+    },
+    "x": 4,
+    "y": -3
+  },
+  "criteria": {
+    "white": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:white_dye" } },
+    "light_gray": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:light_gray_dye" } },
+    "gray": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:gray_dye" } },
+    "black": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:black_dye" } },
+    "brown": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:brown_dye" } },
+    "red": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:red_dye" } },
+    "orange": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:orange_dye" } },
+    "yellow": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:yellow_dye" } },
+    "lime": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:lime_dye" } },
+    "green": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:green_dye" } },
+    "cyan": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:cyan_dye" } },
+    "light_blue": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:light_blue_dye" } },
+    "blue": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:blue_dye" } },
+    "purple": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:purple_dye" } },
+    "magenta": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:magenta_dye" } },
+    "pink": { "trigger": "dissolver_enhanced:learned_item", "conditions": { "item": "minecraft:pink_dye" } }
+  },
+  "requirements": [
+    [ "white" ],
+    [ "light_gray" ],
+    [ "gray" ],
+    [ "black" ],
+    [ "brown" ],
+    [ "red" ],
+    [ "orange" ],
+    [ "yellow" ],
+    [ "lime" ],
+    [ "green" ],
+    [ "cyan" ],
+    [ "light_blue" ],
+    [ "blue" ],
+    [ "purple" ],
+    [ "magenta" ],
+    [ "pink" ]
+  ]
+}

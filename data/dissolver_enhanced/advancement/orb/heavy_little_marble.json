@@ -1,0 +1,31 @@
+{
+  "parent": "dissolver_enhanced:orb/condensed_wealth",
+  "display": {
+    "icon": {
+      "id": "dissolver_enhanced:emc_orb",
+      "count": 1
+    },
+    "title": {
+      "text": "Heavy Little Marble"
+    },
+    "description": {
+      "text": "Create an EMC Orb worth at least 1,000,000 EMC. Please lift with your knees."
+    },
+    "x": 4,
+    "y": 6
+  },
+  "criteria": {
+    "orb": {
+      "trigger": "dissolver_enhanced:emc_orb",
+      "conditions": {
+        "min_emc": "1000000",
+        "action": "created"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "orb"
+    ]
+  ]
+}

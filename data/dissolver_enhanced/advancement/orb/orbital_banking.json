@@ -1,0 +1,30 @@
+{
+  "parent": "dissolver_enhanced:root",
+  "display": {
+    "icon": {
+      "id": "dissolver_enhanced:emc_orb",
+      "count": 1
+    },
+    "title": {
+      "text": "Orbital Banking"
+    },
+    "description": {
+      "text": "Create your first EMC Orb. Banking is round now."
+    },
+    "x": 2,
+    "y": 5
+  },
+  "criteria": {
+    "orb": {
+      "trigger": "dissolver_enhanced:emc_orb",
+      "conditions": {
+        "min_emc": "1"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "orb"
+    ]
+  ]
+}

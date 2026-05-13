@@ -1,0 +1,31 @@
+{
+  "parent": "dissolver_enhanced:orb/orbital_banking",
+  "display": {
+    "icon": {
+      "id": "dissolver_enhanced:emc_orb",
+      "count": 1
+    },
+    "title": {
+      "text": "Round Trip Transaction"
+    },
+    "description": {
+      "text": "Put an EMC Orb into the Dissolver. The orb has completed its paperwork."
+    },
+    "x": 3,
+    "y": 5
+  },
+  "criteria": {
+    "orb": {
+      "trigger": "dissolver_enhanced:emc_orb",
+      "conditions": {
+        "min_emc": "1",
+        "action": "dissolved"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "orb"
+    ]
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "parent": "dissolver_enhanced:learn/diamond",
+  "display": {
+    "icon": {
+      "id": "minecraft:dragon_egg",
+      "count": 1
+    },
+    "title": {
+      "text": "Dragon Accounting Department"
+    },
+    "description": {
+      "text": "Learn the Dragon Egg. The end has been itemized."
+    },
+    "x": 4,
+    "y": 2
+  },
+  "criteria": {
+    "learned": {
+      "trigger": "dissolver_enhanced:learned_item",
+      "conditions": {
+        "item": "minecraft:dragon_egg"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "learned"
+    ]
+  ]
+}
