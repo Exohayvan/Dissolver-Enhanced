@@ -18,85 +18,37 @@ public final class EmcValueYamlParser {
     }
 
     public static EmcValueSet parse(String yaml) {
-        int schema = 0;
-        Map<String, BigInteger> items = new LinkedHashMap<>();
-        Map<String, BigInteger> tags = new LinkedHashMap<>();
-        Map<String, MutableOverride> overrides = new LinkedHashMap<>();
-
-        Section section = Section.NONE;
-        String currentOverride = null;
-
+        ParseState state = new ParseState();
         String[] lines = yaml.split("\\r?\\n");
         for (String rawLine : lines) {
-            if (rawLine.isBlank() || rawLine.stripLeading().startsWith("#")) {
-                continue;
-            }
-
-            int indent = countLeadingSpaces(rawLine);
-            String line = rawLine.strip();
-
-            if (indent == 0) {
-                if (line.startsWith("schema:")) {
-                    schema = parseInteger(valuePart(line), "schema");
-                    section = Section.NONE;
-                    currentOverride = null;
-                } else if (line.equals("items:")) {
-                    section = Section.ITEMS;
-                    currentOverride = null;
-                } else if (line.equals("tags:")) {
-                    section = Section.TAGS;
-                    currentOverride = null;
-                } else if (line.equals("overrides:")) {
-                    section = Section.OVERRIDES;
-                    currentOverride = null;
-                }
-                continue;
-            }
-
-            if (section == Section.ITEMS && indent == 2) {
-                parseValueLine(line, items);
-                continue;
-            }
-
-            if (section == Section.TAGS && indent == 2) {
-                parseValueLine(line, tags);
-                continue;
-            }
-
-            if ((section == Section.OVERRIDES || section == Section.OVERRIDE_ITEMS || section == Section.OVERRIDE_TAGS) && indent == 2) {
-                currentOverride = stripTrailingColon(line);
-                overrides.computeIfAbsent(currentOverride, ignored -> new MutableOverride());
-                section = Section.OVERRIDES;
-                continue;
-            }
-
-            if ((section == Section.OVERRIDES || section == Section.OVERRIDE_ITEMS || section == Section.OVERRIDE_TAGS) && indent == 4) {
-                if (currentOverride == null) {
-                    continue;
-                }
-
-                if (line.equals("items:")) {
-                    section = Section.OVERRIDE_ITEMS;
-                } else if (line.equals("tags:")) {
-                    section = Section.OVERRIDE_TAGS;
-                }
-                continue;
-            }
-
-            if (section == Section.OVERRIDE_ITEMS && indent == 6 && currentOverride != null) {
-                parseValueLine(line, overrides.get(currentOverride).items);
-                continue;
-            }
-
-            if (section == Section.OVERRIDE_TAGS && indent == 6 && currentOverride != null) {
-                parseValueLine(line, overrides.get(currentOverride).tags);
-            }
+            state.parseLine(rawLine);
         }
 
         Map<String, EmcValueOverride> immutableOverrides = new LinkedHashMap<>();
-        overrides.forEach((key, value) -> immutableOverrides.put(key, new EmcValueOverride(value.items, value.tags)));
+        state.overrides.forEach((key, value) -> immutableOverrides.put(key, new EmcValueOverride(value.items, value.tags)));
 
-        return new EmcValueSet(schema, items, tags, immutableOverrides);
+        return new EmcValueSet(state.schema, state.items, state.tags, immutableOverrides);
+    }
+
+    private static boolean isIgnoredLine(String rawLine) {
+        return rawLine.isBlank() || rawLine.stripLeading().startsWith("#");
+    }
+
+    private static boolean isOverrideSection(Section section) {
+        return section == Section.OVERRIDES || section == Section.OVERRIDE_ITEMS || section == Section.OVERRIDE_TAGS;
+    }
+
+    private static Section topLevelSection(String line) {
+        if (line.equals("items:")) return Section.ITEMS;
+        if (line.equals("tags:")) return Section.TAGS;
+        if (line.equals("overrides:")) return Section.OVERRIDES;
+        return Section.NONE;
+    }
+
+    private static Section overrideChildSection(String line) {
+        if (line.equals("items:")) return Section.OVERRIDE_ITEMS;
+        if (line.equals("tags:")) return Section.OVERRIDE_TAGS;
+        return Section.OVERRIDES;
     }
 
     private static void parseValueLine(String line, Map<String, BigInteger> values) {
@@ -151,6 +103,81 @@ public final class EmcValueYamlParser {
         }
 
         return value.substring(0, value.length() - 1);
+    }
+
+    private static final class ParseState {
+        private int schema;
+        private final Map<String, BigInteger> items = new LinkedHashMap<>();
+        private final Map<String, BigInteger> tags = new LinkedHashMap<>();
+        private final Map<String, MutableOverride> overrides = new LinkedHashMap<>();
+        private Section section = Section.NONE;
+        private String currentOverride;
+
+        private void parseLine(String rawLine) {
+            if (isIgnoredLine(rawLine)) return;
+
+            int indent = countLeadingSpaces(rawLine);
+            String line = rawLine.strip();
+
+            if (indent == 0) {
+                parseTopLevelLine(line);
+            } else if (indent == 2) {
+                parseSecondLevelLine(line);
+            } else if (indent == 4 && isOverrideSection(section)) {
+                parseOverrideChild(line);
+            } else if (indent == 6) {
+                parseOverrideValue(line);
+            }
+        }
+
+        private void parseTopLevelLine(String line) {
+            resetCurrentOverride();
+            if (line.startsWith("schema:")) {
+                schema = parseInteger(valuePart(line), "schema");
+                section = Section.NONE;
+                return;
+            }
+
+            section = topLevelSection(line);
+        }
+
+        private void parseSecondLevelLine(String line) {
+            if (section == Section.ITEMS) {
+                parseValueLine(line, items);
+                return;
+            }
+
+            if (section == Section.TAGS) {
+                parseValueLine(line, tags);
+                return;
+            }
+
+            if (isOverrideSection(section)) {
+                currentOverride = stripTrailingColon(line);
+                overrides.computeIfAbsent(currentOverride, ignored -> new MutableOverride());
+                section = Section.OVERRIDES;
+            }
+        }
+
+        private void parseOverrideChild(String line) {
+            if (currentOverride == null) return;
+            section = overrideChildSection(line);
+        }
+
+        private void parseOverrideValue(String line) {
+            if (currentOverride == null) return;
+
+            MutableOverride override = overrides.get(currentOverride);
+            if (section == Section.OVERRIDE_ITEMS) {
+                parseValueLine(line, override.items);
+            } else if (section == Section.OVERRIDE_TAGS) {
+                parseValueLine(line, override.tags);
+            }
+        }
+
+        private void resetCurrentOverride() {
+            currentOverride = null;
+        }
     }
 
     private static final class MutableOverride {
