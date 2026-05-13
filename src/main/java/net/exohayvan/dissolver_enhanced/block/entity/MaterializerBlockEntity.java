@@ -5,6 +5,8 @@ import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.screen.MaterializerScreenHandler;
+import net.exohayvan.dissolver_enhanced.common.machine.MachineTiming;
+import net.exohayvan.dissolver_enhanced.common.machine.MaterializerLogic;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
@@ -25,9 +27,8 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     public static final int CORE_SLOT = 2;
     public static final int OUTPUT_SLOT = 3;
     private static final int SIZE = 4;
-    private static final int TICKS_PER_SECOND = 20;
     private static final int SECONDS_PER_EMC = 1;
-    private static final int CONVERSION_TICKS_PER_EMC = TICKS_PER_SECOND * SECONDS_PER_EMC;
+    private static final int CONVERSION_TICKS_PER_EMC = MachineTiming.ticksPerEmc(SECONDS_PER_EMC);
     private static final int[] TOP_SLOTS = new int[]{TARGET_SLOT, EMC_INPUT_SLOT};
     private static final int[] BOTTOM_SLOTS = new int[]{OUTPUT_SLOT};
     private static final int[] SIDE_SLOTS = new int[]{EMC_INPUT_SLOT};
@@ -104,7 +105,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
         int inputValue = getInputValue();
         if (inputValue <= 0) return;
 
-        this.storedEmc = safeAdd(this.storedEmc, inputValue);
+        this.storedEmc = MaterializerLogic.absorbInput(this.storedEmc, inputValue);
         input.decrement(1);
         if (input.isEmpty()) {
             this.stacks.set(EMC_INPUT_SLOT, ItemStack.EMPTY);
@@ -114,7 +115,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     private boolean canOutputTarget() {
         ItemStack target = this.stacks.get(TARGET_SLOT);
         int targetValue = getTargetValue();
-        if (target.isEmpty() || targetValue <= 0 || this.storedEmc < targetValue) return false;
+        if (target.isEmpty() || !MaterializerLogic.canOutput(this.storedEmc, targetValue)) return false;
 
         ItemStack output = this.stacks.get(OUTPUT_SLOT);
         if (output.isEmpty()) return true;
@@ -124,7 +125,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     private void outputTarget() {
         ItemStack target = this.stacks.get(TARGET_SLOT);
         int targetValue = getTargetValue();
-        if (targetValue <= 0 || this.storedEmc < targetValue) return;
+        if (!MaterializerLogic.canOutput(this.storedEmc, targetValue)) return;
 
         ItemStack output = this.stacks.get(OUTPUT_SLOT);
         if (output.isEmpty()) {
@@ -137,7 +138,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
             return;
         }
 
-        this.storedEmc -= targetValue;
+        this.storedEmc = MaterializerLogic.spendForOutput(this.storedEmc, targetValue);
     }
 
     private int getTargetValue() {
@@ -149,26 +150,18 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     }
 
     private int getConversionTime() {
-        int inputValue = getInputValue();
-        if (inputValue <= 0) return CONVERSION_TICKS_PER_EMC;
-
-        long conversionTime = (long)inputValue * CONVERSION_TICKS_PER_EMC;
-        return conversionTime > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)conversionTime;
+        return MachineTiming.ticksForEmc(getInputValue(), CONVERSION_TICKS_PER_EMC);
     }
 
     private int stackValue(ItemStack stack, boolean allowOrb) {
         if (stack.isEmpty()) return 0;
         if (EMCOrbItem.isEMCOrb(stack)) return allowOrb ? EMCOrbItem.getEMC(stack) : 0;
 
-        int emc = EMCValues.get(EMCKey.fromStack(stack));
+        String stackKey = EMCKey.fromStack(stack);
+        int emc = EMCValues.get(stackKey);
         if (emc <= 0) return 0;
 
-        return Math.max(1, (int)Math.floor(emc * ItemHelper.getDurabilityPercentage(stack)));
-    }
-
-    private int safeAdd(int current, int added) {
-        long result = (long)current + added;
-        return result > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)result;
+        return MaterializerLogic.getMaterializeValue(stackKey, emc, ItemHelper.getDurabilityPercentage(stack));
     }
 
     private boolean resetProgress() {

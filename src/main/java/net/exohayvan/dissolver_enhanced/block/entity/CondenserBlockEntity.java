@@ -5,6 +5,8 @@ import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.screen.CondenserScreenHandler;
+import net.exohayvan.dissolver_enhanced.common.machine.CondenserLogic;
+import net.exohayvan.dissolver_enhanced.common.machine.MachineTiming;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
@@ -24,9 +26,8 @@ public class CondenserBlockEntity extends CustomBlockEntity {
     public static final int CORE_SLOT = 1;
     public static final int OUTPUT_SLOT = 2;
     private static final int SIZE = 3;
-    private static final int TICKS_PER_SECOND = 20;
     private static final int SECONDS_PER_EMC = 1;
-    private static final int CONVERSION_TICKS_PER_EMC = TICKS_PER_SECOND * SECONDS_PER_EMC;
+    private static final int CONVERSION_TICKS_PER_EMC = MachineTiming.ticksPerEmc(SECONDS_PER_EMC);
     private static final int[] TOP_SLOTS = new int[]{INPUT_SLOT};
     private static final int[] BOTTOM_SLOTS = new int[]{OUTPUT_SLOT};
     private static final int[] SIDE_SLOTS = new int[]{INPUT_SLOT};
@@ -104,7 +105,7 @@ public class CondenserBlockEntity extends CustomBlockEntity {
         if (output.isEmpty()) {
             this.stacks.set(OUTPUT_SLOT, EMCOrbItem.create(emc));
         } else if (EMCOrbItem.isEMCOrb(output)) {
-            EMCOrbItem.setEMC(output, safeAdd(EMCOrbItem.getEMC(output), emc));
+            EMCOrbItem.setEMC(output, CondenserLogic.safeAdd(EMCOrbItem.getEMC(output), emc));
         }
 
         input.decrement(1);
@@ -118,23 +119,16 @@ public class CondenserBlockEntity extends CustomBlockEntity {
             return EMCOrbItem.getEMC(stack);
         }
 
-        int emc = EMCValues.get(EMCKey.fromStack(stack));
+        String stackKey = EMCKey.fromStack(stack);
+        int emc = EMCValues.get(stackKey);
         if (emc <= 0) return 0;
 
-        return Math.max(1, (int)Math.floor(emc * ItemHelper.getDurabilityPercentage(stack)));
+        return CondenserLogic.getCondenseValue(stackKey, emc, ItemHelper.getDurabilityPercentage(stack));
     }
 
     private int getConversionTime() {
         int emc = condenseValue(this.stacks.get(INPUT_SLOT));
-        if (emc <= 0) return CONVERSION_TICKS_PER_EMC;
-
-        long conversionTime = (long)emc * CONVERSION_TICKS_PER_EMC;
-        return conversionTime > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)conversionTime;
-    }
-
-    private int safeAdd(int current, int added) {
-        long result = (long)current + added;
-        return result > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)result;
+        return MachineTiming.ticksForEmc(emc, CONVERSION_TICKS_PER_EMC);
     }
 
     private void resetProgress() {
