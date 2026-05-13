@@ -1,0 +1,30 @@
+{
+  "parent": "dissolver_enhanced:balance/one_billion",
+  "display": {
+    "icon": {
+      "id": "minecraft:nether_star",
+      "count": 1
+    },
+    "title": {
+      "text": "Trillionaire Table Manners"
+    },
+    "description": {
+      "text": "Hold 1,000,000,000,000 EMC. At this point the universe owes you change."
+    },
+    "x": 5,
+    "y": 3
+  },
+  "criteria": {
+    "balance": {
+      "trigger": "dissolver_enhanced:emc_balance",
+      "conditions": {
+        "min_emc": "1000000000000"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "balance"
+    ]
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "parent": "dissolver_enhanced:root",
+  "display": {
+    "icon": {
+      "id": "minecraft:gold_ingot",
+      "count": 1
+    },
+    "title": {
+      "text": "Pocket Change Alchemy"
+    },
+    "description": {
+      "text": "Hold 1,000 EMC. The dirt is starting to respect you."
+    },
+    "x": 2,
+    "y": 3
+  },
+  "criteria": {
+    "balance": {
+      "trigger": "dissolver_enhanced:emc_balance",
+      "conditions": {
+        "min_emc": "1000"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "balance"
+    ]
+  ]
+}

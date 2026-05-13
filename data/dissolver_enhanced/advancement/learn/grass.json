@@ -1,5 +1,5 @@
 {
-  "parent": "dissolver_enhanced:root",
+  "parent": "dissolver_enhanced:learn/dirt",
   "display": {
     "icon": {
       "id": "minecraft:grass_block",
@@ -11,8 +11,8 @@
     "description": {
       "translate": "advancements.dissolver_enhanced.learn.grass.description"
     },
-    "x": 2,
-    "y": 2
+    "x": 3,
+    "y": -2
   },
   "criteria": {
     "learned": {
