@@ -1,5 +1,6 @@
 package net.exohayvan.dissolver_enhanced.mixin;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,7 +22,7 @@ import net.minecraft.tags.TagManager.LoadResult;
 
 @Mixin(TagManager.class)
 public abstract class TagManagerLoaderMixin {
-    private static final HashMap<String, Integer> NEW_EMC_VALUES = new HashMap<String, Integer>();
+    private static final HashMap<String, BigInteger> NEW_EMC_VALUES = new HashMap<String, BigInteger>();
     private static final HashMap<String, List<String>> TAG_ITEMS = new HashMap<String, List<String>>();
     @Shadow private List<LoadResult<?>> registryTags = List.of();
 
@@ -71,7 +72,7 @@ public abstract class TagManagerLoaderMixin {
             return;
         }
 
-        int emcValue = EMCValues.EMC_TAG_VALUES.get(tagIdString);
+        BigInteger emcValue = EMCValues.EMC_TAG_VALUES.get(tagIdString);
         itemIds.forEach((itemId) -> {
             NEW_EMC_VALUES.put(itemId, emcValue);
         });

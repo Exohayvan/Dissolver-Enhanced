@@ -6,6 +6,7 @@ import net.exohayvan.dissolver_enhanced.config.model.ConfigEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigInteger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -97,9 +98,9 @@ class ModConfigTest {
                 isDefaults();
 
                 assertThat(VisibilityModifier.EMC_OVERRIDES.items())
-                    .containsEntry("test:case", 400)
-                    .containsEntry("minecraft:dirt", 200)
-                    .containsEntry("minecraft:cobblestone", 300);
+                    .containsEntry("test:case", BigInteger.valueOf(400))
+                    .containsEntry("minecraft:dirt", BigInteger.valueOf(200))
+                    .containsEntry("minecraft:cobblestone", BigInteger.valueOf(300));
 
                 break;
             case INVERTED:

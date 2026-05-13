@@ -1,6 +1,7 @@
 package net.exohayvan.dissolver_enhanced.event;
 
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValueUpdateMonitor;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
@@ -22,6 +23,16 @@ public class JoinEvent {
         PlayerData playerState = StateSaverAndLoader.getPlayerState(player);
         DataSender.sendPlayerData(player, playerState);
         sendPlayerDataWhenEMCValuesReady(player);
+        sendDefaultEmcUpdateMessage(player);
+    }
+
+    private static void sendDefaultEmcUpdateMessage(ServerPlayer player) {
+        if (!DefaultEmcValueUpdateMonitor.hasUpdateAvailable()) {
+            return;
+        }
+
+        DissolverEnhanced.LOGGER.info(DefaultEmcValueUpdateMonitor.UPDATE_MESSAGE);
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(DefaultEmcValueUpdateMonitor.UPDATE_MESSAGE));
     }
 
     private static void sendPlayerDataWhenEMCValuesReady(ServerPlayer playerEntity) {

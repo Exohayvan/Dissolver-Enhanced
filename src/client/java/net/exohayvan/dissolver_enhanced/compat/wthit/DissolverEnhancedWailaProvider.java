@@ -24,8 +24,8 @@ public class DissolverEnhancedWailaProvider implements IBlockComponentProvider {
         }
 
         String itemId = EMCKey.fromStack(stack);
-        int emc = EMCValues.getDisplay(itemId);
-        if (emc == 0) {
+        var emc = EMCValues.getDisplayBig(itemId);
+        if (emc.signum() == 0) {
             return;
         }
 

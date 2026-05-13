@@ -127,7 +127,7 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
     private String getMessage() {
         String CUSTOM_MSG = PlayerDataClient.MESSAGE;
         if (CUSTOM_MSG.isEmpty()) {
-            if (PlayerDataClient.EMC == 0) {
+            if (PlayerDataClient.EMC.signum() == 0) {
                 return Component.translatable("emc.empty").getString();
             }
 
@@ -136,7 +136,9 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
             return text.getString();
         }
 
-        Component text = Component.translatable(CUSTOM_MSG);
+        Component text = CUSTOM_MSG.startsWith("literal:")
+            ? Component.literal(CUSTOM_MSG.substring("literal:".length()))
+            : Component.translatable(CUSTOM_MSG);
         return text.getString();
     }
 

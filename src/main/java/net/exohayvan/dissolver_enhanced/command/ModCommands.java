@@ -7,7 +7,6 @@ import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 
 import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -139,9 +138,9 @@ public class ModCommands {
                     .executes((context) -> executeCommand(context, "debug namespace", DebugItem::namespace))
                     .then(argument("namespace", StringArgumentType.word())
                         .executes((context) -> executeCommand(context, "debug namespace", DebugItem::namespaceFiltered)))))
-            .then(createSubCommandWithPlayerArg("give", "number", IntegerArgumentType.integer(), ChangeEMC::changeEMC, ChangeEMC::changeEMCPlayer))
-            .then(createSubCommandWithPlayerArg("take", "number", IntegerArgumentType.integer(), ChangeEMC::changeEMC, ChangeEMC::changeEMCPlayer))
-            .then(createSubCommandWithPlayerArg("set", "number", IntegerArgumentType.integer(), ChangeEMC::changeEMC, ChangeEMC::changeEMCPlayer))
+            .then(createSubCommandWithPlayerArg("give", "number", StringArgumentType.word(), ChangeEMC::changeEMC, ChangeEMC::changeEMCPlayer))
+            .then(createSubCommandWithPlayerArg("take", "number", StringArgumentType.word(), ChangeEMC::changeEMC, ChangeEMC::changeEMCPlayer))
+            .then(createSubCommandWithPlayerArg("set", "number", StringArgumentType.word(), ChangeEMC::changeEMC, ChangeEMC::changeEMCPlayer))
         );
 
         // LEARNED (unlock all, learn specific items, unlearn)

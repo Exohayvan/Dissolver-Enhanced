@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.block.ModBlocks;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
+import net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValueUpdateMonitor;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.entity.ModEntities;
@@ -30,6 +31,11 @@ public class DissolverEnhanced {
 		LOGGER.info("Initializing DissolverEnhanced!");
 
 		ModConfig.init();
+		DefaultEmcValueUpdateMonitor.start(
+			ModConfig.defaultValuesFile(),
+			LOGGER::info,
+			(message, exception) -> LOGGER.warn(message, exception)
+		);
 		ModCriteria.init();
 		RecipeGenerator.init();
 

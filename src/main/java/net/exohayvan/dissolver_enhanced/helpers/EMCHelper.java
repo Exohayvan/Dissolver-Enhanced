@@ -1,5 +1,7 @@
 package net.exohayvan.dissolver_enhanced.helpers;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -19,6 +21,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
+import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
@@ -28,7 +31,7 @@ import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
 import net.minecraftforge.fml.ModList;
 
 public class EMCHelper {
-    public static boolean serverAddItem(Level world, String itemId, int addedValue) {
+    public static boolean serverAddItem(Level world, String itemId, BigInteger addedValue) {
         MinecraftServer server = world.getServer();
         
         PlayerData globalData = StateSaverAndLoader.getGlobalData(server);
@@ -38,8 +41,7 @@ public class EMCHelper {
         learnedList.add(itemId);
         StateSaverAndLoader.setGlobalLearned(server, learnedList);
 
-        int currentValue = globalData.EMC;
-        int newValue = currentValue += addedValue;
+        BigInteger newValue = EmcNumber.nonNegative(globalData.EMC).add(EmcNumber.nonNegative(addedValue));
         
         StateSaverAndLoader.setGlobalEMC(server, newValue);
 
@@ -47,32 +49,41 @@ public class EMCHelper {
     }
 
     public static void addEMCValue(Player player, int addedValue) {
+        addEMCValue(player, BigInteger.valueOf(addedValue));
+    }
+
+    public static void addEMCValue(Player player, BigInteger addedValue) {
         if (player.getServer() == null) return;
 
-        int currentValue = getEMCValue(player);
-        int newValue = currentValue += addedValue;
+        BigInteger currentValue = getEMCValue(player);
+        BigInteger newValue = currentValue.add(EmcNumber.nonNegative(addedValue));
         
         setEMCValue(player, newValue);
     }
 
     public static boolean removeEMCValue(Player player, int removedValue) {
+        return removeEMCValue(player, BigInteger.valueOf(removedValue));
+    }
+
+    public static boolean removeEMCValue(Player player, BigInteger removedValue) {
         if (player.getServer() == null) return false;
 
-        int currentValue = getEMCValue(player);
-        int newValue = currentValue -= removedValue;
+        BigInteger currentValue = getEMCValue(player);
+        BigInteger newValue = currentValue.subtract(EmcNumber.nonNegative(removedValue));
 
-        if (newValue < 0) return false;
+        if (newValue.signum() < 0) return false;
 
         setEMCValue(player, newValue);
         return true;
     }
 
-    public static int getEMCValue(Player player) {
+    public static BigInteger getEMCValue(Player player) {
         return StateSaverAndLoader.getPlayerState(player).EMC;
     }
 
-    public static void setEMCValue(Player player, int value) {
+    public static void setEMCValue(Player player, BigInteger value) {
         StateSaverAndLoader.setPlayerEMC(player, value);
+        ModCriteria.triggerEmcBalance(player, value);
     }
 
     // CHECK
@@ -87,7 +98,11 @@ public class EMCHelper {
     private static final HashMap<String, Long> MISSING_ITEM_REPORT_TIMES = new HashMap<>();
 
     private static boolean checkValidEMC(int emc, String id, Action action) {
-        if (emc == 0) {
+        return checkValidEMC(BigInteger.valueOf(emc), id, action);
+    }
+
+    private static boolean checkValidEMC(BigInteger emc, String id, Action action) {
+        if (emc == null || emc.signum() == 0) {
             DissolverEnhanced.LOGGER.info("Tried to " + action + " item, but it does not have any EMC value. ID: " + id);
             return false;
         }
@@ -95,11 +110,19 @@ public class EMCHelper {
         return true;
     }
 
+    private static BigInteger stackValue(BigInteger emcValue, int itemCount, double durabilityPercentage) {
+        BigDecimal value = new BigDecimal(EmcNumber.nonNegative(emcValue))
+            .multiply(BigDecimal.valueOf(itemCount))
+            .multiply(BigDecimal.valueOf(durabilityPercentage));
+        BigInteger rounded = value.toBigInteger();
+        return rounded.signum() > 0 ? rounded : BigInteger.ONE;
+    }
+
     // GET
 
     public static boolean getItem(Player player, ItemStack itemStack, DissolverScreenHandler handler, int items) {
         String itemId = EMCKey.fromStack(itemStack);
-        int emcValue = EMCValues.get(itemId) * items;
+        BigInteger emcValue = EMCValues.getBig(itemId).multiply(BigInteger.valueOf(items));
 
         if (!checkValidEMC(emcValue, itemId, Action.GET)) return false;
 
@@ -107,6 +130,7 @@ public class EMCHelper {
             sendMessageToClient(player, "emc.action.not_enough_short");
             return false;
         }
+        sendEmcDeltaToClient(player, emcValue.negate());
 
         // refresh block inv content
         new Thread(() -> {
@@ -120,14 +144,14 @@ public class EMCHelper {
 
     public static boolean addItem(ItemStack itemStack) {
         String itemId = EMCKey.fromStack(itemStack);
-        int emcValue = EMCValues.get(itemId);
+        BigInteger emcValue = EMCValues.getBig(itemId);
 
         return checkValidEMC(emcValue, itemId, Action.ADD);
     }
 
     public static boolean canAddItem(ItemStack itemStack, Player player) {
         String itemId = EMCKey.fromStack(itemStack);
-        int emcValue = EMCValues.get(itemId);
+        BigInteger emcValue = EMCValues.getBig(itemId);
 
         if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
             reportMissingItemValue(player, itemStack, itemId);
@@ -142,19 +166,19 @@ public class EMCHelper {
     // added from another inventory & not private EMC
     public static boolean addItem(ItemStack itemStack, Level world) {
         String itemId = EMCKey.fromStack(itemStack);
-        int emcValue = EMCValues.get(itemId);
+        BigInteger emcValue = EMCValues.getBig(itemId);
 
         if (!checkValidEMC(emcValue, itemId, Action.ADD)) return false;
 
         int itemCount = itemStack.getCount();
-        int addedEmcValue = (int)(emcValue * itemCount * ItemHelper.getDurabilityPercentage(itemStack));
+        BigInteger addedEmcValue = stackValue(emcValue, itemCount, ItemHelper.getDurabilityPercentage(itemStack));
 
         return serverAddItem(world, storageKey(itemId), addedEmcValue);
     }
 
     public static boolean addItem(ItemStack itemStack, Player player, DissolverScreenHandler handler) {
         String itemId = EMCKey.fromStack(itemStack);
-        int emcValue = EMCValues.get(itemId);
+        BigInteger emcValue = EMCValues.getBig(itemId);
 
         if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
             reportMissingItemValue(player, itemStack, itemId);
@@ -163,12 +187,13 @@ public class EMCHelper {
 
         // calculated new EMC (from DissolverInventoryInput)
         int itemCount = itemStack.getCount();
-        int addedEmcValue = (int)(emcValue * itemCount * ItemHelper.getDurabilityPercentage(itemStack));
+        BigInteger addedEmcValue = stackValue(emcValue, itemCount, ItemHelper.getDurabilityPercentage(itemStack));
 
-        learnItem(player, storageKey(itemId));
+        learnItem(player, storageKey(itemId), false);
         ModCriteria.triggerLearnedItem(player, itemId);
 
         EMCHelper.addEMCValue(player, addedEmcValue);
+        sendEmcDeltaToClient(player, addedEmcValue);
 
         // refresh block inv content
         new Thread(() -> {
@@ -183,17 +208,23 @@ public class EMCHelper {
     // LEARN
 
     public static boolean learnItem(Player player, String itemId) {
+        return learnItem(player, itemId, true);
+    }
+
+    public static boolean learnItem(Player player, String itemId, boolean sendStoredMessage) {
         List<String> learnedList = StateSaverAndLoader.getPlayerState(player).LEARNED_ITEMS;
         if (learnedList.contains(itemId)) return false;
 
         learnedList.add(itemId);
         StateSaverAndLoader.setPlayerLearned(player, learnedList);
 
-        // let blocklist update before sending message (to prevent empty message sent)
-        new Thread(() -> {
-            wait(50);
-            sendMessageToClient(player, "emc.action.stored_short");
-        }).start();
+        if (sendStoredMessage) {
+            // let blocklist update before sending message (to prevent empty message sent)
+            new Thread(() -> {
+                wait(50);
+                sendMessageToClient(player, "emc.action.stored_short");
+            }).start();
+        }
 
         return true;
     }
@@ -439,6 +470,12 @@ public class EMCHelper {
         }).start();
     }
 
+    public static void sendEmcDeltaToClient(Player player, BigInteger delta) {
+        String sign = delta.signum() >= 0 ? "+" : "-";
+        String value = EmcNumber.format(delta.abs());
+        sendMessageToClient(player, "literal:" + sign + value + " EMC");
+    }
+
     // TOOLTIP
 
     public static Component tooltipValue(String key) {
@@ -446,11 +483,12 @@ public class EMCHelper {
     }
 
     public static Component tooltipValue(String key, double reducedEmc) {
-        Integer EMC = EMCValues.getDisplay(key);
+        BigInteger EMC = EMCValues.getDisplayBig(key);
         Component text = Component.literal("");
-        if (EMC == 0) return text;
+        if (EMC.signum() == 0) return text;
 
-        return Component.translatable("item_tooltip.dissolver_enhanced.emc", (int)(EMC * reducedEmc));
+        BigInteger value = new BigDecimal(EMC).multiply(BigDecimal.valueOf(reducedEmc)).toBigInteger();
+        return Component.translatable("item_tooltip.dissolver_enhanced.emc", EmcNumber.format(value));
     }
 
     // HELPERS

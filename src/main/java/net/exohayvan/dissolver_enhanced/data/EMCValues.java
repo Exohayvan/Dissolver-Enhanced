@@ -1,16 +1,18 @@
 package net.exohayvan.dissolver_enhanced.data;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalDouble;
 import java.util.Set;
 
 import net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValues;
+import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.exohayvan.dissolver_enhanced.common.values.EmcValueSet;
+
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
@@ -22,25 +24,33 @@ import net.minecraft.world.item.Item;
 public class EMCValues {
     protected static final Set<String> CONFIG_OVERRIDDEN = new HashSet<>();
 
-    protected static final HashMap<String, Integer> EMC_VALUES = new HashMap<String, Integer>();
+    protected static final HashMap<String, BigInteger> EMC_VALUES = new HashMap<String, BigInteger>();
     private static final HashMap<String, String> EMC_SOURCES = new HashMap<String, String>();
     private static final HashMap<String, String> EMC_SOURCE_DETAILS = new HashMap<String, String>();
-    private static final HashMap<String, Integer> CLIENT_SYNC_VALUES = new HashMap<String, Integer>();
-    public static final HashMap<String, Integer> EMC_TAG_VALUES = new HashMap<String, Integer>();
+    private static final HashMap<String, BigInteger> CLIENT_SYNC_VALUES = new HashMap<String, BigInteger>();
+    public static final HashMap<String, BigInteger> EMC_TAG_VALUES = new HashMap<String, BigInteger>();
     private static final HashMap<String, List<String>> TAG_ITEMS = new HashMap<String, List<String>>();
 
     public static Integer get(String key) {
-        int emc = EMC_VALUES.getOrDefault(key, 0);
-        if (emc > 0 || !EMCKey.isComponentKey(key)) return emc;
+        return EmcNumber.toIntSaturated(getBig(key));
+    }
 
-        return EMC_VALUES.getOrDefault(EMCKey.baseItemId(key), 0);
+    public static BigInteger getBig(String key) {
+        BigInteger emc = EMC_VALUES.getOrDefault(key, BigInteger.ZERO);
+        if (emc.signum() > 0 || !EMCKey.isComponentKey(key)) return emc;
+
+        return EMC_VALUES.getOrDefault(EMCKey.baseItemId(key), BigInteger.ZERO);
     }
 
     public static Integer getDisplay(String key) {
-        int emc = CLIENT_SYNC_VALUES.getOrDefault(key, 0);
-        if (emc > 0 || !EMCKey.isComponentKey(key)) return CLIENT_SYNC_VALUES.getOrDefault(key, get(key));
+        return EmcNumber.toIntSaturated(getDisplayBig(key));
+    }
 
-        return CLIENT_SYNC_VALUES.getOrDefault(EMCKey.baseItemId(key), get(key));
+    public static BigInteger getDisplayBig(String key) {
+        BigInteger emc = CLIENT_SYNC_VALUES.getOrDefault(key, BigInteger.ZERO);
+        if (emc.signum() > 0 || !EMCKey.isComponentKey(key)) return CLIENT_SYNC_VALUES.getOrDefault(key, getBig(key));
+
+        return CLIENT_SYNC_VALUES.getOrDefault(EMCKey.baseItemId(key), getBig(key));
     }
 
     public static String getSource(String key) {
@@ -80,11 +90,11 @@ public class EMCValues {
         for (Map.Entry<String, List<String>> recipe : RECIPES.entrySet()) {
             String resultId = recipe.getKey().split("__")[0];
             if (namespace != null && !resultId.startsWith(namespace + ":")) continue;
-            if (get(resultId) > 0) continue;
+            if (getBig(resultId).signum() > 0) continue;
 
             Set<String> missingIngredients = new HashSet<>();
             for (String ingredient : recipe.getValue()) {
-                if (getRecipeIngredientValue(ingredient) == 0) {
+                if (getRecipeIngredientValue(ingredient).signum() == 0) {
                     missingIngredients.add(ingredient);
                 }
             }
@@ -107,15 +117,15 @@ public class EMCValues {
         return unlockInfos;
     }
 
-    private static int getRecipeIngredientValue(String itemId) {
-        int emc = getIngredientEMC(itemId);
-        if (emc > 0) return emc;
+    private static BigInteger getRecipeIngredientValue(String itemId) {
+        BigInteger emc = getIngredientEMC(itemId);
+        if (emc.signum() > 0) return emc;
 
         if (RECIPE_ITEM_VALUES.containsKey(itemId)) {
             return getAverage(RECIPE_ITEM_VALUES.get(itemId));
         }
 
-        return 0;
+        return BigInteger.ZERO;
     }
 
     private static String getMissingRecipeIngredientReason(String itemId) {
@@ -129,7 +139,7 @@ public class EMCValues {
             boolean hasKnownAlternative = false;
             boolean hasBlockedAlternative = false;
             for (String tagItem : tagItems) {
-                if (getRecipeIngredientValue(tagItem) > 0) {
+                if (getRecipeIngredientValue(tagItem).signum() > 0) {
                     hasKnownAlternative = true;
                 } else {
                     hasBlockedAlternative = true;
@@ -157,11 +167,11 @@ public class EMCValues {
             String resultId = recipe.getKey().split("__")[0];
             if (!resultId.equals(itemId)) continue;
 
-            int emc = combineEMC(recipe.getValue());
+            BigInteger emc = combineEMC(recipe.getValue());
             lines.add("Recipe: " + RECIPE_SOURCES.getOrDefault(recipe.getKey(), recipe.getKey()));
             lines.add("Key: " + recipe.getKey());
             lines.add("Ingredients: " + formatIngredients(recipe.getValue()));
-            lines.add("Ingredient EMC: " + (emc > 0 ? emc : "Blocked"));
+            lines.add("Ingredient EMC: " + (emc.signum() > 0 ? emc : "Blocked"));
             lines.add("Raw JSON:");
             lines.add(RECIPE_JSON.getOrDefault(recipe.getKey(), "Unavailable"));
             lines.add("");
@@ -194,7 +204,7 @@ public class EMCValues {
 
     public static List<String> getSyncValues() {
         List<String> values = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : EMC_VALUES.entrySet()) {
+        for (Map.Entry<String, BigInteger> entry : EMC_VALUES.entrySet()) {
             values.add(entry.getKey() + "=" + entry.getValue());
         }
 
@@ -215,9 +225,9 @@ public class EMCValues {
             if (splitIndex <= 0 || splitIndex >= value.length() - 1) continue;
 
             String itemId = value.substring(0, splitIndex);
-            int emc;
+            BigInteger emc;
             try {
-                emc = Integer.parseInt(value.substring(splitIndex + 1));
+                emc = EmcNumber.parse(value.substring(splitIndex + 1));
             } catch (NumberFormatException ignored) {
                 continue;
             }
@@ -250,7 +260,7 @@ public class EMCValues {
 
     private static void applyDefaultValues(EmcValueSet values) {
         values.items().forEach((itemId, value) -> {
-            if (value != null && value > 0) {
+            if (value != null && value.signum() > 0) {
                 setEMCUnchecked(itemId, value);
             } else {
                 removeEMC(itemId);
@@ -258,7 +268,7 @@ public class EMCValues {
         });
 
         values.tags().forEach((tagId, value) -> {
-            if (value != null && value > 0) {
+            if (value != null && value.signum() > 0) {
                 EMC_TAG_VALUES.put(tagId, value);
             } else {
                 EMC_TAG_VALUES.remove(tagId);
@@ -272,9 +282,9 @@ public class EMCValues {
             return;
         }
 
-        for (Map.Entry<String, Integer> emcOverride : ModConfig.EMC_OVERRIDES.items().entrySet()) {
+        for (Map.Entry<String, BigInteger> emcOverride : ModConfig.EMC_OVERRIDES.items().entrySet()) {
             String blockName = emcOverride.getKey();
-            Integer value = emcOverride.getValue();
+            BigInteger value = emcOverride.getValue();
 
             if (blockName == null) {
                 continue;
@@ -286,7 +296,7 @@ public class EMCValues {
             }
 
             CONFIG_OVERRIDDEN.add(blockName);
-            if (value != null && value > 0) {
+            if (value != null && value.signum() > 0) {
                 DissolverEnhanced.LOGGER.debug("Setting EMC of {} to {}", blockName, value);
                 setEMCUnchecked(blockName, value, "EMC Override");
             } else {
@@ -301,7 +311,7 @@ public class EMCValues {
 
     private static void removeEMC(String blockName) {
         //remove if defined
-        Integer rez = EMC_VALUES.remove(blockName);
+        BigInteger rez = EMC_VALUES.remove(blockName);
         if (rez != null) {
             DissolverEnhanced.LOGGER.info("Removing EMC value from {}", blockName);
         }
@@ -311,14 +321,14 @@ public class EMCValues {
 
     private static void setEMCUnchecked(
         String blockName,
-        Integer value
+        BigInteger value
     ) {
         setEMCUnchecked(blockName, value, "Base Value");
     }
 
     private static void setEMCUnchecked(
         String blockName,
-        Integer value,
+        BigInteger value,
         String source
     ) {
         setEMCUnchecked(blockName, value, source, "None");
@@ -326,7 +336,7 @@ public class EMCValues {
 
     private static void setEMCUnchecked(
         String blockName,
-        Integer value,
+        BigInteger value,
         String source,
         String sourceDetail
     ) {
@@ -340,6 +350,13 @@ public class EMCValues {
         String blockName,
         int emcValue
     ) {
+        setEMC(blockName, BigInteger.valueOf(emcValue));
+    }
+
+    protected static void setEMC(
+        String blockName,
+        BigInteger emcValue
+    ) {
         if(CONFIG_OVERRIDDEN != null && CONFIG_OVERRIDDEN.contains(blockName)) {
             //config is locked
             return;
@@ -352,6 +369,14 @@ public class EMCValues {
     protected static void setEMC(
         String blockName,
         int emcValue,
+        String source
+    ) {
+        setEMC(blockName, BigInteger.valueOf(emcValue), source);
+    }
+
+    protected static void setEMC(
+        String blockName,
+        BigInteger emcValue,
         String source
     ) {
         if(CONFIG_OVERRIDDEN != null && CONFIG_OVERRIDDEN.contains(blockName)) {
@@ -368,6 +393,15 @@ public class EMCValues {
         String source,
         String sourceDetail
     ) {
+        setEMC(blockName, BigInteger.valueOf(emcValue), source, sourceDetail);
+    }
+
+    protected static void setEMC(
+        String blockName,
+        BigInteger emcValue,
+        String source,
+        String sourceDetail
+    ) {
         if(CONFIG_OVERRIDDEN != null && CONFIG_OVERRIDDEN.contains(blockName)) {
             //config is locked
             return;
@@ -376,18 +410,18 @@ public class EMCValues {
         setEMCUnchecked(blockName, emcValue, source, sourceDetail);
     }
 
-    protected static void setEMC(HashMap<String, Integer> NEW_EMC_VALUES) {
+    protected static void setEMC(HashMap<String, BigInteger> NEW_EMC_VALUES) {
         if (NEW_EMC_VALUES == null || NEW_EMC_VALUES.isEmpty()) {
             return;
         }
-        for (Map.Entry<String, Integer> entry : NEW_EMC_VALUES.entrySet()) {
+        for (Map.Entry<String, BigInteger> entry : NEW_EMC_VALUES.entrySet()) {
             setEMC(entry.getKey(), entry.getValue(), "Tag");
         }
     }
 
     private static boolean tags_loaded = false;
 
-    public static void tagsLoaded(HashMap<String, Integer> NEW_EMC_VALUES) {
+    public static void tagsLoaded(HashMap<String, BigInteger> NEW_EMC_VALUES) {
         setEMC(NEW_EMC_VALUES);
         inferTagEMCValues();
         tags_loaded = true;
@@ -396,7 +430,7 @@ public class EMCValues {
     }
 
     public static void tagsLoaded(
-        HashMap<String, Integer> NEW_EMC_VALUES,
+        HashMap<String, BigInteger> NEW_EMC_VALUES,
         HashMap<String, List<String>> newTagItems
     ) {
         if (newTagItems != null && !newTagItems.isEmpty()) {
@@ -415,7 +449,7 @@ public class EMCValues {
                 String tagId = tag.getKey();
                 if (EMC_TAG_VALUES.containsKey(tagId)) continue;
 
-                Integer tagEMC = getEquivalentTagEMC(tag.getValue());
+                BigInteger tagEMC = getEquivalentTagEMC(tag.getValue());
                 if (tagEMC == null) continue;
 
                 EMC_TAG_VALUES.put(tagId, tagEMC);
@@ -424,13 +458,13 @@ public class EMCValues {
         }
     }
 
-    private static Integer getEquivalentTagEMC(List<String> itemIds) {
+    private static BigInteger getEquivalentTagEMC(List<String> itemIds) {
         if (itemIds == null || itemIds.isEmpty()) return null;
 
-        Set<Integer> knownValues = new HashSet<>();
+        Set<BigInteger> knownValues = new HashSet<>();
         for (String itemId : itemIds) {
-            int emc = getIngredientEMC(itemId);
-            if (emc == 0) return null;
+            BigInteger emc = getIngredientEMC(itemId);
+            if (emc.signum() == 0) return null;
             knownValues.add(emc);
         }
 
@@ -522,7 +556,7 @@ public class EMCValues {
         } else {
             List<String> HAS_MULTIPLE = new ArrayList<>();
             RECIPE_ITEM_VALUES.forEach((resultId, emcValues) -> {
-                int emcValue = getAverage(emcValues);
+                BigInteger emcValue = getAverage(emcValues);
                 // mostly stonecutter items!
                 boolean ignored = resultId.contains("dye") || resultId.contains("copper") ||
                     resultId.contains("painting");
@@ -535,7 +569,7 @@ public class EMCValues {
 
                 // add dynamic
                 if (resultId.contains("concrete_powder")) {
-                    setEMC(resultId.substring(0, resultId.indexOf("_powder")), emcValue + 20, "Recipe");
+                    setEMC(resultId.substring(0, resultId.indexOf("_powder")), emcValue.add(BigInteger.valueOf(20)), "Recipe");
                 }
             });
 
@@ -588,23 +622,24 @@ public class EMCValues {
         return true;
     }
 
-    private static int getAverage(List<Integer> list) {
-        OptionalDouble average = list
-            .stream()
-            .mapToDouble(a -> a)
-            .average();
+    private static BigInteger getAverage(List<BigInteger> list) {
+        if (list == null || list.isEmpty()) return BigInteger.ZERO;
 
-        return (int) (average.isPresent() ? average.getAsDouble() : 0);
+        BigInteger total = BigInteger.ZERO;
+        for (BigInteger value : list) {
+            total = total.add(EmcNumber.nonNegative(value));
+        }
+        return total.divide(BigInteger.valueOf(list.size()));
     }
 
     private static void inferEquivalentTagValues() {
         for (Map.Entry<String, List<String>> tag : TAG_ITEMS.entrySet()) {
             String tagId = tag.getKey();
 
-            Set<Integer> knownValues = new HashSet<>();
+            Set<BigInteger> knownValues = new HashSet<>();
             for (String itemId : tag.getValue()) {
-                int emc = get(itemId);
-                if (emc > 0) {
+                BigInteger emc = getBig(itemId);
+                if (emc.signum() > 0) {
                     knownValues.add(emc);
                 }
             }
@@ -616,9 +651,9 @@ public class EMCValues {
                 continue;
             }
 
-            int equivalentEMC = knownValues.iterator().next();
+            BigInteger equivalentEMC = knownValues.iterator().next();
             for (String itemId : tag.getValue()) {
-                if (get(itemId) == 0 && !recipeKeySearch(itemId)) {
+                if (getBig(itemId).signum() == 0 && !recipeKeySearch(itemId)) {
                     setEMC(itemId, equivalentEMC, "Equivalent Tag #" + tagId);
                 }
             }
@@ -627,7 +662,7 @@ public class EMCValues {
 
     private static final List<String> COMPLETED = new ArrayList<String>();
     private static final List<String> MISSING = new ArrayList<String>();
-    private static final HashMap<String, List<Integer>> RECIPE_ITEM_VALUES = new HashMap<String, List<Integer>>();
+    private static final HashMap<String, List<BigInteger>> RECIPE_ITEM_VALUES = new HashMap<String, List<BigInteger>>();
     private static final HashMap<String, List<String>> RECIPE_ITEM_SOURCE_DETAILS = new HashMap<String, List<String>>();
     private static final HashMap<String, List<String>> PARENTS = new HashMap<String, List<String>>();
 
@@ -648,11 +683,11 @@ public class EMCValues {
         String[] parts = id.split("__");
         String resultId = parts[0];
         int resultCount = Integer.parseInt(parts[1]);
-        int extraEMC = Integer.parseInt(parts[2]); // cooking
+        BigInteger extraEMC = EmcNumber.parse(parts[2]); // cooking
 
         List<String> ingredients = recipe.getValue();
-        int totalInputEMC = combineEMC(ingredients);
-        if (totalInputEMC == 0) {
+        BigInteger totalInputEMC = combineEMC(ingredients);
+        if (totalInputEMC.signum() == 0) {
             if (checkReverseRecipe(id, resultId, resultCount, extraEMC, ingredients)) {
                 COMPLETED.add(id);
             }
@@ -671,13 +706,13 @@ public class EMCValues {
             if (!RECIPE_ITEM_VALUES.containsKey(resultId) || resultId.contains("copper")) {return;}
 
             // check if emc values are different
-            int previousEMC = RECIPE_ITEM_VALUES
+            BigInteger previousEMC = RECIPE_ITEM_VALUES
                 .get(resultId)
                 .get(0);
-            int newEMC = totalInputEMC / resultCount + extraEMC;
+            BigInteger newEMC = totalInputEMC.divide(BigInteger.valueOf(resultCount)).add(extraEMC);
             // round up to 1 if below 1
-            if (newEMC < 1) {newEMC = 1;}
-            if (previousEMC == newEMC) {return;}
+            if (newEMC.signum() < 1) {newEMC = BigInteger.ONE;}
+            if (previousEMC.equals(newEMC)) {return;}
 
             childParentUnmatchingEMC++;
             return;
@@ -689,12 +724,12 @@ public class EMCValues {
             PARENTS.put(parentId, children);
         }
 
-        List<Integer> values = new ArrayList<>();
+        List<BigInteger> values = new ArrayList<>();
         if (RECIPE_ITEM_VALUES.containsKey(resultId)) {values = RECIPE_ITEM_VALUES.get(resultId);}
 
-        totalInputEMC = totalInputEMC / resultCount + extraEMC; // divide value on output item count
+        totalInputEMC = totalInputEMC.divide(BigInteger.valueOf(resultCount)).add(extraEMC); // divide value on output item count
         // round up to 1 if below 1
-        if (totalInputEMC < 1) {totalInputEMC = 1;}
+        if (totalInputEMC.signum() < 1) {totalInputEMC = BigInteger.ONE;}
 
         if (values.contains(totalInputEMC)) {
             return; // same value
@@ -729,24 +764,25 @@ public class EMCValues {
         String recipeKey,
         String resultId,
         int resultCount,
-        int extraEMC,
+        BigInteger extraEMC,
         List<String> ingredients
     ) {
-        if (extraEMC != 0 || ingredients.isEmpty()) return false;
+        if (extraEMC.signum() != 0 || ingredients.isEmpty()) return false;
 
         String unknownIngredient = ingredients.get(0);
         for (String ingredient : ingredients) {
-            if (!ingredient.equals(unknownIngredient) || get(ingredient) > 0) {
+            if (!ingredient.equals(unknownIngredient) || getBig(ingredient).signum() > 0) {
                 return false;
             }
         }
 
-        int resultEMC = getResultEMC(resultId);
-        if (resultEMC == 0) return false;
+        BigInteger resultEMC = getResultEMC(resultId);
+        if (resultEMC.signum() == 0) return false;
 
-        long totalResultEMC = (long) resultEMC * resultCount;
-        int ingredientEMC = (int) ((totalResultEMC + ingredients.size() - 1) / ingredients.size());
-        if (ingredientEMC < 1) ingredientEMC = 1;
+        BigInteger totalResultEMC = resultEMC.multiply(BigInteger.valueOf(resultCount));
+        BigInteger divisor = BigInteger.valueOf(ingredients.size());
+        BigInteger ingredientEMC = totalResultEMC.add(divisor).subtract(BigInteger.ONE).divide(divisor);
+        if (ingredientEMC.signum() < 1) ingredientEMC = BigInteger.ONE;
 
         setEMC(
             unknownIngredient,
@@ -757,24 +793,24 @@ public class EMCValues {
         return true;
     }
 
-    private static int getResultEMC(String resultId) {
-        int resultEMC = get(resultId);
-        if (resultEMC > 0) return resultEMC;
+    private static BigInteger getResultEMC(String resultId) {
+        BigInteger resultEMC = getBig(resultId);
+        if (resultEMC.signum() > 0) return resultEMC;
 
         if (RECIPE_ITEM_VALUES.containsKey(resultId)) {
             return getAverage(RECIPE_ITEM_VALUES.get(resultId));
         }
 
-        return 0;
+        return BigInteger.ZERO;
     }
 
     private static void addRecipeSourceDetail(
         String resultId,
         String recipeKey,
-        int emcValue,
+        BigInteger emcValue,
         List<String> ingredients,
         int resultCount,
-        int extraEMC
+        BigInteger extraEMC
     ) {
         List<String> sourceDetails = new ArrayList<>();
         if (RECIPE_ITEM_SOURCE_DETAILS.containsKey(resultId)) {
@@ -802,12 +838,12 @@ public class EMCValues {
         String resultId,
         int resultCount,
         List<String> ingredients,
-        int emcValue,
-        int extraEMC
+        BigInteger emcValue,
+        BigInteger extraEMC
     ) {
         return "Recipe " + getRecipeSource(recipeKey) + ": " + formatIngredients(ingredients) + " -> " +
             resultCount + "x " + resultId + " = " + emcValue + " EMC" +
-            (extraEMC > 0 ? " (+" + extraEMC + " cooking)" : "");
+            (extraEMC.signum() > 0 ? " (+" + extraEMC + " cooking)" : "");
     }
 
     private static String formatReverseRecipeSourceDetail(
@@ -815,7 +851,7 @@ public class EMCValues {
         String resultId,
         int resultCount,
         List<String> ingredients,
-        int emcValue
+        BigInteger emcValue
     ) {
         return "Reverse recipe " + getRecipeSource(recipeKey) + ": " + formatIngredients(ingredients) + " -> " +
             resultCount + "x " + resultId + " = " + emcValue + " EMC each";
@@ -836,50 +872,50 @@ public class EMCValues {
         return String.join(", ", formatted);
     }
 
-    private static int combineEMC(List<String> itemIds) {
-        int totalEmcValue = 0;
+    private static BigInteger combineEMC(List<String> itemIds) {
+        BigInteger totalEmcValue = BigInteger.ZERO;
 
         for (String itemId : itemIds) {
-            int emcValue = getIngredientEMC(itemId);
-            if (emcValue == 0) {
+            BigInteger emcValue = getIngredientEMC(itemId);
+            if (emcValue.signum() == 0) {
                 // could not get value for all blocks
                 if (!RECIPE_ITEM_VALUES.containsKey(itemId)) {
                     if (!recipeKeySearch(itemId) && !MISSING.contains(itemId)) {MISSING.add(itemId);}
-                    return 0;
+                    return BigInteger.ZERO;
                 }
 
                 if (MISSING.contains(itemId)) {MISSING.remove(itemId);}
                 emcValue = getAverage(RECIPE_ITEM_VALUES.get(itemId));
             }
 
-            totalEmcValue += emcValue;
+            totalEmcValue = totalEmcValue.add(emcValue);
         }
 
         return totalEmcValue;
     }
 
-    private static int getIngredientEMC(String itemId) {
+    private static BigInteger getIngredientEMC(String itemId) {
         if (itemId.startsWith("#")) {
             String tagId = itemId.substring(1);
-            int tagEMC = EMC_TAG_VALUES.getOrDefault(tagId, 0);
-            if (tagEMC > 0) return tagEMC;
+            BigInteger tagEMC = EMC_TAG_VALUES.getOrDefault(tagId, BigInteger.ZERO);
+            if (tagEMC.signum() > 0) return tagEMC;
 
-            Integer inferredEMC = getEquivalentTagIngredientEMC(TAG_ITEMS.get(tagId));
-            return inferredEMC == null ? 0 : inferredEMC;
+            BigInteger inferredEMC = getEquivalentTagIngredientEMC(TAG_ITEMS.get(tagId));
+            return inferredEMC == null ? BigInteger.ZERO : inferredEMC;
         }
 
-        return get(itemId);
+        return getBig(itemId);
     }
 
-    private static Integer getEquivalentTagIngredientEMC(List<String> itemIds) {
+    private static BigInteger getEquivalentTagIngredientEMC(List<String> itemIds) {
         if (itemIds == null || itemIds.isEmpty()) {
             return null;
         }
 
-        Set<Integer> knownValues = new HashSet<>();
+        Set<BigInteger> knownValues = new HashSet<>();
         for (String itemId : itemIds) {
-            int emc = getResultEMC(itemId);
-            if (emc > 0) {
+            BigInteger emc = getResultEMC(itemId);
+            if (emc.signum() > 0) {
                 knownValues.add(emc);
             }
         }
