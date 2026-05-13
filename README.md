@@ -1,45 +1,73 @@
 # Dissolver Enhanced
 
-Dissolver Enhanced is a Fabric mod forked from [Dissolver / VanillaEMC](https://github.com/vassbo/Dissolver). The original mod adds a Dissolver block that lets players convert items into EMC, then spend that EMC to recreate stored items.
+Dissolver Enhanced is a multi-loader fork of [Dissolver / VanillaEMC](https://github.com/vassbo/Dissolver). It keeps the simple ProjectE-style loop: convert items into EMC, learn them, then spend EMC to recreate learned items.
 
-This fork is currently early in development. The goal is to keep the simple ProjectE-style transmutation feel while improving balance, compatibility, admin controls, and support for item variants that the original mod does not value well yet.
+This fork is still in active development. The current focus is shared EMC value logic, better recipe and tag handling, cleaner player data, and new machine flows that can be carried across Fabric and Forge builds.
 
-## Status
+## Versions
 
-- Minecraft: `1.21`
-- Mod loader: Fabric
-- Required dependency: [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api)
-- Development state: work in progress
-- Modpacks: allowed
+| Minecraft | Loader | Status | Notes |
+| --- | --- | --- | --- |
+| `1.21.1` | Fabric | Released, with beta builds available | Main playable build line. New features usually start here before being ported. |
+| `26.1.2` | Fabric | Beta builds | Active compatibility branch for the newer Minecraft/Fabric API stack. Expect UI and mapping fixes while APIs settle. |
+| `1.20.1` | Forge | Alpha builds | Early Forge port. Use for testing only until parity work is finished. |
 
-## Roadmap
+## Project Layout
 
-Use this table to track what is finished, what is being worked on, and what is still planned.
+This repository is split into worktrees/branches by target platform.
 
-| Status | Area | Plan |
-| --- | --- | --- |
-| Planned | EMC value command | Add a permission-gated command for changing the EMC value of an item, such as `/emc value {amount}` while holding or targeting an item. |
-| Planned | Permissions | Make admin commands respect server permissions so normal players cannot change EMC values or other protected settings. |
-| Planned | Better mod compatibility | Improve how EMC values are calculated for modded items instead of relying only on simple crafting recipes. |
-| Planned | World generation value logic | Estimate rarity from world generation data, including ores, block distribution, dimensions, biome restrictions, and generation frequency. |
-| Planned | Loot table value logic | Use loot tables to better understand items that come from chests, mobs, fishing, structures, archaeology, or other non-crafting sources. |
-| Planned | Variant item values | Add proper EMC handling for items with important data, including enchanted books, potions, tipped arrows, and similar item variants. |
-| Planned | Distant Horizons compatibility | Investigate and fix the known error that happens when Dissolver is used with Distant Horizons. |
-| Planned | Config cleanup | Make custom values and balance settings easier to read, edit, and maintain. |
-| Planned | Documentation | Keep this README updated as features move from planned to done. |
-
-## Planned Admin Commands
-
-These commands are planned for Dissolver Enhanced and may change during development.
-
-| Command | Purpose |
+| Folder | Purpose |
 | --- | --- |
-| `/emc value {amount}` | Set the EMC value for the item being held or selected. Requires permission. |
-| `/emc value get` | Show the EMC value for the item being held or selected. |
-| `/emc value clear` | Remove a custom EMC override and let the mod calculate the value again. Requires permission. |
-| `/emc reload` | Reload EMC config and custom values without restarting the server. Requires permission. |
+| `Common` | Shared EMC values, reusable machine rules, and cross-loader Java logic. |
+| `Fabric-1.21.1` | Fabric build for Minecraft `1.21.1`. |
+| `Fabric-26.1.2` | Fabric beta build for Minecraft `26.1.2`. |
+| `Forge-1.20.1` | Forge alpha build for Minecraft `1.20.1`. |
 
-The original commands from Dissolver are still expected to be supported unless this fork changes them intentionally:
+Common is not a complete mod by itself. Loader projects include it so shared logic can stay consistent across versions.
+
+## Current Features
+
+- Dissolver block for learning items, storing EMC, and recreating learned items.
+- Global or private EMC storage depending on config.
+- Crystal Frame item for crafting and remote Dissolver access.
+- EMC tooltip support.
+- WTHIT integration for showing EMC and learned state where supported.
+- Shared default EMC values in `Common/emc-values/defaults.yaml`.
+- Recipe and item tag based EMC calculation improvements.
+- Condenser WIP machine for converting items into EMC Orbs.
+- EMC Orb item that stores EMC metadata and can feed value back into the Dissolver.
+- Materializer WIP machine for converting EMC input toward target output items.
+- Shared machine helper logic in Common, including condenser/materializer value helpers and conversion timing helpers.
+
+## Stability
+
+`1.21.1` is the most stable line. The `26.1.2` branch is beta quality and may need fixes as Minecraft and Fabric internals change. The `1.20.1` Forge branch is alpha quality and may lag behind Fabric features.
+
+Modpacks are allowed, but beta and alpha builds should be tested before being added to a pack intended for regular play.
+
+## How It Works
+
+Each item has an EMC value. Some values are fixed in defaults or config overrides, while others are calculated from recipes and known tags. Players add items to the Dissolver to learn them, then spend stored EMC to create learned items later.
+
+For example, if dirt is worth `1` EMC and a diamond is worth `4200` EMC, a player needs `4200` EMC to create one diamond. The same system lets players dissolve higher-value items back into stored EMC.
+
+## Machines
+
+### Dissolver
+
+The Dissolver is the main block. It learns items, stores EMC, and lets players create learned items from stored EMC. Its data can be shared globally or made private per player depending on config.
+
+### Condenser WIP
+
+The Condenser converts input items into EMC Orbs. Conversion time is based on the EMC value of the input item. EMC Orbs can also be put back into the Condenser to combine their stored values.
+
+### Materializer WIP
+
+The Materializer is the reverse-style machine. It accepts an item target, EMC input items, and an upgrade core slot reserved for later. Input value builds up until enough EMC is stored to output the target item.
+
+## Commands
+
+Inherited commands from Dissolver are expected to remain available unless intentionally changed:
 
 - `/emc`: get player EMC
 - `/emc list`: list all players and their EMC
@@ -52,34 +80,55 @@ The original commands from Dissolver are still expected to be supported unless t
 - `/emcmemory remove {item}`: remove a specific stored item
 - `/opendissolver`: open the Dissolver screen if a block is within range
 
+Planned admin command improvements:
+
+| Command | Purpose |
+| --- | --- |
+| `/emc value {amount}` | Set the EMC value for the held or selected item. |
+| `/emc value get` | Show the EMC value for the held or selected item. |
+| `/emc value clear` | Remove a custom EMC override and let the mod calculate the value again. |
+| `/emc reload` | Reload EMC config and custom values without restarting the server. |
+
+## Config
+
+Current inherited config options:
+
+- `emc_on_hud=false|true`: display current EMC on the HUD
+- `private_emc=false|true`: give each player their own EMC storage
+- `creative_items=false|true`: allow creative-only items to have EMC
+- `difficulty=easy|normal|hard`: change the Dissolver crafting recipe
+- `mode=default|skyblock`: change some EMC values for different play styles
+- `emc:{id}={number}`: set a custom EMC value for an item, for example `emc:minecraft:dirt=50`
+
+These may be reorganized as custom value and compatibility systems mature.
+
 ## Compatibility Goals
 
-Dissolver Enhanced should eventually understand more than basic crafting recipes. The plan is to make EMC values smarter by looking at multiple sources:
+Dissolver Enhanced should eventually understand more than basic crafting recipes. Planned value sources include:
 
 - Crafting, smelting, blasting, smoking, stonecutting, and other recipes
+- Item and block tags
 - Ore and block world generation
 - Structure, chest, mob, fishing, and archaeology loot tables
 - Dimension and biome restrictions
 - Modded blocks and items
-- Items with components or NBT-like data, such as enchantments, potion effects, and tipped arrow effects
+- Item variants with components or NBT-like data, such as enchantments, potion effects, and tipped arrows
 
-This should help modpacks get usable EMC values with less manual config work.
+## Roadmap
 
-## How It Works
-
-Each item has an EMC value. Some values may be fixed manually, while others are calculated from recipes or other data. Players add items to the Dissolver to learn them, then spend stored EMC to create learned items later.
-
-For example, if dirt is worth `1` EMC and a diamond is worth `4200` EMC, a player would need `4200` EMC to create one diamond. The same system also lets players dissolve higher-value items back into EMC.
-
-## The Dissolver
-
-The Dissolver is the main block. It stores learned items and manages EMC conversion. Its stored data works globally in the world, similar to an Ender Chest, and can be shared between players or made private depending on config.
-
-The block can be broken with a stone pickaxe or better.
-
-## The Crystal Frame
-
-The Crystal Frame is used to craft the Dissolver. It can also remotely access the Dissolver inventory when the player is within range of a Dissolver block.
+| Status | Area | Plan |
+| --- | --- | --- |
+| In progress | Common logic | Keep reusable EMC value and machine rules in Common for Fabric/Forge parity. |
+| In progress | `26.1.2` Fabric | Stabilize UI, recipes, item registration, mixins, and player-data syncing. |
+| In progress | Forge `1.20.1` | Continue alpha port and loader-specific wrappers. |
+| Planned | Admin commands | Add permission-gated EMC value override and reload commands. |
+| Planned | Permissions | Make admin commands respect server permissions. |
+| Planned | Better mod compatibility | Improve values for modded items beyond simple crafting recipes. |
+| Planned | World generation value logic | Estimate rarity from ore/block generation data. |
+| Planned | Loot table value logic | Account for chest, mob, fishing, structure, and archaeology loot. |
+| Planned | Variant item values | Handle enchanted books, potions, tipped arrows, and other data-driven variants. |
+| Planned | Config cleanup | Make custom values and balance settings easier to edit. |
+| Planned | Documentation | Keep docs current as features move between alpha, beta, and release builds. |
 
 ## Screenshots
 
@@ -103,19 +152,6 @@ Normal difficulty recipe:
 Easy difficulty recipe:
 
 ![Easy difficulty recipe](https://i.imgur.com/w8UpOF9.png)
-
-## Config
-
-Current inherited config options from Dissolver:
-
-- `emc_on_hud=false|true`: display current EMC on the HUD
-- `private_emc=false|true`: give each player their own EMC storage
-- `creative_items=false|true`: allow creative-only items to have EMC
-- `difficulty=easy|normal|hard`: change the Dissolver crafting recipe
-- `mode=default|skyblock`: change some EMC values for different play styles
-- `emc:{id}={number}`: set a custom EMC value for an item, for example `emc:minecraft:dirt=50`
-
-These may be reorganized as Dissolver Enhanced adds better custom value and compatibility systems.
 
 ## Credits
 
