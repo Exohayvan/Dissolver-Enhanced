@@ -89,6 +89,16 @@ Planned admin command improvements:
 | `/emc value clear` | Remove a custom EMC override and let the mod calculate the value again. |
 | `/emc reload` | Reload EMC config and custom values without restarting the server. |
 
+Debug commands are also available for pack makers and development builds. They require operator/admin permission and may write report files into the server's `debug` folder.
+
+| Command | Purpose |
+| --- | --- |
+| `/emc debug` | Show a global EMC coverage summary, including total items, items with EMC, items without EMC, top missing tags, and recipe bottlenecks. |
+| `/emc debug item` | Debug the item currently held by the command source, including its EMC key, value source, tags, and recipe diagnostics. |
+| `/emc debug recipe` | Write detailed recipe diagnostics for the held item. |
+| `/emc debug namespace` | Show EMC coverage grouped by namespace/mod id. |
+| `/emc debug namespace {namespace}` | Show EMC coverage and missing-value diagnostics for one namespace/mod id. |
+
 ## Config
 
 Current inherited config options:
