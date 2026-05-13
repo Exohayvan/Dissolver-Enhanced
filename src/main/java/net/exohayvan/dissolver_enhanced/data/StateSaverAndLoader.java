@@ -1,6 +1,7 @@
 package net.exohayvan.dissolver_enhanced.data;
 
 import java.util.ArrayList;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -16,6 +17,7 @@ import net.minecraft.world.PersistentStateManager;
 import net.minecraft.world.World;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
+import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.migration.LegacyNamespaceMigration;
 
@@ -26,7 +28,8 @@ public class StateSaverAndLoader extends PersistentState {
 
     private static NbtCompound storeData(NbtCompound playerNbt, PlayerData playerData) {
         if (playerData.NAME != "") playerNbt.putString("NAME", playerData.NAME);
-        playerNbt.putInt("EMC", playerData.EMC);
+        playerNbt.putString("EMC_BIG", EmcNumber.nonNegative(playerData.EMC).toString());
+        playerNbt.putInt("EMC", EmcNumber.toIntSaturated(playerData.EMC));
         playerNbt = storeList(playerNbt, "LEARNED_ITEMS", playerData.LEARNED_ITEMS);
 
         return playerNbt;
@@ -34,10 +37,18 @@ public class StateSaverAndLoader extends PersistentState {
 
     private static PlayerData getData(NbtCompound playerNbt, PlayerData playerData) {
         playerData.NAME = playerNbt.getString("NAME");
-        playerData.EMC = playerNbt.getInt("EMC");
+        playerData.EMC = loadEmc(playerNbt);
         playerData.LEARNED_ITEMS = migrateLearnedItemIds(getList(playerNbt, "LEARNED_ITEMS"));
 
         return playerData;
+    }
+
+    private static BigInteger loadEmc(NbtCompound playerNbt) {
+        if (playerNbt.contains("EMC_BIG")) {
+            return EmcNumber.parse(playerNbt.getString("EMC_BIG"));
+        }
+
+        return EmcNumber.of(playerNbt.getInt("EMC"));
     }
 
     private static List<String> migrateLearnedItemIds(List<String> learnedItems) {
@@ -166,11 +177,11 @@ public class StateSaverAndLoader extends PersistentState {
         return serverState.sharedData;
     }
 
-    public static void setGlobalEMC(MinecraftServer server, int emc) {
+    public static void setGlobalEMC(MinecraftServer server, BigInteger emc) {
         StateSaverAndLoader serverState = getServerState(server);
         PlayerData globalData = serverState.sharedData;
 
-        globalData.EMC = emc;
+        globalData.EMC = EmcNumber.nonNegative(emc);
         serverState.sharedData = globalData;
 
         updateAllServerPlayers(server);
@@ -245,7 +256,7 @@ public class StateSaverAndLoader extends PersistentState {
         return serverState.sharedData;
     }
 
-    public static void setPlayerEMC(LivingEntity player, int emc) {
+    public static void setPlayerEMC(LivingEntity player, BigInteger emc) {
         if (player.getServer() == null) return;
 
         StateSaverAndLoader serverState = getSaver(player);
@@ -257,7 +268,7 @@ public class StateSaverAndLoader extends PersistentState {
             playerState.NAME = playerName;
         }
 
-        playerState.EMC = emc;
+        playerState.EMC = EmcNumber.nonNegative(emc);
         updateState(player, serverState, playerState);
     }
 

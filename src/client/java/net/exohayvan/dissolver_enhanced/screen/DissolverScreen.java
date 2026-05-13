@@ -129,7 +129,7 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
     private String getMessage() {
         String CUSTOM_MSG = PlayerDataClient.MESSAGE;
         if (CUSTOM_MSG.isEmpty()) {
-            if (PlayerDataClient.EMC == 0) {
+            if (PlayerDataClient.EMC.signum() == 0) {
                 return Text.translatable("emc.empty").getString();
             }
 
@@ -138,7 +138,9 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
             return text.getString();
         }
 
-        Text text = Text.translatable(CUSTOM_MSG);
+        Text text = CUSTOM_MSG.startsWith("literal:")
+            ? Text.literal(CUSTOM_MSG.substring("literal:".length()))
+            : Text.translatable(CUSTOM_MSG);
         return text.getString();
     }
 

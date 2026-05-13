@@ -1,5 +1,7 @@
 package net.exohayvan.dissolver_enhanced.advancement;
 
+import java.math.BigInteger;
+
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.entity.player.PlayerEntity;
@@ -10,6 +12,10 @@ public class ModCriteria {
         DissolverEnhanced.MOD_ID + ":learned_item",
         new LearnedItemCriterion()
     );
+    public static final EmcBalanceCriterion EMC_BALANCE = Criteria.register(
+        DissolverEnhanced.MOD_ID + ":emc_balance",
+        new EmcBalanceCriterion()
+    );
 
     public static void init() {
     }
@@ -17,6 +23,12 @@ public class ModCriteria {
     public static void triggerLearnedItem(PlayerEntity player, String itemId) {
         if (player instanceof ServerPlayerEntity serverPlayer) {
             LEARNED_ITEM.trigger(serverPlayer, itemId);
+        }
+    }
+
+    public static void triggerEmcBalance(PlayerEntity player, BigInteger emc) {
+        if (player instanceof ServerPlayerEntity serverPlayer) {
+            EMC_BALANCE.trigger(serverPlayer, emc);
         }
     }
 }

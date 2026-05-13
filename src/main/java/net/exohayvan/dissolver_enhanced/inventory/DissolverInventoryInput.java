@@ -97,6 +97,7 @@ public class DissolverInventoryInput implements Inventory {
                 int emc = EMCOrbItem.getEMC(stack);
                 if (emc > 0) {
                     EMCHelper.addEMCValue(player, emc);
+                    EMCHelper.sendEmcDeltaToClient(player, java.math.BigInteger.valueOf(emc));
                     this.stacks.set(slot, ItemStack.EMPTY);
                     this.handler.onContentChanged(this);
                     this.handler.refresh();

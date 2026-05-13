@@ -1,7 +1,10 @@
 package net.exohayvan.dissolver_enhanced.helpers;
 
+import java.math.BigInteger;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+
+import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 
 import org.spongepowered.asm.mixin.injection.struct.InjectorGroupInfo.Map;
 
@@ -27,5 +30,9 @@ public class NumberHelpers {
 	        String suffix = e.getValue();
 	
 	        return String.format("%.1f%s", value / (double) divideBy, suffix);
+	    }
+
+	    public static String format(BigInteger value) {
+	        return EmcNumber.format(value);
 	    }
 	}

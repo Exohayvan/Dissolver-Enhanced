@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 
 public class EMCOrbItem extends Item {
     private static final String EMC_KEY = "dissolver_enhanced.emc";
@@ -38,7 +39,7 @@ public class EMCOrbItem extends Item {
 
     @Override
     public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
-        tooltip.add(Text.translatable("item_tooltip.dissolver_enhanced.emc_orb", getEMC(stack)).formatted(Formatting.LIGHT_PURPLE));
+        tooltip.add(Text.translatable("item_tooltip.dissolver_enhanced.emc_orb", EmcNumber.format(java.math.BigInteger.valueOf(getEMC(stack)))).formatted(Formatting.LIGHT_PURPLE));
     }
 
     @Override

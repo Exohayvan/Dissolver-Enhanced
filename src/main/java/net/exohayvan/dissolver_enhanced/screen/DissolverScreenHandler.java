@@ -1,5 +1,6 @@
 package net.exohayvan.dissolver_enhanced.screen;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -14,6 +15,7 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
+import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
@@ -146,23 +148,23 @@ public class DissolverScreenHandler extends ScreenHandler {
     }
 
     private ItemStack getHighestStack(ItemStack stack) {
-        int currentPlayerEMC = EMCHelper.getEMCValue(player);
+        BigInteger currentPlayerEMC = EMCHelper.getEMCValue(player);
         return getHighestPossibleStack(currentPlayerEMC, stack);
     }
 
-    private ItemStack getHighestPossibleStack(int playerEMC, ItemStack stack) {
-        int emcValue = EMCValues.get(EMCKey.fromStack(stack));
+    private ItemStack getHighestPossibleStack(BigInteger playerEMC, ItemStack stack) {
+        BigInteger emcValue = EMCValues.getBig(EMCKey.fromStack(stack));
 
-        if (emcValue == 0) {
+        if (emcValue.signum() == 0) {
             return stack;
         }
 
-        if (emcValue > playerEMC) {
+        if (emcValue.compareTo(playerEMC) > 0) {
             // optionally change the item name/nbt to red, etc.
             return stack;
         }
 
-        int maxItems = playerEMC / emcValue; // auto floored
+        int maxItems = EmcNumber.toIntSaturated(playerEMC.divide(emcValue));
         stack.setCount(maxItems);
         stack.capCount(stack.getMaxCount());
 
@@ -185,7 +187,7 @@ public class DissolverScreenHandler extends ScreenHandler {
         List<String> learnedList = new ArrayList<>(StateSaverAndLoader.getPlayerState(player).LEARNED_ITEMS);
         if (learnedList.size() < 1) return new ArrayList<>();
 
-        int currentPlayerEMC = EMCHelper.getEMCValue(player);
+        BigInteger currentPlayerEMC = EMCHelper.getEMCValue(player);
 
         // sort by name
         learnedList = sortByName(learnedList);
@@ -215,22 +217,22 @@ public class DissolverScreenHandler extends ScreenHandler {
         Collections.sort(items, new Comparator<String>() {
             @Override
             public int compare(String o1, String o2) {
-                int emc1 = EMCValues.get(o1);
-                int emc2 = EMCValues.get(o2);
+                BigInteger emc1 = EMCValues.getBig(o1);
+                BigInteger emc2 = EMCValues.getBig(o2);
                 // this is intentionally inverted to the next sort will turn it back
-                return emc1 == emc2 ? 0 : emc1 > emc2 ? 1 : -1;
+                return emc1.compareTo(emc2);
             }
         });
 
         return items;
     }
 
-    private List<String> sortByValid(List<String> items, int playerEMC) {
+    private List<String> sortByValid(List<String> items, BigInteger playerEMC) {
         Collections.sort(items, new Comparator<String>() {
             @Override
             public int compare(String o1, String o2) {
-                boolean canAfford1 = EMCValues.get(o1) <= playerEMC;
-                boolean canAfford2 = EMCValues.get(o2) <= playerEMC;
+                boolean canAfford1 = EMCValues.getBig(o1).compareTo(playerEMC) <= 0;
+                boolean canAfford2 = EMCValues.getBig(o2).compareTo(playerEMC) <= 0;
                 return canAfford1 && canAfford2 ? -1 : canAfford1 ? -1 : 1;
             }
         });
@@ -291,6 +293,7 @@ public class DissolverScreenHandler extends ScreenHandler {
                 if (emc <= 0) return ItemStack.EMPTY;
 
                 EMCHelper.addEMCValue(player, emc);
+                EMCHelper.sendEmcDeltaToClient(player, BigInteger.valueOf(emc));
                 slot.getStack().decrement(1);
                 if (slot.getStack().isEmpty()) {
                     slot.setStack(ItemStack.EMPTY);

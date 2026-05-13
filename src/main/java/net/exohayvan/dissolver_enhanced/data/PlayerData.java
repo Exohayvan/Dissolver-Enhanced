@@ -2,10 +2,11 @@ package net.exohayvan.dissolver_enhanced.data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigInteger;
 // https://fabricmc.net/wiki/tutorial:persistent_states#more_involved_player_data
 public class PlayerData {
     public String NAME = "";
-    public int EMC = 0;
+    public BigInteger EMC = BigInteger.ZERO;
     public List<String> LEARNED_ITEMS = new ArrayList<>();
 
     // not stored

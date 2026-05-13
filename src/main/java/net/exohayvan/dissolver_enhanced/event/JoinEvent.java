@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValueUpdateMonitor;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
@@ -24,11 +25,21 @@ public class JoinEvent {
                 PlayerData playerState = StateSaverAndLoader.getPlayerState(playerEntity);
                 DataSender.sendPlayerData(playerEntity, playerState);
                 sendPlayerDataWhenEMCValuesReady(playerEntity);
+                sendDefaultEmcUpdateMessage(playerEntity);
             } else {
                 LOGGER.error("Client cannot receive packet. This probably means that DissolverEnhanced is not installed on the client.");
                 handler.disconnect(Text.literal("Please install the DissolverEnhanced mod to play on this server."));
             }
         });
+    }
+
+    private static void sendDefaultEmcUpdateMessage(ServerPlayerEntity playerEntity) {
+        if (!DefaultEmcValueUpdateMonitor.hasUpdateAvailable()) {
+            return;
+        }
+
+        LOGGER.info(DefaultEmcValueUpdateMonitor.UPDATE_MESSAGE);
+        playerEntity.sendMessage(Text.literal(DefaultEmcValueUpdateMonitor.UPDATE_MESSAGE), false);
     }
 
     private static void sendPlayerDataWhenEMCValuesReady(ServerPlayerEntity playerEntity) {
