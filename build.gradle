@@ -85,6 +85,11 @@ processResources {
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version
 	}
+
+	from(commonDir) {
+		include 'emc-values/**'
+		include 'data/dissolver_enhanced/advancement/**'
+	}
 }
 
 tasks.withType(JavaCompile).configureEach {

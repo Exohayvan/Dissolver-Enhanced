@@ -100,8 +100,11 @@ public class SimpleConfig {
      * @return new config request object
      */
     public static ConfigRequest of( String filename ) {
-        Path path = FabricLoader.getInstance().getConfigDir();
-        return new ConfigRequest( path.resolve( filename + ".properties" ).toFile(), filename );
+        return new ConfigRequest( configDirectory().resolve( filename + ".properties" ).toFile(), filename );
+    }
+
+    public static Path configDirectory() {
+        return FabricLoader.getInstance().getConfigDir().resolve("dissolver-enhanced");
     }
 
     private void createConfig() throws IOException {
