@@ -1,6 +1,7 @@
 package net.exohayvan.dissolver_enhanced.data;
 
 import net.exohayvan.dissolver_enhanced.TestConstants;
+import net.exohayvan.dissolver_enhanced.common.values.EmcValueSet;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.data.model.EMCRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,7 +11,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static net.exohayvan.dissolver_enhanced.data.EMCExpected.common;
@@ -257,7 +260,7 @@ class EMCValuesTest {
         List<EMCRecord> expected,
         List<EMCRecord> baseSet
     ) {
-        ModConfig.EMC_OVERRIDES = overrides;
+        ModConfig.EMC_OVERRIDES = toValueSet(overrides);
 
         ModConfig.MODE = TestConstants.Modes.DEFAULT.getValue();
         EMCValues.init();
@@ -267,6 +270,14 @@ class EMCValuesTest {
         list.addAll(expected);
 
         validateEMCValues(list);
+    }
+
+    private static EmcValueSet toValueSet(List<EMCRecord> records) {
+        Map<String, Integer> items = new LinkedHashMap<>();
+        for (EMCRecord record : records) {
+            items.put(record.getBlockName(), record.getEmc());
+        }
+        return new EmcValueSet(1, items, Map.of(), Map.of());
     }
 
 }

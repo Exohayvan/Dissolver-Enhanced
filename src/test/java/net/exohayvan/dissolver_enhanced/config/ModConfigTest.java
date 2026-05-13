@@ -3,7 +3,6 @@ package net.exohayvan.dissolver_enhanced.config;
 import net.exohayvan.dissolver_enhanced.TestConstants;
 import net.exohayvan.dissolver_enhanced.config.model.ConfigConstants;
 import net.exohayvan.dissolver_enhanced.config.model.ConfigEntry;
-import net.exohayvan.dissolver_enhanced.data.model.EMCRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +11,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
 class ModConfigTest {
@@ -89,7 +87,8 @@ class ModConfigTest {
 
                 isDefaults();
 
-                assertThat(VisibilityModifier.EMC_OVERRIDES).isNullOrEmpty();
+                assertThat(VisibilityModifier.EMC_OVERRIDES.items()).isEmpty();
+                assertThat(VisibilityModifier.EMC_OVERRIDES.tags()).isEmpty();
 
                 break;
 
@@ -97,12 +96,10 @@ class ModConfigTest {
 
                 isDefaults();
 
-                assertThat(VisibilityModifier.EMC_OVERRIDES).isNotNull().containsAll(Arrays.asList(
-                        new EMCRecord("test:case", 400),
-                        new EMCRecord("minecraft:dirt", 200),
-                        new EMCRecord("minecraft:cobblestone", 300)
-                    )
-                );
+                assertThat(VisibilityModifier.EMC_OVERRIDES.items())
+                    .containsEntry("test:case", 400)
+                    .containsEntry("minecraft:dirt", 200)
+                    .containsEntry("minecraft:cobblestone", 300);
 
                 break;
             case INVERTED:
@@ -123,7 +120,8 @@ class ModConfigTest {
                     .asConfigEntry()
                     .getDefault());
 
-                assertThat(VisibilityModifier.EMC_OVERRIDES).isNullOrEmpty();
+                assertThat(VisibilityModifier.EMC_OVERRIDES.items()).isEmpty();
+                assertThat(VisibilityModifier.EMC_OVERRIDES.tags()).isEmpty();
 
                 break;
 
@@ -217,7 +215,7 @@ class ModConfigTest {
 
     private static Configuration getMyConfigLocation(TestConstants.Configs.Directories directories) {
         File file = new File(directories.getValue());
-        File config = new File(file, TestConstants.Configs.FILE_NAME);
+        File config = new File(new File(file, "dissolver-enhanced"), TestConstants.Configs.FILE_NAME);
         Configuration myConfigLocation = new Configuration(file, config);
         return myConfigLocation;
     }

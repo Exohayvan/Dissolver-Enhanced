@@ -102,8 +102,11 @@ public class SimpleConfig {
      * @return new config request object
      */
     public static ConfigRequest of( String filename ) {
-        Path path = configDirSupplier.get();
-        return new ConfigRequest( path.resolve( filename + ".properties" ).toFile(), filename );
+        return new ConfigRequest( configDirectory().resolve( filename + ".properties" ).toFile(), filename );
+    }
+
+    public static Path configDirectory() {
+        return configDirSupplier.get().resolve("dissolver-enhanced");
     }
 
     private void createConfig() throws IOException {
