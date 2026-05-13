@@ -6,6 +6,31 @@ import java.util.Locale;
 public final class EmcNumber {
     public static final BigInteger ZERO = BigInteger.ZERO;
     private static final BigInteger INT_MAX = BigInteger.valueOf(Integer.MAX_VALUE);
+    private static final BigInteger THOUSAND = BigInteger.valueOf(1_000);
+    private static final BigInteger[] FORMAT_DIVISORS = {
+        BigInteger.TEN.pow(30),
+        BigInteger.TEN.pow(27),
+        BigInteger.TEN.pow(24),
+        BigInteger.TEN.pow(21),
+        BigInteger.TEN.pow(18),
+        BigInteger.TEN.pow(15),
+        BigInteger.TEN.pow(12),
+        BigInteger.TEN.pow(9),
+        BigInteger.TEN.pow(6),
+        BigInteger.TEN.pow(3)
+    };
+    private static final String[] FORMAT_SUFFIXES = {
+        "dc",
+        "no",
+        "oc",
+        "sp",
+        "sx",
+        "q",
+        "t",
+        "b",
+        "m",
+        "k"
+    };
 
     private EmcNumber() {
     }
@@ -55,16 +80,23 @@ public final class EmcNumber {
     }
 
     public static String format(BigInteger value) {
-        String raw = nonNegative(value).toString();
-        StringBuilder formatted = new StringBuilder(raw.length() + raw.length() / 3);
-        int firstGroup = raw.length() % 3;
-        if (firstGroup == 0) firstGroup = 3;
+        BigInteger nonNegative = nonNegative(value);
+        if (nonNegative.compareTo(THOUSAND) < 0) return nonNegative.toString();
 
-        formatted.append(raw, 0, firstGroup);
-        for (int i = firstGroup; i < raw.length(); i += 3) {
-            formatted.append(',').append(raw, i, i + 3);
+        for (int i = 0; i < FORMAT_DIVISORS.length; i++) {
+            BigInteger divisor = FORMAT_DIVISORS[i];
+            if (nonNegative.compareTo(divisor) >= 0) {
+                return formatWithSuffix(nonNegative, divisor, FORMAT_SUFFIXES[i]);
+            }
         }
 
-        return formatted.toString();
+        return nonNegative.toString();
+    }
+
+    private static String formatWithSuffix(BigInteger value, BigInteger divisor, String suffix) {
+        BigInteger whole = value.divide(divisor);
+        BigInteger remainder = value.remainder(divisor);
+        BigInteger decimal = remainder.multiply(BigInteger.valueOf(100)).divide(divisor);
+        return whole + "." + String.format(Locale.ROOT, "%02d", decimal.intValue()) + suffix;
     }
 }
