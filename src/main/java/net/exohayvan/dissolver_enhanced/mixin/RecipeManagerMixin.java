@@ -27,6 +27,8 @@ import net.minecraft.world.item.crafting.RecipeManager;
 public class RecipeManagerMixin {
     @Inject(method = "prepare", at = @At("HEAD"))
     private void prepareMixin(ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfoReturnable<RecipeMap> info) {
+        loadItemTags(resourceManager);
+
         Map<Identifier, JsonElement> recipes = loadRecipeJson(resourceManager);
         if (RecipeGenerator.DISSOLVER_RECIPE != null) {
             recipes.put(Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
@@ -74,6 +76,65 @@ public class RecipeManagerMixin {
         });
 
         return recipes;
+    }
+
+    private static void loadItemTags(ResourceManager resourceManager) {
+        Map<String, List<String>> rawTagValues = new HashMap<>();
+        FileToIdConverter tagLister = FileToIdConverter.json("tags/item");
+
+        tagLister.listMatchingResources(resourceManager).forEach((fileId, resource) -> {
+            try (var reader = resource.openAsReader()) {
+                JsonElement json = JsonParser.parseReader(reader);
+                if (!json.isJsonObject() || !json.getAsJsonObject().has("values")) return;
+
+                List<String> values = new ArrayList<>();
+                for (JsonElement value : json.getAsJsonObject().get("values").getAsJsonArray()) {
+                    String id = getTagValueId(value);
+                    if (id != null && !id.isBlank()) values.add(id);
+                }
+
+                rawTagValues.put(tagLister.fileToId(fileId).toString(), values);
+            } catch (Exception e) {
+                DissolverEnhanced.LOGGER.warn("Unable to read item tag JSON {}", fileId, e);
+            }
+        });
+
+        HashMap<String, List<String>> tagItems = new HashMap<>();
+        rawTagValues.keySet().forEach(tagId -> tagItems.put(tagId, resolveTagItems(tagId, rawTagValues, new ArrayList<>())));
+
+        HashMap<String, Integer> tagEmcValues = new HashMap<>();
+        tagItems.forEach((tagId, itemIds) -> {
+            int emcValue = EMCValues.EMC_TAG_VALUES.getOrDefault(tagId, 0);
+            if (emcValue <= 0) return;
+            itemIds.forEach(itemId -> tagEmcValues.put(itemId, emcValue));
+        });
+
+        EMCValues.tagsLoaded(tagEmcValues, tagItems);
+    }
+
+    private static String getTagValueId(JsonElement value) {
+        if (value.isJsonPrimitive()) return value.getAsString();
+        if (!value.isJsonObject()) return null;
+
+        JsonObject object = value.getAsJsonObject();
+        if (object.has("id")) return object.get("id").getAsString();
+        return null;
+    }
+
+    private static List<String> resolveTagItems(String tagId, Map<String, List<String>> rawTagValues, List<String> visitedTags) {
+        if (visitedTags.contains(tagId)) return new ArrayList<>();
+        visitedTags.add(tagId);
+
+        List<String> resolved = new ArrayList<>();
+        for (String value : rawTagValues.getOrDefault(tagId, new ArrayList<>())) {
+            if (value.startsWith("#")) {
+                resolved.addAll(resolveTagItems(value.substring(1), rawTagValues, new ArrayList<>(visitedTags)));
+            } else if (!resolved.contains(value)) {
+                resolved.add(value);
+            }
+        }
+
+        return resolved;
     }
 
     private static void addRecipe(String id, int extraEMC, List<String> INGREDIENTS, String recipeId, JsonElement rawJson) {
