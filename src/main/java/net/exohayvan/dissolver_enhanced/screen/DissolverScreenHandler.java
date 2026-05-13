@@ -18,6 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -94,7 +95,9 @@ public class DissolverScreenHandler extends AbstractContainerMenu {
             inventory.setItem(index, stack);
         }
 
-        addItems();
+        if (!this.player.level().isClientSide()) {
+            addItems();
+        }
     }
 
     // ITEMS
@@ -105,6 +108,7 @@ public class DissolverScreenHandler extends AbstractContainerMenu {
         convertIdsToItems(SEARCHED);
 
         scrollItems(this.scrollPosition);
+        syncVisibleItems();
     }
 
     private List<String> searchFilter(List<String> items) {
@@ -129,7 +133,8 @@ public class DissolverScreenHandler extends AbstractContainerMenu {
             newData.EMC = playerState.EMC;
             newData.LEARNED_ITEMS_TOTAL_SIZE = playerState.LEARNED_ITEMS.size();
             newData.MESSAGE = playerState.MESSAGE;
-            newData.LEARNED_ITEMS = itemIds;
+            newData.LEARNED_ITEMS = new ArrayList<>(playerState.LEARNED_ITEMS);
+            newData.LEARNED_ITEMS_SIZE = itemIds.size();
             DataSender.sendPlayerData(player, newData);
         }
 
@@ -169,9 +174,9 @@ public class DissolverScreenHandler extends AbstractContainerMenu {
 
     private void clearItems() {
         this.slots.forEach((Slot slot) -> {
-            int slotIndex = slot.getContainerSlot();
-            if (slotIndex <= PLAYER_INV_SIZE) return; // player inv
-            if (slotIndex == this.slots.size() - 1) return; // input slot
+            int slotIndex = slot.index;
+            if (slotIndex < PLAYER_INV_SIZE) return; // player inv
+            if (slotIndex >= PLAYER_INV_SIZE + CUSTOM_INV_SIZE) return; // input slots
 
             slot.setByPlayer(Items.AIR.getDefaultInstance());
         });
@@ -263,6 +268,13 @@ public class DissolverScreenHandler extends AbstractContainerMenu {
                 inventory.setItem(l + k * 9, m >= 0 && m < this.itemList.size() ? getHighestStack(this.itemList.get(m).getDefaultInstance()) : ItemStack.EMPTY);
             }
         }
+        syncVisibleItems();
+    }
+
+    private void syncVisibleItems() {
+        if (this.player.level().isClientSide()) return;
+
+        this.broadcastFullState();
     }
     
     private int getRow(float position) {
@@ -271,6 +283,19 @@ public class DissolverScreenHandler extends AbstractContainerMenu {
     }
 
     // QUICK MOVE
+
+    @Override
+    public void clicked(int slotId, int button, ContainerInput actionType, Player player) {
+        if (actionType == ContainerInput.SWAP && isCustomOutputSlot(slotId)) {
+            return;
+        }
+
+        super.clicked(slotId, button, actionType, player);
+    }
+
+    private boolean isCustomOutputSlot(int slotId) {
+        return slotId >= PLAYER_INV_SIZE && slotId < PLAYER_INV_SIZE + CUSTOM_INV_SIZE;
+    }
 
     // only take items from inv, not add
     @Override

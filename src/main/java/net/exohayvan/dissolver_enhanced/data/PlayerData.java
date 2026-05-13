@@ -9,7 +9,7 @@ public class PlayerData {
     public List<String> LEARNED_ITEMS = new ArrayList<>();
 
     // not stored
-    // public int learnedItemsSize = 0;
+    public int LEARNED_ITEMS_SIZE = 0;
     public int LEARNED_ITEMS_TOTAL_SIZE = 0;
     public String MESSAGE = "";
 }

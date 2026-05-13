@@ -4,6 +4,7 @@
     "item.dissolver_enhanced.crystal_frame_item": "Crystal Frame",
     "block.dissolver_enhanced.dissolver_block": "Dissolver",
     "entity.dissolver_enhanced.crystal_entity": "Crystal Entity",
+    "gui.dissolver_enhanced.search": "Search",
 
     "item_tooltip.dissolver_enhanced.emc": "§dEMC:§r %d",
     "item_tooltip.dissolver_enhanced.crystal_frame_item": "Something's missing, I just can't frame it...",

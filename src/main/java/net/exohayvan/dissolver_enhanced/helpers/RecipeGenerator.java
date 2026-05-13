@@ -66,5 +66,4 @@ public class RecipeGenerator {
 
         return json;
     }
-
 }

@@ -228,6 +228,7 @@ public class StateSaverAndLoader extends SavedData {
         }
         if (state == null) {
             state = new StateSaverAndLoader();
+            persistentStateManager.set(TYPE, state);
         }
 
         // If state is not marked dirty, when Minecraft closes, 'writeNbt' won't be called and therefore nothing will be saved.
