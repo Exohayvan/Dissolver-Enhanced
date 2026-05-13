@@ -23,7 +23,7 @@ public class DataSender {
 
         int learnedItemsSize = data.LEARNED_ITEMS_SIZE > 0 ? data.LEARNED_ITEMS_SIZE : data.LEARNED_ITEMS.size();
         int learnedItemsTotalSize = data.LEARNED_ITEMS_TOTAL_SIZE > 0 ? data.LEARNED_ITEMS_TOTAL_SIZE : data.LEARNED_ITEMS.size();
-        PlayerDataPayload dataToSend = new PlayerDataPayload(data.EMC, learnedItemsSize, learnedItemsTotalSize, data.MESSAGE, data.LEARNED_ITEMS);
+        PlayerDataPayload dataToSend = new PlayerDataPayload(data.EMC.toString(), learnedItemsSize, learnedItemsTotalSize, data.MESSAGE, data.LEARNED_ITEMS);
         EMCValuesPayload emcValuesToSend = getEMCValuesPayload(playerEntity);
 
         server.execute(() -> {

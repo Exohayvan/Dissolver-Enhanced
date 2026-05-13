@@ -131,14 +131,16 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
     private Component getMessage() {
         String customMessage = PlayerDataClient.MESSAGE;
         if (customMessage.isEmpty()) {
-            if (PlayerDataClient.EMC == 0) {
+            if (PlayerDataClient.EMC.signum() == 0) {
                 return Component.translatable("emc.empty");
             }
 
             return Component.literal("EMC: ").append(Component.literal(NumberHelpers.format(PlayerDataClient.EMC)).withStyle(ChatFormatting.GOLD));
         }
 
-        return Component.translatable(customMessage);
+        return customMessage.startsWith("literal:")
+            ? Component.literal(customMessage.substring("literal:".length()))
+            : Component.translatable(customMessage);
     }
 
     private String getLearnedSummary() {

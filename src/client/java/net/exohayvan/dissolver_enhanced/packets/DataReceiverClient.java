@@ -35,7 +35,7 @@ public class DataReceiverClient {
     }
 
 	private static void receivedData(Player player, PlayerDataPayload playerData) {
-			PlayerDataClient.EMC = playerData.emc();
+			PlayerDataClient.EMC = net.exohayvan.dissolver_enhanced.common.values.EmcNumber.parse(playerData.emc());
 			PlayerDataClient.LEARNED_ITEMS_SIZE = playerData.learnedItemsSize();
 			PlayerDataClient.LEARNED_ITEMS_TOTAL_SIZE = playerData.learnedItemsTotalSize();
 			PlayerDataClient.MESSAGE = playerData.message();

@@ -7,6 +7,7 @@ import net.exohayvan.dissolver_enhanced.data.model.EMCRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,7 +30,7 @@ class EMCValuesTest {
 
     class VisibilityModifier
         extends EMCValues {
-        public HashMap<String, Integer> EMC_VALUES() {return EMC_VALUES;}
+        public HashMap<String, BigInteger> EMC_VALUES() {return EMC_VALUES;}
 
         public Collection<String> CONFIG_OVERRIDDEN() {
             return CONFIG_OVERRIDDEN;
@@ -42,7 +43,7 @@ class EMCValuesTest {
             VisibilityModifier.setEMC(resultId, emcValue);
         }
 
-        public void __setEMC(HashMap<String, Integer> NEW_EMC_VALUES) {
+        public void __setEMC(HashMap<String, BigInteger> NEW_EMC_VALUES) {
             VisibilityModifier.setEMC(NEW_EMC_VALUES);
         }
 
@@ -201,7 +202,7 @@ class EMCValuesTest {
 
         test_init_simple_config_override();
 
-        HashMap<String, Integer> map = new HashMap<>();
+        HashMap<String, BigInteger> map = new HashMap<>();
 
         underTest.__setEMC(map);
 
@@ -216,9 +217,9 @@ class EMCValuesTest {
 
         test_init_simple_config_override();
 
-        HashMap<String, Integer> map = new HashMap<>();
-        map.put(TEST_CASE_EMC_RECORD.getBlockName(), 100);
-        map.put(MINECRAFT_DIRT, 200);
+        HashMap<String, BigInteger> map = new HashMap<>();
+        map.put(TEST_CASE_EMC_RECORD.getBlockName(), BigInteger.valueOf(100));
+        map.put(MINECRAFT_DIRT, BigInteger.valueOf(200));
 
 
         underTest.__setEMC(map);
@@ -273,9 +274,9 @@ class EMCValuesTest {
     }
 
     private static EmcValueSet toValueSet(List<EMCRecord> records) {
-        Map<String, Integer> items = new LinkedHashMap<>();
+        Map<String, BigInteger> items = new LinkedHashMap<>();
         for (EMCRecord record : records) {
-            items.put(record.getBlockName(), record.getEmc());
+            items.put(record.getBlockName(), BigInteger.valueOf(record.getEmc()));
         }
         return new EmcValueSet(1, items, Map.of(), Map.of());
     }
