@@ -21,7 +21,7 @@ import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 
 @Mixin(value = ItemStack.class, priority = 500)
 public class ItemStackTooltipMixin {
-    @Inject(method = "getTooltip", at = @At(value = "RETURN", ordinal = 1))
+    @Inject(method = "getTooltipLines", at = @At("RETURN"))
     private void addEmcTooltip(Item.TooltipContext context, @Nullable Player player, TooltipFlag type, CallbackInfoReturnable<List<Component>> cir) {
         ItemStack stack = (ItemStack)(Object)this;
         String itemId = EMCKey.fromStack(stack);
