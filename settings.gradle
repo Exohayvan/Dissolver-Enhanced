@@ -11,4 +11,14 @@ pluginManagement {
 
 rootProject.name = 'dissolver-enhanced-fabric-1.21.1'
 
-includeBuild("../Common")
+def commonBuildDir = [
+	"../Common",
+	"../Dissolver Enhanced (Common)",
+	"Common"
+].collect { file(it) }.find { it.exists() }
+
+if (commonBuildDir == null) {
+	throw new GradleException("Common build not found. Expected one of ../Common, ../Dissolver Enhanced (Common), or ./Common.")
+}
+
+includeBuild(commonBuildDir)

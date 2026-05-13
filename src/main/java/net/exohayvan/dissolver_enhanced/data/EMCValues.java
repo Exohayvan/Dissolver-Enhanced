@@ -11,7 +11,6 @@ import java.util.Set;
 
 import net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValues;
 import net.exohayvan.dissolver_enhanced.common.values.EmcValueSet;
-import net.exohayvan.dissolver_enhanced.data.model.EMCRecord;
 
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
@@ -233,7 +232,7 @@ public class EMCValues {
     }
 
     public static void init() {
-        EmcValueSet values = DefaultEmcValues.load();
+        EmcValueSet values = ModConfig.DEFAULT_EMC_VALUES == null ? DefaultEmcValues.load() : ModConfig.DEFAULT_EMC_VALUES;
 
         String emcMode = ModConfig.MODE.toLowerCase();
         if (emcMode.contains("skyblock")) {
@@ -243,6 +242,8 @@ public class EMCValues {
         if (ModConfig.CREATIVE_ITEMS) {
             values = values.applyOverride("creative_items");
         }
+
+        values = values.applyValues(ModConfig.EMC_OVERRIDES);
 
         applyDefaultValues(values);
         loadConfig();
@@ -267,28 +268,35 @@ public class EMCValues {
     }
 
     private static void loadConfig() {
-        if (ModConfig.EMC_OVERRIDES == null || ModConfig.EMC_OVERRIDES.isEmpty()) {
-            DissolverEnhanced.LOGGER.debug("No EMC Overrides");
+        if (ModConfig.EMC_OVERRIDES == null || (ModConfig.EMC_OVERRIDES.items().isEmpty() && ModConfig.EMC_OVERRIDES.tags().isEmpty())) {
+            DissolverEnhanced.LOGGER.debug("No EMC overrides");
             return;
         }
 
-        for (EMCRecord emcOverride : ModConfig.EMC_OVERRIDES) {
-            String blockName = emcOverride.getBlockName();
-            Integer value = emcOverride.getEmc();
+        for (Map.Entry<String, Integer> emcOverride : ModConfig.EMC_OVERRIDES.items().entrySet()) {
+            String blockName = emcOverride.getKey();
+            Integer value = emcOverride.getValue();
 
-            if (blockName != null && value != null) {
-                blockName = blockName.trim();
-                if (blockName.isEmpty()) {
-                    continue;
-                }
-                CONFIG_OVERRIDDEN.add(blockName);
-                if (value > 0) {
-                    DissolverEnhanced.LOGGER.debug("Setting EMC of {} to {}", blockName, value);
-                    setEMCUnchecked(blockName, value, "Config Override");
-                } else {
-                    removeEMC(blockName);
-                }
+            if (blockName == null) {
+                continue;
             }
+
+            blockName = blockName.trim();
+            if (blockName.isEmpty()) {
+                continue;
+            }
+
+            CONFIG_OVERRIDDEN.add(blockName);
+            if (value != null && value > 0) {
+                DissolverEnhanced.LOGGER.debug("Setting EMC of {} to {}", blockName, value);
+                setEMCUnchecked(blockName, value, "EMC Override");
+            } else {
+                removeEMC(blockName);
+            }
+        }
+
+        for (String tagId : ModConfig.EMC_OVERRIDES.tags().keySet()) {
+            CONFIG_OVERRIDDEN.add("#" + tagId);
         }
     }
 

@@ -1,12 +1,17 @@
 package net.exohayvan.dissolver_enhanced.config;
 
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValues;
+import net.exohayvan.dissolver_enhanced.common.values.EmcValueSet;
 import net.exohayvan.dissolver_enhanced.config.model.ConfigConstants;
-import net.exohayvan.dissolver_enhanced.data.model.EMCRecord;
 
-import java.util.List;
+import java.nio.file.Path;
 
 public class ModConfig {
+    private static final String CONFIG_FILE_NAME = "dissolver_enhanced";
+    private static final String DEFAULT_EMC_FILE_NAME = "default-emc-values.yaml";
+    private static final String EMC_OVERRIDES_FILE_NAME = "emc-overrides.yaml";
+
     public static SimpleConfig CONFIG;
     protected static ModConfigProvider configs;
 
@@ -15,13 +20,14 @@ public class ModConfig {
     public static boolean CREATIVE_ITEMS;
     public static String DIFFICULTY;
     public static String MODE;
-    public static List<EMCRecord> EMC_OVERRIDES;
+    public static EmcValueSet DEFAULT_EMC_VALUES;
+    public static EmcValueSet EMC_OVERRIDES;
 
     public static void init() {
         configs = new ModConfigProvider();
         createConfigs();
 
-        CONFIG = SimpleConfig.of(DissolverEnhanced.MOD_ID).provider(configs).request();
+        CONFIG = SimpleConfig.of(CONFIG_FILE_NAME).provider(configs).request();
 
         assignConfigs();
     }
@@ -39,6 +45,14 @@ public class ModConfig {
         DIFFICULTY = CONFIG.getOrDefault("difficulty", "hard");
         MODE = CONFIG.getOrDefault("mode", "default");
 
-        EMC_OVERRIDES = new EMCOverrideLoader(CONFIG.getConfig(), configs).load();
+        Path configDirectory = SimpleConfig.configDirectory();
+        Path defaultValuesFile = configDirectory.resolve(DEFAULT_EMC_FILE_NAME);
+        Path overridesFile = configDirectory.resolve(EMC_OVERRIDES_FILE_NAME);
+
+        DefaultEmcValues.writeDefaultFile(defaultValuesFile);
+        DefaultEmcValues.writeOverrideTemplateIfMissing(overridesFile);
+
+        DEFAULT_EMC_VALUES = DefaultEmcValues.loadFromFile(defaultValuesFile);
+        EMC_OVERRIDES = DefaultEmcValues.loadFromFile(overridesFile);
     }
 }

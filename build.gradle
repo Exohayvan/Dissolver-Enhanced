@@ -6,9 +6,18 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
-def commonPropertiesFile = file("../Common/gradle.properties")
+def commonDir = [
+	"../Common",
+	"../Dissolver Enhanced (Common)",
+	"Common"
+].collect { file(it) }.find { it.exists() }
+if (commonDir == null) {
+	throw new GradleException("Common worktree not found. Expected one of ../Common, ../Dissolver Enhanced (Common), or ./Common.")
+}
+
+def commonPropertiesFile = file("${commonDir}/gradle.properties")
 if (!commonPropertiesFile.exists()) {
-	throw new GradleException("Common gradle.properties not found at ${commonPropertiesFile}. Check out the Common worktree beside this Fabric worktree.")
+	throw new GradleException("Common gradle.properties not found at ${commonPropertiesFile}.")
 }
 
 def commonProperties = new Properties()
@@ -76,6 +85,11 @@ processResources {
 
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version
+	}
+
+	from(commonDir) {
+		include 'emc-values/**'
+		include 'data/dissolver_enhanced/advancement/**'
 	}
 }
 

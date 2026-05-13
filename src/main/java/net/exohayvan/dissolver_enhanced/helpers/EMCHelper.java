@@ -320,7 +320,7 @@ public class EMCHelper {
     }
 
     private static String configSnapshot() {
-        int overrideCount = ModConfig.EMC_OVERRIDES == null ? 0 : ModConfig.EMC_OVERRIDES.size();
+        int overrideCount = ModConfig.EMC_OVERRIDES == null ? 0 : ModConfig.EMC_OVERRIDES.items().size() + ModConfig.EMC_OVERRIDES.tags().size();
 
         return "emc_on_hud=" + ModConfig.EMC_ON_HUD + "\n"
             + "private_emc=" + ModConfig.PRIVATE_EMC + "\n"

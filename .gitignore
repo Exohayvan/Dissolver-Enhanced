@@ -39,3 +39,10 @@ hs_err_*.log
 replay_*.log
 *.hprof
 *.jfr
+
+# test-generated config
+
+src/test/resources/config/**/dissolver-enhanced/default-emc-values.yaml
+src/test/resources/config/empty/dissolver-enhanced/
+src/test/resources/config/defaults/dissolver-enhanced/emc-overrides.yaml
+src/test/resources/config/inverted/dissolver-enhanced/emc-overrides.yaml

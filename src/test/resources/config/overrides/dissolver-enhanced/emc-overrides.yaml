@@ -1,0 +1,6 @@
+schema: 1
+items:
+  test:case: 400
+  minecraft:dirt: 200
+  minecraft:cobblestone: 300
+tags:

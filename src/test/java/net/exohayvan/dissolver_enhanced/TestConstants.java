@@ -45,10 +45,7 @@ public class TestConstants {
                     "private_emc=false # Should each player have their own EMC storage? [default: false]",
                     "creative_items=false # Should creative items have EMC? [default: false]",
                     "difficulty=hard # easy | normal | hard - Changes crafting recipe for Dissolver block. [default: hard]",
-                    "mode=default # default | skyblock - Changes some EMC values. [default: default]",
-                    "emc:test:case=400",
-                    "emc:minecraft:dirt=200",
-                    "emc:cobblestone=300"
+                    "mode=default # default | skyblock - Changes some EMC values. [default: default]"
                 )),
 
             /** all the booleans are flipped */
