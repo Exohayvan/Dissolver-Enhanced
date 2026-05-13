@@ -3,6 +3,9 @@
 
     "item.dissolver_enhanced.crystal_frame_item": "Crystal Frame",
     "item.dissolver_enhanced.emc_orb": "EMC Orb",
+    "item.dissolver_enhanced.dissolver_block": "Dissolver",
+    "item.dissolver_enhanced.condenser_block": "Condenser WIP",
+    "item.dissolver_enhanced.materializer_block": "Materializer WIP",
     "block.dissolver_enhanced.dissolver_block": "Dissolver",
     "block.dissolver_enhanced.condenser_block": "Condenser WIP",
     "block.dissolver_enhanced.materializer_block": "Materializer WIP",

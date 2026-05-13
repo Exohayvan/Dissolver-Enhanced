@@ -50,7 +50,9 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
         this.searchBox.setBordered(false);
         this.searchBox.setMaxLength(50);
         this.searchBox.setTextColor(0xFFFFFF);
+        this.searchBox.setCanLoseFocus(false);
         this.searchBox.setFocused(true);
+        this.setFocused(this.searchBox);
         this.searchBox.setResponder(value -> search());
         this.addRenderableWidget(this.searchBox);
     }

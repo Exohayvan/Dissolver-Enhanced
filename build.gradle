@@ -90,6 +90,12 @@ processResources {
 	from(commonDir) {
 		include 'emc-values/**'
 		include 'data/dissolver_enhanced/advancement/**'
+		filter { line ->
+			line.replace(
+				'"background": "dissolver_enhanced:textures/block/dissolver_block.png"',
+				'"background": "dissolver_enhanced:gui/advancements/backgrounds/dissolver_block"'
+			)
+		}
 	}
 }
 
