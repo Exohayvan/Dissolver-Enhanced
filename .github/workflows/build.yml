@@ -98,11 +98,30 @@ jobs:
         with:
           min-wrapper-count: 2
 
-      - name: Setup Java 21
+      - name: Select Java version
+        id: java
+        shell: bash
+        run: |
+          case "${{ matrix.branch }}" in
+            forge-1.20.1)
+              echo "version=17" >> "$GITHUB_OUTPUT"
+              echo "distribution=temurin" >> "$GITHUB_OUTPUT"
+              ;;
+            fabric-26.1.2)
+              echo "version=25" >> "$GITHUB_OUTPUT"
+              echo "distribution=temurin" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "version=21" >> "$GITHUB_OUTPUT"
+              echo "distribution=microsoft" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Setup Java ${{ steps.java.outputs.version }}
         uses: actions/setup-java@v4
         with:
-          java-version: 21
-          distribution: microsoft
+          java-version: ${{ steps.java.outputs.version }}
+          distribution: ${{ steps.java.outputs.distribution }}
 
       - name: Build ${{ matrix.branch }}
         working-directory: ${{ env.TARGET_DIR }}
