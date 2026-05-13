@@ -15,6 +15,7 @@ sourceSets {
         resources {
             srcDir '.'
             include 'emc-values/**'
+            include 'data/dissolver_enhanced/advancement/**'
         }
     }
 }

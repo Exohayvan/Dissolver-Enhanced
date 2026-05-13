@@ -1,0 +1,30 @@
+{
+  "parent": "dissolver_enhanced:root",
+  "display": {
+    "icon": {
+      "id": "minecraft:emerald",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.dissolver_enhanced.learn.emerald.title"
+    },
+    "description": {
+      "translate": "advancements.dissolver_enhanced.learn.emerald.description"
+    },
+    "x": 3,
+    "y": 1
+  },
+  "criteria": {
+    "learned": {
+      "trigger": "dissolver_enhanced:learned_item",
+      "conditions": {
+        "item": "minecraft:emerald"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "learned"
+    ]
+  ]
+}

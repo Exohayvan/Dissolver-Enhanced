@@ -53,6 +53,20 @@ public final class EmcValueSet {
         return new EmcValueSet(schema, mergedItems, mergedTags, overrides);
     }
 
+    public EmcValueSet applyValues(EmcValueSet overrideValues) {
+        if (overrideValues == null) {
+            return this;
+        }
+
+        Map<String, Integer> mergedItems = new LinkedHashMap<>(items);
+        overrideValues.items().forEach((key, value) -> applyOverrideValue(mergedItems, key, value));
+
+        Map<String, Integer> mergedTags = new LinkedHashMap<>(tags);
+        overrideValues.tags().forEach((key, value) -> applyOverrideValue(mergedTags, key, value));
+
+        return new EmcValueSet(schema, mergedItems, mergedTags, overrides);
+    }
+
     private static void applyOverrideValue(Map<String, Integer> values, String key, Integer value) {
         if (value == null) {
             values.remove(key);

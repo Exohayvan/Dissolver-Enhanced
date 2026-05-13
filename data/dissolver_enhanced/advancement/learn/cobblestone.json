@@ -1,0 +1,30 @@
+{
+  "parent": "dissolver_enhanced:root",
+  "display": {
+    "icon": {
+      "id": "minecraft:cobblestone",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.dissolver_enhanced.learn.cobblestone.title"
+    },
+    "description": {
+      "translate": "advancements.dissolver_enhanced.learn.cobblestone.description"
+    },
+    "x": 2,
+    "y": 0
+  },
+  "criteria": {
+    "learned": {
+      "trigger": "dissolver_enhanced:learned_item",
+      "conditions": {
+        "item": "minecraft:cobblestone"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "learned"
+    ]
+  ]
+}

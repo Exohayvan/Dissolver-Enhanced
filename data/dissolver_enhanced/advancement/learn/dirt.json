@@ -1,0 +1,30 @@
+{
+  "parent": "dissolver_enhanced:root",
+  "display": {
+    "icon": {
+      "id": "minecraft:dirt",
+      "count": 1
+    },
+    "title": {
+      "translate": "advancements.dissolver_enhanced.learn.dirt.title"
+    },
+    "description": {
+      "translate": "advancements.dissolver_enhanced.learn.dirt.description"
+    },
+    "x": 2,
+    "y": -2
+  },
+  "criteria": {
+    "learned": {
+      "trigger": "dissolver_enhanced:learned_item",
+      "conditions": {
+        "item": "minecraft:dirt"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "learned"
+    ]
+  ]
+}

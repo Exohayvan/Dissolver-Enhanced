@@ -33,6 +33,7 @@ Common is not a complete mod by itself. Loader projects include it so shared log
 - EMC tooltip support.
 - WTHIT integration for showing EMC and learned state where supported.
 - Shared default EMC values in `Common/emc-values/defaults.yaml`.
+- Shared advancement JSON in `Common/data/dissolver_enhanced/advancement`.
 - Recipe and item tag based EMC calculation improvements.
 - Condenser WIP machine for converting items into EMC Orbs.
 - EMC Orb item that stores EMC metadata and can feed value back into the Dissolver.
@@ -101,16 +102,35 @@ Debug commands are also available for pack makers and development builds. They r
 
 ## Config
 
-Current inherited config options:
+Runtime config is stored under `config/dissolver-enhanced/`.
+
+| File | Purpose |
+| --- | --- |
+| `dissolver_enhanced.properties` | Main config toggles only. EMC value overrides do not belong here. |
+| `default-emc-values.yaml` | Generated from the bundled Common EMC defaults. This file may be overwritten by mod updates. |
+| `emc-overrides.yaml` | Pack/server value tuning. These values are applied after defaults and should be used for custom overrides. |
+
+Current config options:
 
 - `emc_on_hud=false|true`: display current EMC on the HUD
 - `private_emc=false|true`: give each player their own EMC storage
 - `creative_items=false|true`: allow creative-only items to have EMC
 - `difficulty=easy|normal|hard`: change the Dissolver crafting recipe
 - `mode=default|skyblock`: change some EMC values for different play styles
-- `emc:{id}={number}`: set a custom EMC value for an item, for example `emc:minecraft:dirt=50`
 
-These may be reorganized as custom value and compatibility systems mature.
+EMC YAML files support `items:` and `tags:` sections. Use `emc-overrides.yaml` for custom values, for example:
+
+```yaml
+schema: 1
+items:
+  minecraft:dirt: 1
+tags:
+  minecraft:logs: 32
+```
+
+## Advancements
+
+Advancement data lives in Common so Fabric and Forge builds package the same advancement tree. To add one, create a JSON file under `Common/data/dissolver_enhanced/advancement/`, set its `parent`, and set `display.x` / `display.y` to control the visible order in the advancement tab.
 
 ## Compatibility Goals
 
