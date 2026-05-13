@@ -1,5 +1,6 @@
 package net.exohayvan.dissolver_enhanced.inventory;
 
+import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
 
@@ -94,11 +95,11 @@ public class DissolverInventoryInput implements Inventory {
 
         if (!player.getWorld().isClient()) {
             if (EMCOrbItem.isEMCOrb(stack)) {
-                int emc = EMCOrbItem.getEMC(stack);
-                if (emc > 0) {
+                BigInteger emc = EMCOrbItem.getEmcBig(stack);
+                if (emc.signum() > 0) {
                     EMCHelper.addEMCValue(player, emc);
-                    EMCHelper.sendEmcDeltaToClient(player, java.math.BigInteger.valueOf(emc));
-                    ModCriteria.triggerEmcOrb(player, java.math.BigInteger.valueOf(emc), "dissolved");
+                    EMCHelper.sendEmcDeltaToClient(player, emc);
+                    ModCriteria.triggerEmcOrb(player, emc, "dissolved");
                     this.stacks.set(slot, ItemStack.EMPTY);
                     this.handler.onContentChanged(this);
                     this.handler.refresh();

@@ -1,12 +1,16 @@
 package net.exohayvan.dissolver_enhanced.block.entity;
 
+import java.math.BigInteger;
+
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
+import net.exohayvan.dissolver_enhanced.item.EmcCoreItem;
 import net.exohayvan.dissolver_enhanced.screen.CondenserScreenHandler;
 import net.exohayvan.dissolver_enhanced.common.machine.CondenserLogic;
 import net.exohayvan.dissolver_enhanced.common.machine.MachineTiming;
+import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
@@ -89,8 +93,8 @@ public class CondenserBlockEntity extends CustomBlockEntity {
         ItemStack input = this.stacks.get(INPUT_SLOT);
         if (input.isEmpty()) return false;
 
-        int emc = condenseValue(input);
-        if (emc <= 0) return false;
+        BigInteger emc = condenseValueBig(input);
+        if (emc.signum() <= 0) return false;
 
         ItemStack output = this.stacks.get(OUTPUT_SLOT);
         return output.isEmpty() || (EMCOrbItem.isEMCOrb(output) && output.getCount() == 1);
@@ -98,14 +102,14 @@ public class CondenserBlockEntity extends CustomBlockEntity {
 
     private void condenseOneItem() {
         ItemStack input = this.stacks.get(INPUT_SLOT);
-        int emc = condenseValue(input);
-        if (emc <= 0) return;
+        BigInteger emc = condenseValueBig(input);
+        if (emc.signum() <= 0) return;
 
         ItemStack output = this.stacks.get(OUTPUT_SLOT);
         if (output.isEmpty()) {
             this.stacks.set(OUTPUT_SLOT, EMCOrbItem.create(emc));
         } else if (EMCOrbItem.isEMCOrb(output)) {
-            EMCOrbItem.setEMC(output, CondenserLogic.safeAdd(EMCOrbItem.getEMC(output), emc));
+            EMCOrbItem.setEMC(output, EMCOrbItem.getEmcBig(output).add(emc));
         }
 
         input.decrement(1);
@@ -115,20 +119,35 @@ public class CondenserBlockEntity extends CustomBlockEntity {
     }
 
     private int condenseValue(ItemStack stack) {
+        return EmcNumber.toIntSaturated(condenseValueBig(stack));
+    }
+
+    private BigInteger condenseValueBig(ItemStack stack) {
         if (EMCOrbItem.isEMCOrb(stack)) {
-            return EMCOrbItem.getEMC(stack);
+            return EMCOrbItem.getEmcBig(stack);
         }
 
         String stackKey = EMCKey.fromStack(stack);
         int emc = EMCValues.get(stackKey);
-        if (emc <= 0) return 0;
+        if (emc <= 0) return BigInteger.ZERO;
 
-        return CondenserLogic.getCondenseValue(stackKey, emc, ItemHelper.getDurabilityPercentage(stack));
+        return BigInteger.valueOf(CondenserLogic.getCondenseValue(stackKey, emc, ItemHelper.getDurabilityPercentage(stack)));
     }
 
     private int getConversionTime() {
         int emc = condenseValue(this.stacks.get(INPUT_SLOT));
-        return MachineTiming.ticksForEmc(emc, CONVERSION_TICKS_PER_EMC);
+        return ticksForRate(emc, getEmcPerSecond());
+    }
+
+    private int getEmcPerSecond() {
+        return EmcCoreItem.getEmcPerSecond(this.stacks.get(CORE_SLOT));
+    }
+
+    private int ticksForRate(int emc, int emcPerSecond) {
+        if (emc <= 0) return CONVERSION_TICKS_PER_EMC;
+
+        long ticks = ((long) emc * MachineTiming.TICKS_PER_SECOND + Math.max(1, emcPerSecond) - 1L) / Math.max(1, emcPerSecond);
+        return (int) Math.max(1L, Math.min(Integer.MAX_VALUE, ticks));
     }
 
     private void resetProgress() {
@@ -184,6 +203,7 @@ public class CondenserBlockEntity extends CustomBlockEntity {
 
     @Override
     public boolean canInsert(int slot, ItemStack stack, Direction direction) {
+        if (slot == CORE_SLOT) return EmcCoreItem.isEmcCore(stack);
         if (slot != INPUT_SLOT) return false;
         return EMCOrbItem.isEMCOrb(stack) ? EMCOrbItem.getEMC(stack) > 0 : EMCValues.get(EMCKey.fromStack(stack)) > 0;
     }

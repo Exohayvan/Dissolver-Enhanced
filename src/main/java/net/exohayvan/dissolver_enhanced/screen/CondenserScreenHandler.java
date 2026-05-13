@@ -7,6 +7,7 @@ import net.exohayvan.dissolver_enhanced.inventory.CondenserCoreSlot;
 import net.exohayvan.dissolver_enhanced.inventory.CondenserInputSlot;
 import net.exohayvan.dissolver_enhanced.inventory.OutputOnlySlot;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
+import net.exohayvan.dissolver_enhanced.item.EmcCoreItem;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
@@ -62,20 +63,18 @@ public class CondenserScreenHandler extends ScreenHandler {
         return maxProgress != 0 && progress != 0 ? progress * 24 / maxProgress : 0;
     }
 
-    public int getCondensingRatePerSecond() {
+    public BigInteger getCondensingRatePerSecond() {
         ItemStack input = this.inventory.getStack(INPUT_SLOT);
-        int inputEmc = getInputEmc(input);
-        if (inputEmc <= 0) return 0;
+        BigInteger inputEmc = getInputEmcBig(input);
+        if (inputEmc.signum() <= 0) return BigInteger.ZERO;
         if (EMCOrbItem.isEMCOrb(input)) return inputEmc;
 
-        int conversionTicks = this.propertyDelegate.get(1);
-        int conversionSeconds = Math.max(1, conversionTicks / 20);
-        return Math.max(1, (int)Math.ceil(inputEmc / (double)conversionSeconds));
+        return BigInteger.valueOf(EmcCoreItem.getEmcPerSecond(this.inventory.getStack(CORE_SLOT)));
     }
 
-    public int getStoredEmc() {
+    public BigInteger getStoredEmc() {
         ItemStack output = this.inventory.getStack(OUTPUT_SLOT);
-        return EMCOrbItem.isEMCOrb(output) ? EMCOrbItem.getEMC(output) : 0;
+        return EMCOrbItem.isEMCOrb(output) ? EMCOrbItem.getEmcBig(output) : BigInteger.ZERO;
     }
 
     @Override
@@ -92,7 +91,9 @@ public class CondenserScreenHandler extends ScreenHandler {
             if (!this.insertItem(originalStack, INVENTORY_START, HOTBAR_END, true)) return ItemStack.EMPTY;
             slot.onQuickTransfer(originalStack, newStack);
         } else if (invSlot >= INVENTORY_START && invSlot < HOTBAR_END) {
-            if (isCondensable(originalStack)) {
+            if (EmcCoreItem.isEmcCore(originalStack)) {
+                if (!this.insertItem(originalStack, CORE_SLOT, CORE_SLOT + 1, false)) return ItemStack.EMPTY;
+            } else if (isCondensable(originalStack)) {
                 if (!this.insertItem(originalStack, INPUT_SLOT, INPUT_SLOT + 1, false)) return ItemStack.EMPTY;
             } else if (invSlot < INVENTORY_END) {
                 if (!this.insertItem(originalStack, HOTBAR_START, HOTBAR_END, false)) return ItemStack.EMPTY;
@@ -124,16 +125,20 @@ public class CondenserScreenHandler extends ScreenHandler {
     }
 
     private boolean isCondensable(ItemStack stack) {
-        return getInputEmc(stack) > 0;
+        return getInputEmcBig(stack).signum() > 0;
     }
 
     private int getInputEmc(ItemStack stack) {
         return EMCOrbItem.isEMCOrb(stack) ? EMCOrbItem.getEMC(stack) : EMCValues.get(EMCKey.fromStack(stack));
     }
 
+    private BigInteger getInputEmcBig(ItemStack stack) {
+        return EMCOrbItem.isEMCOrb(stack) ? EMCOrbItem.getEmcBig(stack) : BigInteger.valueOf(EMCValues.get(EMCKey.fromStack(stack)));
+    }
+
     private static void triggerOrbAdvancement(PlayerEntity player, ItemStack stack) {
         if (EMCOrbItem.isEMCOrb(stack)) {
-            ModCriteria.triggerEmcOrb(player, BigInteger.valueOf(EMCOrbItem.getEMC(stack)), "created");
+            ModCriteria.triggerEmcOrb(player, EMCOrbItem.getEmcBig(stack), "created");
         }
     }
 

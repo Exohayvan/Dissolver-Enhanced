@@ -6,6 +6,7 @@ import net.exohayvan.dissolver_enhanced.inventory.CondenserCoreSlot;
 import net.exohayvan.dissolver_enhanced.inventory.MaterializerTemplateSlot;
 import net.exohayvan.dissolver_enhanced.inventory.OutputOnlySlot;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
+import net.exohayvan.dissolver_enhanced.item.EmcCoreItem;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
@@ -69,6 +70,10 @@ public class MaterializerScreenHandler extends ScreenHandler {
         return this.propertyDelegate.get(4);
     }
 
+    public int getMaterializingRatePerSecond() {
+        return getTargetValue() > 0 && getInputValue() > 0 ? EmcCoreItem.getEmcPerSecond(this.inventory.getStack(CORE_SLOT)) : 0;
+    }
+
     @Override
     public ItemStack quickMove(PlayerEntity player, int invSlot) {
         ItemStack newStack = ItemStack.EMPTY;
@@ -82,7 +87,9 @@ public class MaterializerScreenHandler extends ScreenHandler {
             if (!this.insertItem(originalStack, INVENTORY_START, HOTBAR_END, true)) return ItemStack.EMPTY;
             slot.onQuickTransfer(originalStack, newStack);
         } else if (invSlot >= INVENTORY_START && invSlot < HOTBAR_END) {
-            if (isMaterializableTarget(originalStack)) {
+            if (EmcCoreItem.isEmcCore(originalStack)) {
+                if (!this.insertItem(originalStack, CORE_SLOT, CORE_SLOT + 1, false)) return ItemStack.EMPTY;
+            } else if (isMaterializableTarget(originalStack)) {
                 if (!this.insertItem(originalStack, TARGET_SLOT, TARGET_SLOT + 1, false)
                         && !this.insertItem(originalStack, EMC_INPUT_SLOT, EMC_INPUT_SLOT + 1, false)) {
                     return ItemStack.EMPTY;

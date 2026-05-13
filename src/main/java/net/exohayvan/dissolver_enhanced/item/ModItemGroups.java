@@ -19,6 +19,12 @@ public class ModItemGroups {
     private static void addToCustomInventory(DisplayContext displayContext, Entries entries) {
         entries.add(ModItems.CRYSTAL_FRAME_ITEM);
         entries.add(ModItems.EMC_ORB);
+        entries.add(ModItems.COPPER_EMC_CORE);
+        entries.add(ModItems.IRON_EMC_CORE);
+        entries.add(ModItems.GOLD_EMC_CORE);
+        entries.add(ModItems.EMERALD_EMC_CORE);
+        entries.add(ModItems.DIAMOND_EMC_CORE);
+        entries.add(ModItems.NETHERITE_EMC_CORE);
         entries.add(ModBlocks.DISSOLVER_BLOCK);
         entries.add(ModBlocks.CONDENSER_BLOCK);
         entries.add(ModBlocks.MATERIALIZER_BLOCK);

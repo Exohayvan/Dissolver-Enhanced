@@ -14,6 +14,7 @@ import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
@@ -289,11 +290,12 @@ public class DissolverScreenHandler extends ScreenHandler {
 
         if (invSlot < PLAYER_INV_SIZE) {
             if (EMCOrbItem.isEMCOrb(slot.getStack())) {
-                int emc = EMCOrbItem.getEMC(slot.getStack());
-                if (emc <= 0) return ItemStack.EMPTY;
+                BigInteger emc = EMCOrbItem.getEmcBig(slot.getStack());
+                if (emc.signum() <= 0) return ItemStack.EMPTY;
 
                 EMCHelper.addEMCValue(player, emc);
-                EMCHelper.sendEmcDeltaToClient(player, BigInteger.valueOf(emc));
+                EMCHelper.sendEmcDeltaToClient(player, emc);
+                ModCriteria.triggerEmcOrb(player, emc, "dissolved");
                 slot.getStack().decrement(1);
                 if (slot.getStack().isEmpty()) {
                     slot.setStack(ItemStack.EMPTY);

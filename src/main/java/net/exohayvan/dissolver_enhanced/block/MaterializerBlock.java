@@ -1,11 +1,14 @@
 package net.exohayvan.dissolver_enhanced.block;
 
+import java.math.BigInteger;
+
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.MapCodec;
 
 import net.exohayvan.dissolver_enhanced.block.entity.MaterializerBlockEntity;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
+import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
@@ -14,6 +17,7 @@ import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -50,6 +54,25 @@ public class MaterializerBlock extends BlockWithEntity {
         }
 
         return ActionResult.CONSUME;
+    }
+
+    @Override
+    protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+        if (!state.isOf(newState.getBlock())) {
+            BlockEntity blockEntity = world.getBlockEntity(pos);
+            if (blockEntity instanceof MaterializerBlockEntity materializerBlockEntity) {
+                ItemScatterer.spawn(world, pos, materializerBlockEntity);
+
+                BigInteger storedEmc = materializerBlockEntity.getStoredEmcForDrop();
+                if (storedEmc.signum() > 0) {
+                    ItemScatterer.spawn(world, pos.getX(), pos.getY(), pos.getZ(), EMCOrbItem.create(storedEmc));
+                }
+
+                world.updateComparators(pos, this);
+            }
+        }
+
+        super.onStateReplaced(state, world, pos, newState, moved);
     }
 
     @Nullable

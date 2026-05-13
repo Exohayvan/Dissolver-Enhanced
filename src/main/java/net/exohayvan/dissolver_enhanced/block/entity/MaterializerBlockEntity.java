@@ -1,12 +1,16 @@
 package net.exohayvan.dissolver_enhanced.block.entity;
 
+import java.math.BigInteger;
+
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
+import net.exohayvan.dissolver_enhanced.item.EmcCoreItem;
 import net.exohayvan.dissolver_enhanced.screen.MaterializerScreenHandler;
 import net.exohayvan.dissolver_enhanced.common.machine.MachineTiming;
 import net.exohayvan.dissolver_enhanced.common.machine.MaterializerLogic;
+import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
@@ -36,7 +40,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     private final PropertyDelegate propertyDelegate;
     private DefaultedList<ItemStack> stacks = DefaultedList.ofSize(SIZE, ItemStack.EMPTY);
     private int progress = 0;
-    private int storedEmc = 0;
+    private BigInteger storedEmc = BigInteger.ZERO;
 
     public MaterializerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MATERIALIZER_BLOCK_ENTITY, pos, state);
@@ -46,7 +50,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
                 return switch (index) {
                     case 0 -> MaterializerBlockEntity.this.progress;
                     case 1 -> MaterializerBlockEntity.this.getConversionTime();
-                    case 2 -> MaterializerBlockEntity.this.storedEmc;
+                    case 2 -> EmcNumber.toIntSaturated(MaterializerBlockEntity.this.storedEmc);
                     case 3 -> MaterializerBlockEntity.this.getTargetValue();
                     case 4 -> MaterializerBlockEntity.this.getInputValue();
                     default -> 0;
@@ -105,7 +109,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
         int inputValue = getInputValue();
         if (inputValue <= 0) return;
 
-        this.storedEmc = MaterializerLogic.absorbInput(this.storedEmc, inputValue);
+        this.storedEmc = MaterializerLogic.absorbInput(this.storedEmc, BigInteger.valueOf(inputValue));
         input.decrement(1);
         if (input.isEmpty()) {
             this.stacks.set(EMC_INPUT_SLOT, ItemStack.EMPTY);
@@ -115,7 +119,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     private boolean canOutputTarget() {
         ItemStack target = this.stacks.get(TARGET_SLOT);
         int targetValue = getTargetValue();
-        if (target.isEmpty() || !MaterializerLogic.canOutput(this.storedEmc, targetValue)) return false;
+        if (target.isEmpty() || !MaterializerLogic.canOutput(this.storedEmc, BigInteger.valueOf(targetValue))) return false;
 
         ItemStack output = this.stacks.get(OUTPUT_SLOT);
         if (output.isEmpty()) return true;
@@ -125,7 +129,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     private void outputTarget() {
         ItemStack target = this.stacks.get(TARGET_SLOT);
         int targetValue = getTargetValue();
-        if (!MaterializerLogic.canOutput(this.storedEmc, targetValue)) return;
+        if (!MaterializerLogic.canOutput(this.storedEmc, BigInteger.valueOf(targetValue))) return;
 
         ItemStack output = this.stacks.get(OUTPUT_SLOT);
         if (output.isEmpty()) {
@@ -138,7 +142,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
             return;
         }
 
-        this.storedEmc = MaterializerLogic.spendForOutput(this.storedEmc, targetValue);
+        this.storedEmc = MaterializerLogic.spendForOutput(this.storedEmc, BigInteger.valueOf(targetValue));
     }
 
     private int getTargetValue() {
@@ -150,7 +154,18 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     }
 
     private int getConversionTime() {
-        return MachineTiming.ticksForEmc(getInputValue(), CONVERSION_TICKS_PER_EMC);
+        return ticksForRate(getInputValue(), getEmcPerSecond());
+    }
+
+    private int getEmcPerSecond() {
+        return EmcCoreItem.getEmcPerSecond(this.stacks.get(CORE_SLOT));
+    }
+
+    private int ticksForRate(int emc, int emcPerSecond) {
+        if (emc <= 0) return CONVERSION_TICKS_PER_EMC;
+
+        long ticks = ((long) emc * MachineTiming.TICKS_PER_SECOND + Math.max(1, emcPerSecond) - 1L) / Math.max(1, emcPerSecond);
+        return (int) Math.max(1L, Math.min(Integer.MAX_VALUE, ticks));
     }
 
     private int stackValue(ItemStack stack, boolean allowOrb) {
@@ -162,6 +177,10 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
         if (emc <= 0) return 0;
 
         return MaterializerLogic.getMaterializeValue(stackKey, emc, ItemHelper.getDurabilityPercentage(stack));
+    }
+
+    public BigInteger getStoredEmcForDrop() {
+        return EmcNumber.nonNegative(this.storedEmc);
     }
 
     private boolean resetProgress() {
@@ -177,7 +196,11 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
         this.stacks = DefaultedList.ofSize(SIZE, ItemStack.EMPTY);
         Inventories.readNbt(nbt, this.stacks, registryLookup);
         this.progress = Math.max(0, nbt.getInt("Progress"));
-        this.storedEmc = Math.max(0, nbt.getInt("StoredEmc"));
+        if (nbt.contains("StoredEmcBig")) {
+            this.storedEmc = EmcNumber.parse(nbt.getString("StoredEmcBig"));
+        } else {
+            this.storedEmc = EmcNumber.of(nbt.getInt("StoredEmc"));
+        }
     }
 
     @Override
@@ -185,7 +208,8 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
         super.writeNbt(nbt, registryLookup);
         Inventories.writeNbt(nbt, this.stacks, registryLookup);
         nbt.putInt("Progress", this.progress);
-        nbt.putInt("StoredEmc", this.storedEmc);
+        nbt.putString("StoredEmcBig", EmcNumber.nonNegative(this.storedEmc).toString());
+        nbt.putInt("StoredEmc", EmcNumber.toIntSaturated(this.storedEmc));
     }
 
     @Override
@@ -224,6 +248,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     public boolean canInsert(int slot, ItemStack stack, Direction direction) {
         if (slot == TARGET_SLOT) return stackValue(stack, false) > 0;
         if (slot == EMC_INPUT_SLOT) return stackValue(stack, true) > 0;
+        if (slot == CORE_SLOT) return EmcCoreItem.isEmcCore(stack);
         return false;
     }
 

@@ -1,7 +1,10 @@
 package net.exohayvan.dissolver_enhanced.screen;
 
+import java.math.BigInteger;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 
+import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.render.GameRenderer;
@@ -11,6 +14,7 @@ import net.minecraft.util.Identifier;
 
 public class MaterializerScreen extends HandledScreen<MaterializerScreenHandler> {
     private static final Identifier TEXTURE = Identifier.ofVanilla("textures/gui/container/furnace.png");
+    private static final Identifier ARROW_PROGRESS_TEXTURE = Identifier.ofVanilla("container/furnace/burn_progress");
     private static final int FLAME_X = 56;
     private static final int FLAME_Y = 36;
     private static final int FLAME_WIDTH = 14;
@@ -18,12 +22,11 @@ public class MaterializerScreen extends HandledScreen<MaterializerScreenHandler>
     private static final int ARROW_X = 79;
     private static final int ARROW_Y = 34;
     private static final int ARROW_WIDTH = 24;
+    private static final int ARROW_HEIGHT = 16;
     private static final int GUI_BACKGROUND = 0xFFC6C6C6;
     private static final int SLOT_DARK = 0xFF373737;
     private static final int SLOT_LIGHT = 0xFFFFFFFF;
     private static final int SLOT_FILL = 0xFF8B8B8B;
-    private static final int ARROW_FILL = 0xFF59A8FF;
-    private static final int ARROW_HIGHLIGHT = 0xFF91CCFF;
     private static final int STATUS_X = 78;
     private static final int STORED_Y = 54;
     private static final int INPUT_Y = 64;
@@ -62,7 +65,7 @@ public class MaterializerScreen extends HandledScreen<MaterializerScreenHandler>
         context.fill(
                 this.x + FLAME_X - 20,
                 this.y + FLAME_Y,
-                this.x + FLAME_X + FLAME_WIDTH + 20,
+                this.x + FLAME_X + FLAME_WIDTH + 5,
                 this.y + FLAME_Y + FLAME_HEIGHT + 18,
                 GUI_BACKGROUND
         );
@@ -80,33 +83,17 @@ public class MaterializerScreen extends HandledScreen<MaterializerScreenHandler>
         int progress = this.handler.getScaledProgress();
         int width = Math.min(ARROW_WIDTH, progress);
 
-        for (int xOffset = 0; xOffset < width; xOffset++) {
-            int top = 5;
-            int bottom = 11;
-
-            if (xOffset >= 18) {
-                int tipOffset = xOffset - 18;
-                top = 2 + tipOffset;
-                bottom = 14 - tipOffset;
-            }
-
-            context.fill(
-                    this.x + ARROW_X + xOffset,
-                    this.y + ARROW_Y + top,
-                    this.x + ARROW_X + xOffset + 1,
-                    this.y + ARROW_Y + bottom,
-                    ARROW_FILL
-            );
-        }
-
-        if (width > 2) {
-            int highlightWidth = Math.min(width, 18);
-            context.fill(
-                    this.x + ARROW_X + 1,
-                    this.y + ARROW_Y + 6,
-                    this.x + ARROW_X + highlightWidth,
-                    this.y + ARROW_Y + 7,
-                    ARROW_HIGHLIGHT
+        if (width > 0) {
+            context.drawGuiTexture(
+                    ARROW_PROGRESS_TEXTURE,
+                    ARROW_WIDTH,
+                    ARROW_HEIGHT,
+                    0,
+                    0,
+                    this.x + ARROW_X,
+                    this.y + ARROW_Y,
+                    width,
+                    ARROW_HEIGHT
             );
         }
     }
@@ -115,11 +102,11 @@ public class MaterializerScreen extends HandledScreen<MaterializerScreenHandler>
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
         super.drawForeground(context, mouseX, mouseY);
         context.drawText(this.textRenderer, "Stored: " + format(this.handler.getStoredEmc()) + " / " + format(this.handler.getTargetValue()), STATUS_X, STORED_Y, STATUS_COLOR, false);
-        context.drawText(this.textRenderer, "Input: +" + format(this.handler.getInputValue()) + " EMC", STATUS_X, INPUT_Y, STATUS_COLOR, false);
+        context.drawText(this.textRenderer, "Rate: +" + format(this.handler.getMaterializingRatePerSecond()) + " EMC/s", STATUS_X, INPUT_Y, STATUS_COLOR, false);
     }
 
     private String format(int value) {
-        return String.format("%,d", value);
+        return EmcNumber.format(BigInteger.valueOf(value));
     }
 
     @Override
