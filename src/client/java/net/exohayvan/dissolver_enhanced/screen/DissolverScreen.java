@@ -26,10 +26,10 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
     private static final int SCROLL_BAR_X = 198;
     private static final int SCROLL_BAR_Y = 18;
     private static final int SCROLL_AREA_HEIGHT = 108;
-    private static final int SEARCH_X = 102;
-    private static final int SEARCH_Y = 1;
-    private static final int SEARCH_WIDTH = 104;
-    private static final int SEARCH_HEIGHT = 12;
+    private static final int SEARCH_X = 104;
+    private static final int SEARCH_Y = 6;
+    private static final int SEARCH_WIDTH = 80;
+    private static final int SEARCH_HEIGHT = 9;
     private static final int MESSAGE_X = 33;
     private static final int MESSAGE_Y = 6;
 
@@ -49,13 +49,9 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
         this.searchBox = new EditBox(this.font, this.leftPos + SEARCH_X, this.topPos + SEARCH_Y, SEARCH_WIDTH, SEARCH_HEIGHT, Component.translatable("gui.dissolver_enhanced.search"));
         this.searchBox.setBordered(false);
         this.searchBox.setMaxLength(50);
-        this.searchBox.setTextColor(0x404040);
-        this.searchBox.setSuggestion(Component.translatable("gui.dissolver_enhanced.search").getString());
-        this.searchBox.setResponder(value -> {
-            this.scrollPosition = 0.0F;
-            this.searchBox.setSuggestion(value.isEmpty() ? Component.translatable("gui.dissolver_enhanced.search").getString() : "");
-            DataSenderClient.sendDataToServer("search", value);
-        });
+        this.searchBox.setTextColor(0xFFFFFF);
+        this.searchBox.setFocused(true);
+        this.searchBox.setResponder(value -> search());
         this.addRenderableWidget(this.searchBox);
     }
 
@@ -138,9 +134,23 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
             return Component.literal("EMC: ").append(Component.literal(NumberHelpers.format(PlayerDataClient.EMC)).withStyle(ChatFormatting.GOLD));
         }
 
-        return customMessage.startsWith("literal:")
-            ? Component.literal(customMessage.substring("literal:".length()))
-            : Component.translatable(customMessage);
+        if (customMessage.startsWith("literal:")) {
+            return literalMessage(customMessage.substring("literal:".length()));
+        }
+
+        return Component.translatable(customMessage);
+    }
+
+    private Component literalMessage(String message) {
+        if (message.startsWith("§a")) {
+            return Component.literal(message.substring(2)).withStyle(ChatFormatting.GREEN);
+        }
+
+        if (message.startsWith("§c")) {
+            return Component.literal(message.substring(2)).withStyle(ChatFormatting.RED);
+        }
+
+        return Component.literal(message);
     }
 
     private String getLearnedSummary() {
@@ -153,6 +163,14 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
 
     private int getOverflowRows() {
         return Math.max(1, Mth.ceil((float)PlayerDataClient.LEARNED_ITEMS_SIZE / 9.0F) - 6);
+    }
+
+    private void search() {
+        String value = this.searchBox.getValue();
+        DataSenderClient.sendDataToServer("search", value.isEmpty() ? "" : value);
+
+        this.scrollPosition = 0.0F;
+        DataSenderClient.sendDataToServer("scroll", "0");
     }
 
     private void extractForeground(GuiGraphicsExtractor graphics) {

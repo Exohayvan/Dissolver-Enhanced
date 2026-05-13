@@ -474,8 +474,9 @@ public class EMCHelper {
 
     public static void sendEmcDeltaToClient(Player player, BigInteger delta) {
         String sign = delta.signum() >= 0 ? "+" : "-";
+        String color = delta.signum() >= 0 ? "§a" : "§c";
         String value = EmcNumber.format(delta.abs());
-        sendMessageToClient(player, "literal:" + sign + value + " EMC");
+        sendMessageToClient(player, "literal:" + color + sign + value + " EMC");
     }
 
     // TOOLTIP

@@ -1,5 +1,6 @@
 package net.exohayvan.dissolver_enhanced.mixin;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -102,10 +103,10 @@ public class RecipeManagerMixin {
         HashMap<String, List<String>> tagItems = new HashMap<>();
         rawTagValues.keySet().forEach(tagId -> tagItems.put(tagId, resolveTagItems(tagId, rawTagValues, new ArrayList<>())));
 
-        HashMap<String, Integer> tagEmcValues = new HashMap<>();
+        HashMap<String, BigInteger> tagEmcValues = new HashMap<>();
         tagItems.forEach((tagId, itemIds) -> {
-            int emcValue = EMCValues.EMC_TAG_VALUES.getOrDefault(tagId, 0);
-            if (emcValue <= 0) return;
+            BigInteger emcValue = EMCValues.EMC_TAG_VALUES.getOrDefault(tagId, BigInteger.ZERO);
+            if (emcValue.signum() <= 0) return;
             itemIds.forEach(itemId -> tagEmcValues.put(itemId, emcValue));
         });
 
