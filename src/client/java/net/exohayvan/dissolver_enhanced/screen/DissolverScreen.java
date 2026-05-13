@@ -74,7 +74,12 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if (this.searchBox != null && this.searchBox.isFocused() && this.searchBox.keyPressed(event)) {
+        if (this.searchBox != null && this.searchBox.isFocused()) {
+            if (event.key() == 256) {
+                return super.keyPressed(event);
+            }
+
+            this.searchBox.keyPressed(event);
             return true;
         }
 
