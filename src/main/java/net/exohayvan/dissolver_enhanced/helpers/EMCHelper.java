@@ -218,6 +218,7 @@ public class EMCHelper {
 
         learnedList.add(itemId);
         StateSaverAndLoader.setPlayerLearned(player, learnedList);
+        ModCriteria.triggerLearnedCount(player, learnedList.size());
 
         if (sendStoredMessage) {
             // let blocklist update before sending message (to prevent empty message sent)

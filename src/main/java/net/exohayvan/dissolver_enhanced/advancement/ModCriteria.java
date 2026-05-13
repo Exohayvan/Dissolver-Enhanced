@@ -16,6 +16,14 @@ public class ModCriteria {
         DissolverEnhanced.MOD_ID + ":emc_balance",
         new EmcBalanceCriterion()
     );
+    public static final LearnedCountCriterion LEARNED_COUNT = Criteria.register(
+        DissolverEnhanced.MOD_ID + ":learned_count",
+        new LearnedCountCriterion()
+    );
+    public static final EmcOrbCriterion EMC_ORB = Criteria.register(
+        DissolverEnhanced.MOD_ID + ":emc_orb",
+        new EmcOrbCriterion()
+    );
 
     public static void init() {
     }
@@ -29,6 +37,18 @@ public class ModCriteria {
     public static void triggerEmcBalance(PlayerEntity player, BigInteger emc) {
         if (player instanceof ServerPlayerEntity serverPlayer) {
             EMC_BALANCE.trigger(serverPlayer, emc);
+        }
+    }
+
+    public static void triggerLearnedCount(PlayerEntity player, int learnedItems) {
+        if (player instanceof ServerPlayerEntity serverPlayer) {
+            LEARNED_COUNT.trigger(serverPlayer, learnedItems);
+        }
+    }
+
+    public static void triggerEmcOrb(PlayerEntity player, BigInteger emc, String action) {
+        if (player instanceof ServerPlayerEntity serverPlayer) {
+            EMC_ORB.trigger(serverPlayer, emc, action);
         }
     }
 }

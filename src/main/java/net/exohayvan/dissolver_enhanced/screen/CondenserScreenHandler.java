@@ -1,6 +1,7 @@
 package net.exohayvan.dissolver_enhanced.screen;
 
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
+import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.inventory.CondenserCoreSlot;
 import net.exohayvan.dissolver_enhanced.inventory.CondenserInputSlot;
@@ -15,6 +16,7 @@ import net.minecraft.screen.ArrayPropertyDelegate;
 import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
+import java.math.BigInteger;
 
 public class CondenserScreenHandler extends ScreenHandler {
     public static final int INPUT_SLOT = 0;
@@ -41,7 +43,13 @@ public class CondenserScreenHandler extends ScreenHandler {
 
         this.addSlot(new CondenserInputSlot(inventory, INPUT_SLOT, 56, 17));
         this.addSlot(new CondenserCoreSlot(inventory, CORE_SLOT, 56, 53));
-        this.addSlot(new OutputOnlySlot(inventory, OUTPUT_SLOT, 116, 35));
+        this.addSlot(new OutputOnlySlot(inventory, OUTPUT_SLOT, 116, 35) {
+            @Override
+            public void onTakeItem(PlayerEntity player, ItemStack stack) {
+                triggerOrbAdvancement(player, stack);
+                super.onTakeItem(player, stack);
+            }
+        });
 
         addPlayerInventory(playerInventory);
         addPlayerHotbar(playerInventory);
@@ -80,6 +88,7 @@ public class CondenserScreenHandler extends ScreenHandler {
         newStack = originalStack.copy();
 
         if (invSlot == OUTPUT_SLOT) {
+            triggerOrbAdvancement(player, originalStack);
             if (!this.insertItem(originalStack, INVENTORY_START, HOTBAR_END, true)) return ItemStack.EMPTY;
             slot.onQuickTransfer(originalStack, newStack);
         } else if (invSlot >= INVENTORY_START && invSlot < HOTBAR_END) {
@@ -120,6 +129,12 @@ public class CondenserScreenHandler extends ScreenHandler {
 
     private int getInputEmc(ItemStack stack) {
         return EMCOrbItem.isEMCOrb(stack) ? EMCOrbItem.getEMC(stack) : EMCValues.get(EMCKey.fromStack(stack));
+    }
+
+    private static void triggerOrbAdvancement(PlayerEntity player, ItemStack stack) {
+        if (EMCOrbItem.isEMCOrb(stack)) {
+            ModCriteria.triggerEmcOrb(player, BigInteger.valueOf(EMCOrbItem.getEMC(stack)), "created");
+        }
     }
 
     private void addPlayerInventory(PlayerInventory playerInventory) {
