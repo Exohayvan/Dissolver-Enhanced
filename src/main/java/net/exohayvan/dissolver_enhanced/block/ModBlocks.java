@@ -23,11 +23,25 @@ public class ModBlocks {
     private static final Block _DISSOLVER_BLOCK = createDissolverBlock("dissolver_block");
     public static final DissolverBlockItem DISSOLVER_BLOCK_ITEM = new DissolverBlockItem(_DISSOLVER_BLOCK, ModItems.itemProperties("dissolver_block").rarity(Rarity.RARE));
     public static final Block DISSOLVER_BLOCK = registerBlock("dissolver_block", _DISSOLVER_BLOCK, DISSOLVER_BLOCK_ITEM);
+
+    private static final Block _CONDENSER_BLOCK = createCondenserBlock("condenser_block");
+    public static final Block CONDENSER_BLOCK = registerBlock("condenser_block", _CONDENSER_BLOCK, new BlockItem(_CONDENSER_BLOCK, ModItems.itemProperties("condenser_block").rarity(Rarity.UNCOMMON)));
+
+    private static final Block _MATERIALIZER_BLOCK = createMaterializerBlock("materializer_block");
+    public static final Block MATERIALIZER_BLOCK = registerBlock("materializer_block", _MATERIALIZER_BLOCK, new BlockItem(_MATERIALIZER_BLOCK, ModItems.itemProperties("materializer_block").rarity(Rarity.UNCOMMON)));
     
     // HELPERS
 
     private static Block createDissolverBlock(String id) {
-        return new DissolverBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.NETHERITE_BLOCK).setId(blockKey(id)).sound(SoundType.AMETHYST).lightLevel(getLuminance(12)).noOcclusion());
+        return new DissolverBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SMOOTH_STONE).setId(blockKey(id)).sound(SoundType.AMETHYST).lightLevel(getLuminance(12)).noOcclusion());
+    }
+
+    private static Block createCondenserBlock(String id) {
+        return new CondenserBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SMOOTH_STONE).setId(blockKey(id)).sound(SoundType.AMETHYST).lightLevel(getLuminance(8)).noOcclusion());
+    }
+
+    private static Block createMaterializerBlock(String id) {
+        return new MaterializerBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SMOOTH_STONE).setId(blockKey(id)).sound(SoundType.AMETHYST).lightLevel(getLuminance(8)).noOcclusion());
     }
     
     private static Block registerBlock(String id, Block block, BlockItem blockItem) {

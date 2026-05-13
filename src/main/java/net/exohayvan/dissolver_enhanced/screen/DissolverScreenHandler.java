@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
@@ -15,6 +16,7 @@ import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.exohayvan.dissolver_enhanced.inventory.DissolverInventory;
 import net.exohayvan.dissolver_enhanced.inventory.DissolverInventoryInput;
 import net.exohayvan.dissolver_enhanced.inventory.DissolverSlot;
+import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.packets.DataSender;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
@@ -311,6 +313,23 @@ public class DissolverScreenHandler extends AbstractContainerMenu {
         if (player.level().getServer() == null) return ItemStack.EMPTY;
 
         if (invSlot < PLAYER_INV_SIZE) {
+            if (EMCOrbItem.isEMCOrb(slot.getItem())) {
+                BigInteger emc = EMCOrbItem.getEmcBig(slot.getItem());
+                if (emc.signum() <= 0) return ItemStack.EMPTY;
+
+                EMCHelper.addEMCValue(player, emc);
+                EMCHelper.sendEmcDeltaToClient(player, emc);
+                ModCriteria.triggerEmcOrb(player, emc, "dissolved");
+                slot.getItem().shrink(1);
+                if (slot.getItem().isEmpty()) {
+                    slot.setByPlayer(ItemStack.EMPTY);
+                } else {
+                    slot.setChanged();
+                }
+                refresh();
+                return ItemStack.EMPTY;
+            }
+
             if (!EMCHelper.canAddItem(slot.getItem(), player)) return newStack;
         }
 

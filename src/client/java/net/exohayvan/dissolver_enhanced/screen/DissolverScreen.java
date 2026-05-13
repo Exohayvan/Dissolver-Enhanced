@@ -49,7 +49,8 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
         this.searchBox = new EditBox(this.font, this.leftPos + SEARCH_X, this.topPos + SEARCH_Y, SEARCH_WIDTH, SEARCH_HEIGHT, Component.translatable("gui.dissolver_enhanced.search"));
         this.searchBox.setBordered(false);
         this.searchBox.setMaxLength(50);
-        this.searchBox.setTextColor(0xFFFFFF);
+        this.searchBox.setTextColor(0xFFFFFFFF);
+        this.searchBox.setTextColorUneditable(0xFFFFFFFF);
         this.searchBox.setCanLoseFocus(false);
         this.searchBox.setFocused(true);
         this.setFocused(this.searchBox);

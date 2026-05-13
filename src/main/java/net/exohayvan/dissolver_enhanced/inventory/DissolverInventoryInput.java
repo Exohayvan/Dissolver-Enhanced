@@ -1,11 +1,13 @@
 package net.exohayvan.dissolver_enhanced.inventory;
 
+import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
 import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
+import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.Container;
@@ -91,6 +93,21 @@ public class DissolverInventoryInput implements Container {
         if (NOT_HOLDING_ITEM) return;
 
         if (!player.level().isClientSide()) {
+            if (EMCOrbItem.isEMCOrb(stack)) {
+                BigInteger emc = EMCOrbItem.getEmcBig(stack);
+                if (emc.signum() > 0) {
+                    EMCHelper.addEMCValue(player, emc);
+                    EMCHelper.sendEmcDeltaToClient(player, emc);
+                    ModCriteria.triggerEmcOrb(player, emc, "dissolved");
+                    this.stacks.set(slot, ItemStack.EMPTY);
+                    this.handler.slotsChanged(this);
+                    this.handler.refresh();
+                } else {
+                    player.getInventory().placeItemBackInInventory(stack);
+                }
+                return;
+            }
+
             if (slot == 0) {
                 if (!EMCHelper.addItem(stack, player, this.handler)) {
                     player.getInventory().placeItemBackInInventory(stack);

@@ -15,6 +15,18 @@ public class ModBlockEntities {
             "dissolver_block_entity",
             FabricBlockEntityTypeBuilder.create(DissolverBlockEntity::new, ModBlocks.DISSOLVER_BLOCK)
     );
+
+    public static BlockEntityType<CondenserBlockEntity> CONDENSER_BLOCK_ENTITY = create(
+            DissolverEnhanced.MOD_ID,
+            "condenser_block_entity",
+            FabricBlockEntityTypeBuilder.create(CondenserBlockEntity::new, ModBlocks.CONDENSER_BLOCK)
+    );
+
+    public static BlockEntityType<MaterializerBlockEntity> MATERIALIZER_BLOCK_ENTITY = create(
+            DissolverEnhanced.MOD_ID,
+            "materializer_block_entity",
+            FabricBlockEntityTypeBuilder.create(MaterializerBlockEntity::new, ModBlocks.MATERIALIZER_BLOCK)
+    );
     
     static <T extends BlockEntity> BlockEntityType<T> create(String namespace, String id, FabricBlockEntityTypeBuilder<T> builder) {
         return Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, Identifier.fromNamespaceAndPath(namespace, id), builder.build());

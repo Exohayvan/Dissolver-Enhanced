@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "dissolver_enhanced:block/materializer_block"
+  }
+}

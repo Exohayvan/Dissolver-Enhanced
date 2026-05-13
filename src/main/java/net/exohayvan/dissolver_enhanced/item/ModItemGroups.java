@@ -17,7 +17,16 @@ public class ModItemGroups {
 
     private static void addToCustomInventory(ItemDisplayParameters displayContext, Output entries) {
         entries.accept(ModItems.CRYSTAL_FRAME_ITEM);
+        entries.accept(ModItems.EMC_ORB);
+        entries.accept(ModItems.COPPER_EMC_CORE);
+        entries.accept(ModItems.IRON_EMC_CORE);
+        entries.accept(ModItems.GOLD_EMC_CORE);
+        entries.accept(ModItems.EMERALD_EMC_CORE);
+        entries.accept(ModItems.DIAMOND_EMC_CORE);
+        entries.accept(ModItems.NETHERITE_EMC_CORE);
         entries.accept(ModBlocks.DISSOLVER_BLOCK);
+        entries.accept(ModBlocks.CONDENSER_BLOCK);
+        entries.accept(ModBlocks.MATERIALIZER_BLOCK);
     }
 
     // HELPERS

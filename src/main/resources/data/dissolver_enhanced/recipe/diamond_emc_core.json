@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "DAD",
+    "RER",
+    "DAD"
+  ],
+  "key": {
+    "A": "minecraft:amethyst_shard",
+    "D": "minecraft:diamond",
+    "E": "dissolver_enhanced:emerald_emc_core",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "dissolver_enhanced:diamond_emc_core"
+  }
+}
