@@ -400,7 +400,20 @@ tags:
   minecraft:stone_crafting_materials: 2
   c:stones: 2
   minecraft:logs: 16
+  minecraft:logs_that_burn: 16
+  minecraft:oak_logs: 16
+  minecraft:spruce_logs: 16
+  minecraft:birch_logs: 16
+  minecraft:jungle_logs: 16
+  minecraft:acacia_logs: 16
+  minecraft:dark_oak_logs: 16
+  minecraft:cherry_logs: 16
+  minecraft:pale_oak_logs: 16
+  minecraft:mangrove_logs: 16
+  minecraft:crimson_stems: 16
+  minecraft:warped_stems: 16
   minecraft:planks: 4
+  minecraft:wooden_tool_materials: 4
   minecraft:nylium: 2
   minecraft:dirt: 1
   minecraft:sand: 2
@@ -415,6 +428,7 @@ tags:
   c:strings: 12
   c:leathers: 80
   minecraft:coal_ores: 40
+  minecraft:coals: 40
   minecraft:redstone_ores: 50
   minecraft:lapis_ores: 400
   minecraft:iron_ores: 225
