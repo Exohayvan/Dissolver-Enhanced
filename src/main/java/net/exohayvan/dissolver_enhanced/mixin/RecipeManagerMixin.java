@@ -2,70 +2,53 @@ package net.exohayvan.dissolver_enhanced.mixin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.mojang.serialization.JsonOps;
+import com.google.gson.JsonParser;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.world.item.crafting.RecipeType;
 
 @Mixin(RecipeManager.class)
 public class RecipeManagerMixin {
-    @Shadow @Final private HolderLookup.Provider registryLookup;
-
-    // CUSTOM RECIPE
-    @Inject(method = "apply", at = @At("HEAD"))
-    public void interceptApply(Map<Identifier, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
+    @Inject(method = "prepare", at = @At("HEAD"))
+    private void prepareMixin(ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfoReturnable<RecipeMap> info) {
+        Map<Identifier, JsonElement> recipes = loadRecipeJson(resourceManager);
         if (RecipeGenerator.DISSOLVER_RECIPE != null) {
-            map.put(Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
+            recipes.put(Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
         }
-    }
 
-    @Inject(method = "apply", at = @At("HEAD"))
-    private void applyMixin(Map<Identifier, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
-        EMCValues.beginStartup(map.size());
+        EMCValues.beginStartup(recipes.size());
         RECIPES.clear();
         RECIPE_SOURCES.clear();
         RECIPE_JSON.clear();
         STONE_CUTTER_LIST.clear();
-        RegistryOps<JsonElement> registryOps = this.registryLookup.createSerializationContext(JsonOps.INSTANCE);
 
         // let tag items load before looking through recipes
         new Thread(() -> {
             wait(800);
 
-            Iterator<Map.Entry<Identifier, JsonElement>> recipeIterator = map.entrySet().iterator();
-            while (recipeIterator.hasNext()) {
-                Map.Entry<Identifier, JsonElement> entry = recipeIterator.next();
+            for (Map.Entry<Identifier, JsonElement> entry : recipes.entrySet()) {
                 try {
-                    getRecipe(entry, registryOps);
-                }catch (Exception e) {
                     if (!getJsonRecipe(entry)) {
                         EMCValues.incrementRecipesNotUnderstood();
                     }
+                } catch (Exception e) {
+                    EMCValues.incrementRecipesNotUnderstood();
                 }
             }
 
@@ -77,10 +60,20 @@ public class RecipeManagerMixin {
     private static final HashMap<String, String> RECIPE_SOURCES = new HashMap<String, String>();
     private static final HashMap<String, String> RECIPE_JSON = new HashMap<String, String>();
     private static final List<String> STONE_CUTTER_LIST = new ArrayList<>();
-    private void getRecipe(Map.Entry<Identifier, JsonElement> entry, RegistryOps<JsonElement> registryOps) {
-        if (!getJsonRecipe(entry)) {
-            EMCValues.incrementRecipesNotUnderstood();
-        }
+
+    private static Map<Identifier, JsonElement> loadRecipeJson(ResourceManager resourceManager) {
+        Map<Identifier, JsonElement> recipes = new HashMap<>();
+        FileToIdConverter recipeLister = FileToIdConverter.json("recipe");
+
+        recipeLister.listMatchingResources(resourceManager).forEach((fileId, resource) -> {
+            try (var reader = resource.openAsReader()) {
+                recipes.put(recipeLister.fileToId(fileId), JsonParser.parseReader(reader));
+            } catch (Exception e) {
+                DissolverEnhanced.LOGGER.warn("Unable to read recipe JSON {}", fileId, e);
+            }
+        });
+
+        return recipes;
     }
 
     private static void addRecipe(String id, int extraEMC, List<String> INGREDIENTS, String recipeId, JsonElement rawJson) {
@@ -204,6 +197,11 @@ public class RecipeManagerMixin {
     private static List<String> getJsonIngredientItemIds(JsonElement ingredientJson) {
         List<String> itemIds = new ArrayList<>();
 
+        if (ingredientJson.isJsonPrimitive()) {
+            addPrimitiveIngredient(itemIds, ingredientJson.getAsString());
+            return itemIds;
+        }
+
         if (ingredientJson.isJsonArray()) {
             for (JsonElement alternative : ingredientJson.getAsJsonArray()) {
                 itemIds.addAll(getJsonIngredientItemIds(alternative));
@@ -223,6 +221,17 @@ public class RecipeManagerMixin {
         }
 
         return itemIds;
+    }
+
+    private static void addPrimitiveIngredient(List<String> itemIds, String ingredientId) {
+        if (ingredientId == null || ingredientId.isBlank()) return;
+
+        if (ingredientId.startsWith("#")) {
+            addJsonTagIngredient(itemIds, ingredientId.substring(1));
+            return;
+        }
+
+        itemIds.add(ingredientId);
     }
 
     private static void addJsonTagIngredient(List<String> itemIds, String tagId) {

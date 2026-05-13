@@ -49,13 +49,12 @@ public class RecipeGenerator {
         jsonArray.add(pattern.get(2));
         json.add("pattern", jsonArray);
 
-        JsonObject individualKey;
         JsonObject keyList = new JsonObject();
 
         for (int i = 0; i < keys.size(); ++i) {
-            individualKey = new JsonObject();
-            individualKey.addProperty(type.get(i), items.get(i).toString());
-            keyList.add(keys.get(i) + "", individualKey);
+            String itemId = items.get(i).toString();
+            if ("tag".equals(type.get(i))) itemId = "#" + itemId;
+            keyList.addProperty(keys.get(i) + "", itemId);
         }
 
         json.add("key", keyList);

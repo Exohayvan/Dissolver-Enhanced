@@ -7,9 +7,9 @@
         "RAR"
     ],
     "key": {
-        "A": { "item": "minecraft:amethyst_shard" },
-        "D": { "item": "minecraft:diamond" },
-        "R": { "item": "minecraft:redstone" }
+        "A": "minecraft:amethyst_shard",
+        "D": "minecraft:diamond",
+        "R": "minecraft:redstone"
     },
     "result": {
         "id": "dissolver_enhanced:crystal_frame_item"
