@@ -1,5 +1,6 @@
 package net.exohayvan.dissolver_enhanced.common.values;
 
+import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -18,8 +19,8 @@ public final class EmcValueYamlParser {
 
     public static EmcValueSet parse(String yaml) {
         int schema = 0;
-        Map<String, Integer> items = new LinkedHashMap<>();
-        Map<String, Integer> tags = new LinkedHashMap<>();
+        Map<String, BigInteger> items = new LinkedHashMap<>();
+        Map<String, BigInteger> tags = new LinkedHashMap<>();
         Map<String, MutableOverride> overrides = new LinkedHashMap<>();
 
         Section section = Section.NONE;
@@ -98,7 +99,7 @@ public final class EmcValueYamlParser {
         return new EmcValueSet(schema, items, tags, immutableOverrides);
     }
 
-    private static void parseValueLine(String line, Map<String, Integer> values) {
+    private static void parseValueLine(String line, Map<String, BigInteger> values) {
         int splitIndex = line.lastIndexOf(": ");
         if (splitIndex == -1) {
             return;
@@ -106,7 +107,7 @@ public final class EmcValueYamlParser {
 
         String key = line.substring(0, splitIndex).strip();
         String rawValue = line.substring(splitIndex + 2).strip();
-        Integer value = parseNullableInteger(rawValue, key);
+        BigInteger value = parseNullableInteger(rawValue, key);
         values.put(key, value);
     }
 
@@ -116,21 +117,21 @@ public final class EmcValueYamlParser {
     }
 
     private static int parseInteger(String value, String key) {
-        Integer parsed = parseNullableInteger(value, key);
+        BigInteger parsed = parseNullableInteger(value, key);
         if (parsed == null) {
             throw new IllegalArgumentException("Expected integer value for " + key);
         }
 
-        return parsed;
+        return parsed.intValueExact();
     }
 
-    private static Integer parseNullableInteger(String value, String key) {
+    private static BigInteger parseNullableInteger(String value, String key) {
         if (value.equals("null")) {
             return null;
         }
 
         try {
-            return Integer.parseInt(value);
+            return EmcNumber.parse(value);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid integer value for " + key + ": " + value, e);
         }
@@ -153,7 +154,7 @@ public final class EmcValueYamlParser {
     }
 
     private static final class MutableOverride {
-        private final Map<String, Integer> items = new LinkedHashMap<>();
-        private final Map<String, Integer> tags = new LinkedHashMap<>();
+        private final Map<String, BigInteger> items = new LinkedHashMap<>();
+        private final Map<String, BigInteger> tags = new LinkedHashMap<>();
     }
 }

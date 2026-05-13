@@ -58,10 +58,16 @@ public final class DefaultEmcValues {
     public static void writeDefaultFile(Path file) {
         try {
             Files.createDirectories(file.getParent());
-            Files.writeString(file, DEFAULT_FILE_HEADER + loadBundledYaml(), StandardCharsets.UTF_8);
+            if (Files.notExists(file)) {
+                Files.writeString(file, defaultFileContent(loadBundledYaml()), StandardCharsets.UTF_8);
+            }
         } catch (IOException e) {
             throw new IllegalStateException("Failed to write default EMC values to " + file, e);
         }
+    }
+
+    public static String defaultFileContent(String yaml) {
+        return DEFAULT_FILE_HEADER + yaml;
     }
 
     public static void writeOverrideTemplateIfMissing(Path file) {

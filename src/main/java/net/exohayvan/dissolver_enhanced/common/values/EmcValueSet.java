@@ -1,19 +1,20 @@
 package net.exohayvan.dissolver_enhanced.common.values;
 
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class EmcValueSet {
     private final int schema;
-    private final Map<String, Integer> items;
-    private final Map<String, Integer> tags;
+    private final Map<String, BigInteger> items;
+    private final Map<String, BigInteger> tags;
     private final Map<String, EmcValueOverride> overrides;
 
     public EmcValueSet(
         int schema,
-        Map<String, Integer> items,
-        Map<String, Integer> tags,
+        Map<String, BigInteger> items,
+        Map<String, BigInteger> tags,
         Map<String, EmcValueOverride> overrides
     ) {
         this.schema = schema;
@@ -26,11 +27,11 @@ public final class EmcValueSet {
         return schema;
     }
 
-    public Map<String, Integer> items() {
+    public Map<String, BigInteger> items() {
         return items;
     }
 
-    public Map<String, Integer> tags() {
+    public Map<String, BigInteger> tags() {
         return tags;
     }
 
@@ -44,10 +45,10 @@ public final class EmcValueSet {
             return this;
         }
 
-        Map<String, Integer> mergedItems = new LinkedHashMap<>(items);
+        Map<String, BigInteger> mergedItems = new LinkedHashMap<>(items);
         override.items().forEach((key, value) -> applyOverrideValue(mergedItems, key, value));
 
-        Map<String, Integer> mergedTags = new LinkedHashMap<>(tags);
+        Map<String, BigInteger> mergedTags = new LinkedHashMap<>(tags);
         override.tags().forEach((key, value) -> applyOverrideValue(mergedTags, key, value));
 
         return new EmcValueSet(schema, mergedItems, mergedTags, overrides);
@@ -58,16 +59,16 @@ public final class EmcValueSet {
             return this;
         }
 
-        Map<String, Integer> mergedItems = new LinkedHashMap<>(items);
+        Map<String, BigInteger> mergedItems = new LinkedHashMap<>(items);
         overrideValues.items().forEach((key, value) -> applyOverrideValue(mergedItems, key, value));
 
-        Map<String, Integer> mergedTags = new LinkedHashMap<>(tags);
+        Map<String, BigInteger> mergedTags = new LinkedHashMap<>(tags);
         overrideValues.tags().forEach((key, value) -> applyOverrideValue(mergedTags, key, value));
 
         return new EmcValueSet(schema, mergedItems, mergedTags, overrides);
     }
 
-    private static void applyOverrideValue(Map<String, Integer> values, String key, Integer value) {
+    private static void applyOverrideValue(Map<String, BigInteger> values, String key, BigInteger value) {
         if (value == null) {
             values.remove(key);
             return;
@@ -76,7 +77,7 @@ public final class EmcValueSet {
         values.put(key, value);
     }
 
-    private static Map<String, Integer> immutableCopy(Map<String, Integer> values) {
+    private static Map<String, BigInteger> immutableCopy(Map<String, BigInteger> values) {
         return Collections.unmodifiableMap(new LinkedHashMap<>(values));
     }
 
