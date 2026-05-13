@@ -152,11 +152,6 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
         }
         
         String string = this.searchBox.getText();
-        // close screen if pressing "e" & nothing is searched
-        if (string == "" && chr == "e".charAt(0)) {
-            this.close();
-            return false;
-        }
 
         if (!this.searchBox.charTyped(chr, modifiers)) return false;
         
