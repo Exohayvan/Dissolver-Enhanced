@@ -135,6 +135,45 @@ jobs:
           name: ${{ matrix.branch }}-${{ github.sha }}
           path: ${{ env.TARGET_DIR }}/build/libs/
 
+  package-all-builds:
+    name: Package All Builds
+    if: ${{ github.ref_name == 'main' && needs.build-common.result == 'success' && needs.build-all-version-branches.result == 'success' }}
+    needs:
+      - build-common
+      - build-all-version-branches
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: downloaded-artifacts
+
+      - name: Collect release jars
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-jars
+
+          while IFS= read -r -d '' jar; do
+            relative_path="${jar#downloaded-artifacts/}"
+            target_path="release-jars/${relative_path}"
+            mkdir -p "$(dirname "${target_path}")"
+            cp "${jar}" "${target_path}"
+          done < <(find downloaded-artifacts -type f -iname '*.jar' ! -iname '*source*' -print0)
+
+          if ! find release-jars -type f -iname '*.jar' | grep -q .; then
+            echo "No non-source jars were found in downloaded artifacts." >&2
+            exit 1
+          fi
+
+          zip -r "all_builds-${GITHUB_SHA}.zip" release-jars
+
+      - name: Upload all builds zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: all_builds-${{ github.sha }}
+          path: all_builds-${{ github.sha }}.zip
+
   build-current-version-branch:
     name: Build Current Branch
     if: ${{ github.ref_name != 'main' }}
