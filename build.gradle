@@ -137,6 +137,11 @@ processResources {
 			line.replace('"id":', '"item":')
 		}
 	}
+
+	from("${commonDir}/src/main/resources/data/dissolver_enhanced/loot_table") {
+		include '**/*.json'
+		into 'data/dissolver_enhanced/loot_tables'
+	}
 }
 
 tasks.withType(JavaCompile).configureEach {
