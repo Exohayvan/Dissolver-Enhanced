@@ -16,6 +16,11 @@ public class ModConfig {
     private static final String CONFIG_FILE_NAME = "dissolver_enhanced";
     private static final String DEFAULT_EMC_FILE_NAME = "default-emc-values.yaml";
     private static final String EMC_OVERRIDES_FILE_NAME = "emc-overrides.yaml";
+    private static final String ANALYTICS_NOTICE = "This only tracks things that are needed to keep the mod going. "
+        + "As you are able to turn these off, we ask that you don't, as it gives us the motivation to keep going :)";
+    private static final String DEFAULT_ANALYTICS_ENDPOINT = "https://us.i.posthog.com/capture/";
+    private static final String DEFAULT_ANALYTICS_ERROR_ENDPOINT = "https://us.i.posthog.com/i/v0/e/";
+    private static final String DEFAULT_ANALYTICS_PROJECT_TOKEN = "phc_y6HcjBmwz7UEPQhaqYmJhdtHbh6VzRrv9h2MthHoLkdY";
 
     public static SimpleConfig CONFIG;
     protected static ModConfigProvider configs;
@@ -39,6 +44,7 @@ public class ModConfig {
         createConfigs();
 
         CONFIG = SimpleConfig.of(CONFIG_FILE_NAME).provider(configs).request();
+        removeInternalAnalyticsConfigEntries();
         ensureAnalyticsConfigEntries();
 
         assignConfigs();
@@ -46,6 +52,9 @@ public class ModConfig {
 
     private static void createConfigs() {
         for (ConfigConstants value : ConfigConstants.values()) {
+            if (value == ConfigConstants.ANALYTICS_ENABLED) {
+                configs.addComment(ANALYTICS_NOTICE);
+            }
             configs.addKeyValuePair(value.asConfigEntry(), value.getComment());
         }
     }
@@ -57,9 +66,9 @@ public class ModConfig {
         DIFFICULTY = CONFIG.getOrDefault("difficulty", "hard");
         MODE = CONFIG.getOrDefault("mode", "default");
         ANALYTICS_ENABLED = CONFIG.getOrDefault("analytics_enabled", true);
-        ANALYTICS_ENDPOINT = CONFIG.getOrDefault("analytics_endpoint", "https://us.i.posthog.com/capture/");
-        ANALYTICS_ERROR_ENDPOINT = CONFIG.getOrDefault("analytics_error_endpoint", "https://us.i.posthog.com/i/v0/e/");
-        ANALYTICS_PROJECT_TOKEN = CONFIG.getOrDefault("analytics_project_token", "phc_y6HcjBmwz7UEPQhaqYmJhdtHbh6VzRrv9h2MthHoLkdY");
+        ANALYTICS_ENDPOINT = DEFAULT_ANALYTICS_ENDPOINT;
+        ANALYTICS_ERROR_ENDPOINT = DEFAULT_ANALYTICS_ERROR_ENDPOINT;
+        ANALYTICS_PROJECT_TOKEN = DEFAULT_ANALYTICS_PROJECT_TOKEN;
 
         Path configDirectory = SimpleConfig.configDirectory();
         defaultValuesFile = configDirectory.resolve(DEFAULT_EMC_FILE_NAME);
@@ -90,6 +99,7 @@ public class ModConfig {
             if (!existing.isEmpty() && !existing.endsWith("\n")) {
                 appended.append("\n");
             }
+            appended.append("# ").append(ANALYTICS_NOTICE).append("\n");
             for (String line : missingLines) {
                 appended.append(line).append("\n");
             }
@@ -97,6 +107,32 @@ public class ModConfig {
         } catch (IOException exception) {
             DissolverEnhanced.LOGGER.warn("Could not append missing analytics config entries.", exception);
         }
+    }
+
+    private static void removeInternalAnalyticsConfigEntries() {
+        Path configFile = SimpleConfig.configDirectory().resolve(CONFIG_FILE_NAME + ".properties");
+        if (!Files.exists(configFile)) {
+            return;
+        }
+
+        try {
+            List<String> lines = Files.readAllLines(configFile);
+            List<String> keptLines = lines.stream()
+                .filter(line -> !isInternalAnalyticsConfigLine(line))
+                .toList();
+            if (keptLines.size() != lines.size()) {
+                Files.write(configFile, keptLines, StandardOpenOption.TRUNCATE_EXISTING);
+            }
+        } catch (IOException exception) {
+            DissolverEnhanced.LOGGER.warn("Could not remove internal analytics config entries.", exception);
+        }
+    }
+
+    private static boolean isInternalAnalyticsConfigLine(String line) {
+        String trimmed = line.trim();
+        return trimmed.startsWith("analytics_endpoint=")
+            || trimmed.startsWith("analytics_error_endpoint=")
+            || trimmed.startsWith("analytics_project_token=");
     }
 
     private static String configLine(ConfigEntry<?> entry) {
