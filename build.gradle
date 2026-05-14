@@ -93,6 +93,7 @@ processResources {
 
 	from("${commonDir}/src/main/resources/data/dissolver_enhanced/advancement") {
 		include '**/*.json'
+		exclude 'recipes/**'
 		into 'data/dissolver_enhanced/advancement'
 		filter { line ->
 			line.replace(
@@ -106,6 +107,8 @@ processResources {
 		include 'assets/**'
 		include 'data/**'
 		include 'wthit_plugins.json'
+		exclude 'data/dissolver_enhanced/advancement/recipes/**'
+		exclude 'data/dissolver_enhanced/recipe/**'
 		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	}
 }
