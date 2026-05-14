@@ -4,6 +4,7 @@ import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.common.analytics.LocalInstanceId;
 import net.exohayvan.dissolver_enhanced.common.analytics.PostHogCaptureClient;
 import net.exohayvan.dissolver_enhanced.common.analytics.PostHogErrorReporter;
+import net.exohayvan.dissolver_enhanced.common.analytics.PostHogSessionId;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.config.SimpleConfig;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
@@ -22,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 
 public final class ModAnalytics {
     private static final String STARTUP_EVENT = "mod_started";
+    private static final String SESSION_STARTED_EVENT = "session_started";
+    private static final String SESSION_ENDED_EVENT = "session_ended";
     private static final String HEARTBEAT_EVENT = "heartbeat";
     private static final String BLOCK_USED_EVENT = "custom_block_used";
     private static final String CONFIG_LOADED_EVENT = "config_loaded";
@@ -32,6 +35,7 @@ public final class ModAnalytics {
     private static PostHogCaptureClient client;
     private static PostHogErrorReporter errorReporter;
     private static String distinctId;
+    private static String sessionId;
     private static int serverHeartbeatTicks;
     private static Thread.UncaughtExceptionHandler previousUncaughtExceptionHandler;
 
@@ -53,6 +57,7 @@ public final class ModAnalytics {
             distinctId = LocalInstanceId.readOrCreate(
                 SimpleConfig.configDirectory().resolve("analytics-instance-id.txt")
             );
+            sessionId = PostHogSessionId.create();
             client = new PostHogCaptureClient(
                 ModConfig.ANALYTICS_ENDPOINT,
                 ModConfig.ANALYTICS_PROJECT_TOKEN,
@@ -68,6 +73,7 @@ public final class ModAnalytics {
             );
             Runtime.getRuntime().addShutdownHook(new Thread(ModAnalytics::close, "dissolver-enhanced-analytics-shutdown"));
             installUncaughtExceptionHandler();
+            client.capture(SESSION_STARTED_EVENT, distinctId, startupProperties());
             client.capture(STARTUP_EVENT, distinctId, startupProperties());
             captureConfigLoaded();
             MinecraftForge.EVENT_BUS.addListener(ModAnalytics::onServerTick);
@@ -79,6 +85,16 @@ public final class ModAnalytics {
 
     public static boolean enabled() {
         return client != null && distinctId != null;
+    }
+
+    public static void captureClientHeartbeat(Map<String, Object> clientProperties) {
+        if (!enabled()) {
+            return;
+        }
+
+        Map<String, Object> properties = baseEventProperties();
+        properties.putAll(clientProperties);
+        client.capture(HEARTBEAT_EVENT, distinctId, properties);
     }
 
     public static void captureBlockUse(String blockId) {
@@ -206,6 +222,7 @@ public final class ModAnalytics {
         properties.put("event_side", "server");
         properties.put("world_state", "server");
         properties.put("world_info", "server");
+        properties.put("session_location", "server");
         properties.put("player_count", server.getPlayerCount());
         properties.put("emc_storage_mode", ModConfig.PRIVATE_EMC ? "private_total" : "shared");
 
@@ -240,13 +257,21 @@ public final class ModAnalytics {
 
     private static Map<String, Object> baseEventProperties() {
         Map<String, Object> properties = new LinkedHashMap<>();
+        String modVersion = modVersion(DissolverEnhanced.MOD_ID);
+        String minecraftVersion = modVersion("minecraft");
+        String loader = "forge";
         properties.put("mod_id", DissolverEnhanced.MOD_ID);
-        properties.put("mod_version", modVersion(DissolverEnhanced.MOD_ID));
-        properties.put("minecraft_version", modVersion("minecraft"));
-        properties.put("loader", "forge");
+        properties.put("mod_version", modVersion);
+        properties.put("minecraft_version", minecraftVersion);
+        properties.put("loader", loader);
+        properties.put("loader_minecraft", loader + "-" + minecraftVersion);
         properties.put("loader_version", modVersion("forge"));
         properties.put("runtime_side", environmentSide());
         properties.put("analytics_enabled", ModConfig.ANALYTICS_ENABLED);
+        if (sessionId != null) {
+            properties.put("$session_id", sessionId);
+            properties.put("session_id", sessionId);
+        }
         properties.put("java_version", System.getProperty("java.version"));
         properties.put("os_name", System.getProperty("os.name"));
         return properties;
@@ -273,6 +298,13 @@ public final class ModAnalytics {
 
     private static void close() {
         if (client != null) {
+            try {
+                Map<String, Object> properties = startupProperties();
+                properties.put("session_location", environmentSide().equals("client") ? "menu" : "server");
+                client.capture(SESSION_ENDED_EVENT, distinctId, properties).get(2, TimeUnit.SECONDS);
+            } catch (Exception exception) {
+                DissolverEnhanced.LOGGER.warn("Could not flush session ended analytics.", exception);
+            }
             client.close();
         }
         if (errorReporter != null) {

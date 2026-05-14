@@ -2,6 +2,7 @@ package net.exohayvan.dissolver_enhanced;
 
 import net.exohayvan.dissolver_enhanced.block.ModBlocks;
 import net.exohayvan.dissolver_enhanced.entity.ModEntities;
+import net.exohayvan.dissolver_enhanced.analytics.ClientAnalytics;
 import net.exohayvan.dissolver_enhanced.overlay.EMCOverlay;
 import net.exohayvan.dissolver_enhanced.particle.ModParticles;
 import net.exohayvan.dissolver_enhanced.render.CrystalEntityRenderer;
@@ -24,6 +25,7 @@ public class DissolverEnhancedClient {
 			ClientScreenHandlers.registerScreenHandlers();
 			ItemBlockRenderTypes.setRenderLayer(ModBlocks.DISSOLVER_BLOCK.get(), RenderType.translucent());
 			EMCOverlay.init();
+			ClientAnalytics.init();
 		});
 	}
 
