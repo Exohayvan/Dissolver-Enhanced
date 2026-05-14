@@ -10,6 +10,7 @@ items:
   minecraft:suspicious_gravel: 2
   minecraft:flint: 4
   minecraft:bamboo: 1
+  minecraft:chest: 32
   minecraft:grass_block: 2
   minecraft:moss_block: 2
   minecraft:raw_iron: 215
