@@ -167,21 +167,7 @@ Dissolver Enhanced should eventually understand more than basic crafting recipes
 
 ## Crafting
 
-Crystal Frame recipe:
-
-![Crystal Frame recipe](https://i.imgur.com/6yI94wB.png)
-
-Default Dissolver recipe:
-
-![Dissolver recipe](https://i.imgur.com/nCiWKMZ.png)
-
-Normal difficulty recipe:
-
-![Normal difficulty recipe](https://i.imgur.com/525sk7u.png)
-
-Easy difficulty recipe:
-
-![Easy difficulty recipe](https://i.imgur.com/w8UpOF9.png)
+Crafting recipes can be found on the Wiki: https://github.com/Exohayvan/Dissolver-Enhanced/wiki/Crafting
 
 ## Credits
 
