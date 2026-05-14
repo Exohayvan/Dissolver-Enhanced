@@ -33,15 +33,19 @@ public final class ClientAnalytics {
         if (client.level == null || client.player == null) {
             properties.put("world_state", "menus");
             properties.put("world_info", "menus");
+            properties.put("world_mode", "menu");
+            properties.put("session_location", "menu");
             properties.put("emc_value", "0");
             properties.put("stored_item_count", 0);
             ModAnalytics.captureClientHeartbeat(properties);
             return;
         }
 
+        String worldMode = client.hasSingleplayerServer() ? "singleplayer" : "multiplayer";
         properties.put("world_state", "in_world");
         properties.put("world_info", client.level.dimension().toString());
-        properties.put("world_mode", client.hasSingleplayerServer() ? "singleplayer" : "multiplayer");
+        properties.put("world_mode", worldMode);
+        properties.put("session_location", worldMode + "_world");
         properties.put("emc_value", PlayerDataClient.EMC.toString());
         properties.put("stored_item_count", PlayerDataClient.LEARNED_ITEMS_SIZE);
         ModAnalytics.captureClientHeartbeat(properties);
