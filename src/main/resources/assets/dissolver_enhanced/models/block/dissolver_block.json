@@ -1,6 +1,0 @@
-{
-    "parent": "block/cube_all",
-    "textures": {
-        "all": "dissolver_enhanced:block/dissolver_block"
-    }
-}
