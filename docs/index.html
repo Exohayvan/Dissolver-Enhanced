@@ -39,13 +39,6 @@
             </select>
           </label>
           <label>
-            Output
-            <select id="outputMode">
-              <option value="overrides">emc-overrides.yaml</option>
-              <option value="defaults">default-emc-values.yaml</option>
-            </select>
-          </label>
-          <label>
             Namespace fallback
             <input id="namespaceFallback" type="text" value="minecraft" spellcheck="false">
           </label>
@@ -59,15 +52,15 @@
 
 or
 
-S:minecraft:diamond=4200
-minecraft:dirt=1'></textarea>
+emc:minecraft:diamond=4200
+emc:minecraft:dirt=1'></textarea>
       </section>
 
       <section class="pane output-pane" aria-labelledby="output-title">
         <div class="pane-header">
           <div>
             <h2 id="output-title">Dissolver YAML</h2>
-            <p>Use this content in your Dissolver Enhanced EMC file.</p>
+            <p>Save this as <code>emc-overrides.yaml</code>.</p>
           </div>
           <div class="actions">
             <button id="convertButton" type="button">Convert</button>
@@ -100,8 +93,8 @@ minecraft:dirt=1'></textarea>
           <p><code>{"minecraft:diamond": 4200}</code> and nested objects with <code>item</code>/<code>id</code> plus <code>emc</code>/<code>value</code>.</p>
         </article>
         <article>
-          <h3>CFG / properties</h3>
-          <p><code>minecraft:diamond=4200</code>, <code>S:minecraft:diamond=4200</code>, and whitespace-separated rows.</p>
+          <h3>VanillaEMC config</h3>
+          <p><code>emc:minecraft:diamond=4200</code> lines are converted. Toggle settings like <code>private_emc</code> are ignored.</p>
         </article>
         <article>
           <h3>YAML-ish</h3>

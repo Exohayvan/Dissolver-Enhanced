@@ -2,7 +2,6 @@ const inputText = document.querySelector("#inputText");
 const outputText = document.querySelector("#outputText");
 const fileInput = document.querySelector("#fileInput");
 const sourceFormat = document.querySelector("#sourceFormat");
-const outputMode = document.querySelector("#outputMode");
 const namespaceFallback = document.querySelector("#namespaceFallback");
 const sortOutput = document.querySelector("#sortOutput");
 const dropZeroes = document.querySelector("#dropZeroes");
@@ -13,11 +12,13 @@ const downloadButton = document.querySelector("#downloadButton");
 const statusEl = document.querySelector("#status");
 const summaryEl = document.querySelector("#summary");
 
-const SAMPLE_INPUT = `{
-  "minecraft:diamond": 4200,
-  "minecraft:emerald": 840,
-  "#minecraft:logs": 32
-}`;
+const SAMPLE_INPUT = `emc_on_hud=false
+private_emc=false
+creative_items=false
+difficulty=hard
+mode=default
+emc:minecraft:diamond=4200
+emc:minecraft:dirt=1`;
 
 inputText.value = SAMPLE_INPUT;
 
@@ -125,6 +126,13 @@ function parseJsonInput(text, fallbackNamespace) {
 function parseLineInput(text, fallbackNamespace) {
   const result = emptyResult();
   let section = "items";
+  const vanillaSettings = new Set([
+    "emc_on_hud",
+    "private_emc",
+    "creative_items",
+    "difficulty",
+    "mode"
+  ]);
 
   for (const originalLine of text.split(/\r?\n/)) {
     let line = originalLine.trim();
@@ -141,6 +149,11 @@ function parseLineInput(text, fallbackNamespace) {
     }
 
     line = line.replace(/^[SIDB]:/i, "");
+    const settingMatch = line.match(/^([a-z_][a-z0-9_]*)\s*[:=]/i);
+    if (settingMatch && vanillaSettings.has(settingMatch[1].toLowerCase())) {
+      continue;
+    }
+
     let match = line.match(/^["']?([^"'=\s]+)["']?\s*[:=]\s*["']?(-?\d+(?:\.\d+)?)["']?\s*[,;]?$/);
     if (!match) {
       match = line.match(/^["']?([^"'\s]+)["']?\s+["']?(-?\d+(?:\.\d+)?)["']?\s*[,;]?$/);
@@ -151,7 +164,11 @@ function parseLineInput(text, fallbackNamespace) {
       continue;
     }
 
-    const key = section === "tags" && !match[1].startsWith("#") ? `#${match[1]}` : match[1];
+    let key = match[1];
+    if (/^emc:/i.test(key)) {
+      key = key.replace(/^emc:/i, "");
+    }
+    key = section === "tags" && !key.startsWith("#") ? `#${key}` : key;
     addEntry(result, key, match[2], fallbackNamespace);
   }
 
@@ -216,7 +233,7 @@ function buildYaml(result) {
 
   lines.push("schema: 1");
 
-  if (outputMode.value === "overrides" && includeHeader.checked) {
+  if (includeHeader.checked) {
     lines.push("");
     lines.push("# Save as config/dissolver-enhanced/emc-overrides.yaml");
   }
@@ -277,14 +294,14 @@ downloadButton.addEventListener("click", () => {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = outputMode.value === "defaults" ? "default-emc-values.yaml" : "emc-overrides.yaml";
+  anchor.download = "emc-overrides.yaml";
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
 });
 
-for (const control of [sourceFormat, outputMode, namespaceFallback, sortOutput, dropZeroes, includeHeader]) {
+for (const control of [sourceFormat, namespaceFallback, sortOutput, dropZeroes, includeHeader]) {
   control.addEventListener("change", convert);
 }
 

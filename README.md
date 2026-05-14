@@ -128,7 +128,7 @@ tags:
   minecraft:logs: 32
 ```
 
-The static converter in `Common/web` can convert ProjectE or VanillaEMC-style value files into Dissolver Enhanced YAML.
+The static converter in `Common/docs` can convert ProjectE or VanillaEMC-style EMC value entries into `emc-overrides.yaml`.
 
 ## Advancements
 

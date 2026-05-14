@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "web/**"
+      - "docs/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -31,10 +31,10 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload web folder
+      - name: Upload docs folder
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web
+          path: docs
 
       - name: Deploy
         id: deployment
