@@ -128,8 +128,6 @@ tags:
   minecraft:logs: 32
 ```
 
-The static converter in `Common/docs` can convert ProjectE or VanillaEMC-style EMC value entries into `emc-overrides.yaml`.
-
 ## Advancements
 
 Advancement data lives in Common so Fabric and Forge builds package the same advancement tree. To add one, create a JSON file under `Common/src/main/resources/data/dissolver_enhanced/advancement/`, set its `parent`, and set `display.x` / `display.y` to control the visible order in the advancement tab.
