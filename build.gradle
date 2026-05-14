@@ -114,6 +114,8 @@ processResources {
 
 	from("${commonDir}/src/main/resources") {
 		include 'assets/**'
+		include 'data/**'
+		include 'wthit_plugins.json'
 		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	}
 
