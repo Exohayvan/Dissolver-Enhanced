@@ -123,7 +123,8 @@ public class EMCHelper {
 
     public static boolean getItem(Player player, ItemStack itemStack, DissolverScreenHandler handler, int items) {
         String itemId = EMCKey.fromStack(itemStack);
-        BigInteger emcValue = EMCValues.getBig(itemId).multiply(BigInteger.valueOf(items));
+        BigInteger singleEmcValue = EMCValues.getBig(itemId);
+        BigInteger emcValue = singleEmcValue.multiply(BigInteger.valueOf(items));
 
         if (!checkValidEMC(emcValue, itemId, Action.GET)) return false;
 
@@ -132,6 +133,7 @@ public class EMCHelper {
             return false;
         }
         sendEmcDeltaToClient(player, emcValue.negate());
+        captureDissolverItemExtracted(itemId, items, singleEmcValue, emcValue, isCreativeItem(itemId));
 
         // refresh block inv content
         new Thread(() -> {
@@ -416,6 +418,19 @@ public class EMCHelper {
     private static void captureDissolverItemDissolved(String itemId, int stackCount, BigInteger singleValue, BigInteger totalValue, boolean creativeItem) {
         String baseItemId = EMCKey.baseItemId(itemId);
         ModAnalytics.captureDissolverItemDissolved(
+            namespace(itemId),
+            itemName(itemId),
+            baseItemId,
+            stackCount,
+            singleValue,
+            totalValue,
+            creativeItem
+        );
+    }
+
+    private static void captureDissolverItemExtracted(String itemId, int stackCount, BigInteger singleValue, BigInteger totalValue, boolean creativeItem) {
+        String baseItemId = EMCKey.baseItemId(itemId);
+        ModAnalytics.captureDissolverItemExtracted(
             namespace(itemId),
             itemName(itemId),
             baseItemId,
