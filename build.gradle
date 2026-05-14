@@ -97,6 +97,11 @@ processResources {
 			)
 		}
 	}
+
+	from("${commonDir}/src/main/resources") {
+		include 'assets/**'
+		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	}
 }
 
 tasks.withType(JavaCompile).configureEach {
