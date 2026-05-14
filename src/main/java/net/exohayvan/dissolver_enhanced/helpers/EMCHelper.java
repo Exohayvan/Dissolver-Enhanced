@@ -23,6 +23,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
+import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
@@ -155,6 +156,7 @@ public class EMCHelper {
         BigInteger emcValue = EMCValues.getBig(itemId);
 
         if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
+            captureDissolverItemRejected(itemId, rejectionReason(itemId));
             reportMissingItemValue(player, itemStack, itemId);
             return false;
         }
@@ -169,12 +171,19 @@ public class EMCHelper {
         String itemId = EMCKey.fromStack(itemStack);
         BigInteger emcValue = EMCValues.getBig(itemId);
 
-        if (!checkValidEMC(emcValue, itemId, Action.ADD)) return false;
+        if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
+            captureDissolverItemRejected(itemId, rejectionReason(itemId));
+            return false;
+        }
 
         int itemCount = itemStack.getCount();
         BigInteger addedEmcValue = stackValue(emcValue, itemCount, ItemHelper.getDurabilityPercentage(itemStack));
 
-        return serverAddItem(world, storageKey(itemId), addedEmcValue);
+        boolean learned = serverAddItem(world, storageKey(itemId), addedEmcValue);
+        if (learned) {
+            captureDissolverItemLearned(itemId, itemCount, emcValue, addedEmcValue, isCreativeItem(itemId));
+        }
+        return learned;
     }
 
     public static boolean addItem(ItemStack itemStack, Player player, DissolverScreenHandler handler) {
@@ -182,6 +191,7 @@ public class EMCHelper {
         BigInteger emcValue = EMCValues.getBig(itemId);
 
         if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
+            captureDissolverItemRejected(itemId, rejectionReason(itemId));
             reportMissingItemValue(player, itemStack, itemId);
             return false;
         }
@@ -190,11 +200,15 @@ public class EMCHelper {
         int itemCount = itemStack.getCount();
         BigInteger addedEmcValue = stackValue(emcValue, itemCount, ItemHelper.getDurabilityPercentage(itemStack));
 
-        learnItem(player, storageKey(itemId), false);
+        boolean learned = learnItem(player, storageKey(itemId), false);
         ModCriteria.triggerLearnedItem(player, itemId);
 
         EMCHelper.addEMCValue(player, addedEmcValue);
         sendEmcDeltaToClient(player, addedEmcValue);
+
+        if (learned) {
+            captureDissolverItemLearned(itemId, itemCount, emcValue, addedEmcValue, isCreativeItem(itemId));
+        }
 
         // refresh block inv content
         new Thread(() -> {
@@ -377,6 +391,58 @@ public class EMCHelper {
         String baseItemId = EMCKey.baseItemId(itemId);
         int namespaceEnd = baseItemId.indexOf(":");
         return namespaceEnd == -1 ? "unknown" : baseItemId.substring(0, namespaceEnd);
+    }
+
+    private static String itemName(String itemId) {
+        String baseItemId = EMCKey.baseItemId(itemId);
+        int namespaceEnd = baseItemId.indexOf(":");
+        return namespaceEnd == -1 ? baseItemId : baseItemId.substring(namespaceEnd + 1);
+    }
+
+    private static void captureDissolverItemLearned(String itemId, int stackCount, BigInteger singleValue, BigInteger totalValue, boolean creativeItem) {
+        String baseItemId = EMCKey.baseItemId(itemId);
+        ModAnalytics.captureDissolverItemLearned(
+            namespace(itemId),
+            itemName(itemId),
+            baseItemId,
+            stackCount,
+            singleValue,
+            totalValue,
+            creativeItem
+        );
+    }
+
+    private static void captureDissolverItemRejected(String itemId, String reason) {
+        String baseItemId = EMCKey.baseItemId(itemId);
+        ModAnalytics.captureDissolverItemRejected(
+            namespace(itemId),
+            itemName(itemId),
+            baseItemId,
+            reason
+        );
+    }
+
+    private static boolean isCreativeItem(String itemId) {
+        String baseItemId = EMCKey.baseItemId(itemId);
+        return baseItemId.contains("spawn_egg")
+            || baseItemId.contains("command_block")
+            || baseItemId.contains("bedrock")
+            || baseItemId.contains("barrier")
+            || baseItemId.contains("structure_block")
+            || baseItemId.contains("jigsaw")
+            || baseItemId.contains("spawner")
+            || baseItemId.contains("vault")
+            || baseItemId.contains("end_portal_frame")
+            || baseItemId.contains("budding_amethyst")
+            || baseItemId.contains("reinforced_deepslate");
+    }
+
+    private static String rejectionReason(String itemId) {
+        if (isCreativeItem(itemId) && !ModConfig.CREATIVE_ITEMS) {
+            return "creative_disabled";
+        }
+
+        return "no_emc";
     }
 
     private static String modVersion(String modId) {

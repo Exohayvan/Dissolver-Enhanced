@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.MapCodec;
 
+import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.entity.CondenserBlockEntity;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
 import net.minecraft.world.level.block.RenderShape;
@@ -46,6 +47,7 @@ public class CondenserBlock extends BaseEntityBlock {
 
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (blockEntity instanceof CondenserBlockEntity condenserBlockEntity) {
+            ModAnalytics.captureBlockUse("condenser_block");
             player.openMenu(condenserBlockEntity);
         }
 

@@ -5,6 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.MapCodec;
+import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.entity.DissolverBlockEntity;
 import net.exohayvan.dissolver_enhanced.entity.CrystalEntity;
 import net.exohayvan.dissolver_enhanced.entity.ModEntities;
@@ -71,6 +72,7 @@ public class DissolverBlock extends BaseEntityBlock {
         } else {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof DissolverBlockEntity) {
+                ModAnalytics.captureBlockUse("dissolver_block");
                 player.openMenu((DissolverBlockEntity)blockEntity);
             }
 
