@@ -110,7 +110,16 @@ processResources {
 
 	from(commonDir) {
 		include 'emc-values/**'
-		include 'data/dissolver_enhanced/advancement/**'
+	}
+
+	from("${commonDir}/data/dissolver_enhanced/advancement") {
+		include '**/*.json'
+		into 'data/dissolver_enhanced/advancements'
+		filter { String line ->
+			line
+				.replace('"id":', '"item":')
+				.replace('"blocks": "dissolver_enhanced:dissolver_block"', '"blocks": ["dissolver_enhanced:dissolver_block"]')
+		}
 	}
 }
 
