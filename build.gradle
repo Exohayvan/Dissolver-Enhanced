@@ -126,6 +126,15 @@ processResources {
 			line
 				.replace('"id":', '"item":')
 				.replace('"blocks": "dissolver_enhanced:dissolver_block"', '"blocks": ["dissolver_enhanced:dissolver_block"]')
+				.replaceAll('"items": "([^"]+)"', '"items": ["$1"]')
+		}
+	}
+
+	from("${commonDir}/src/main/resources/data/dissolver_enhanced/recipe") {
+		include '**/*.json'
+		into 'data/dissolver_enhanced/recipes'
+		filter { String line ->
+			line.replace('"id":', '"item":')
 		}
 	}
 }
