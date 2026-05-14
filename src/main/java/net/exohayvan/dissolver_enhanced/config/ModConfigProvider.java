@@ -16,6 +16,10 @@ public class ModConfigProvider implements SimpleConfig.DefaultConfig {
 
     private final List<ConfigEntry<?>> configsList = new ArrayList<>();
 
+    public void addComment(String comment) {
+        configContents += "# " + comment + "\n";
+    }
+
     public void addKeyValuePair(ConfigEntry<?> keyValuePair, String comment) {
         configsList.add(keyValuePair);
         configContents += keyValuePair.getProperty() + "=" + keyValuePair.getDefault() + " # "
