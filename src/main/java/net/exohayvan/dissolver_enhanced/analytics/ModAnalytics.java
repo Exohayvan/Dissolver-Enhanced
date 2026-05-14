@@ -25,6 +25,7 @@ public final class ModAnalytics {
     private static final String BLOCK_USED_EVENT = "custom_block_used";
     private static final String CONFIG_LOADED_EVENT = "config_loaded";
     private static final String ITEM_LEARNED_EVENT = "dissolver_item_learned";
+    private static final String ITEM_DISSOLVED_EVENT = "dissolver_item_dissolved";
     private static final String ITEM_REJECTED_EVENT = "dissolver_item_rejected";
     private static final int HEARTBEAT_INTERVAL_TICKS = 20 * 60;
     private static PostHogCaptureClient client;
@@ -136,6 +137,27 @@ public final class ModAnalytics {
         properties.put("total_value", totalValue.toString());
         properties.put("creative_item", creativeItem);
         client.capture(ITEM_LEARNED_EVENT, distinctId, properties);
+    }
+
+    public static void captureDissolverItemDissolved(
+        String namespace,
+        String item,
+        String itemId,
+        int stackCount,
+        BigInteger singleValue,
+        BigInteger totalValue,
+        boolean creativeItem
+    ) {
+        if (!enabled()) {
+            return;
+        }
+
+        Map<String, Object> properties = itemProperties(namespace, item, itemId);
+        properties.put("stack_count", stackCount);
+        properties.put("single_value", singleValue.toString());
+        properties.put("total_value", totalValue.toString());
+        properties.put("creative_item", creativeItem);
+        client.capture(ITEM_DISSOLVED_EVENT, distinctId, properties);
     }
 
     public static void captureDissolverItemRejected(String namespace, String item, String itemId, String reason) {
