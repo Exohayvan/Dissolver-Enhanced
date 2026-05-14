@@ -5,6 +5,7 @@ items:
   minecraft:dirt: 1
   minecraft:dirt_path: 1
   minecraft:farmland: 1
+  minecraft:grass: 1
   minecraft:gravel: 2
   minecraft:suspicious_gravel: 2
   minecraft:flint: 4
@@ -457,7 +458,6 @@ tags:
   eternal_starlight:yeti_fur: 32
   simplehats:all_hats: 254
   minecraft:copper_ores: 216
-  minecraft:grass: 1
 
 overrides:
   skyblock:
