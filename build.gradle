@@ -119,7 +119,7 @@ processResources {
 		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	}
 
-	from("${commonDir}/data/dissolver_enhanced/advancement") {
+	from("${commonDir}/src/main/resources/data/dissolver_enhanced/advancement") {
 		include '**/*.json'
 		into 'data/dissolver_enhanced/advancements'
 		filter { String line ->
