@@ -457,6 +457,7 @@ tags:
   eternal_starlight:yeti_fur: 32
   simplehats:all_hats: 254
   minecraft:copper_ores: 216
+  minecraft:grass: 1
 
 overrides:
   skyblock:
