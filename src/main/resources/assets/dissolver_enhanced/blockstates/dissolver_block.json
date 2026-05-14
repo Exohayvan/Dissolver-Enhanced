@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "dissolver_enhanced:block/dissolver_block"
+        }
+    }
+}

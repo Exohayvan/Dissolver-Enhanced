@@ -1,0 +1,8 @@
+{
+    "replace": false,
+    "values": [
+        "dissolver_enhanced:dissolver_block",
+        "dissolver_enhanced:condenser_block",
+        "dissolver_enhanced:materializer_block"
+    ]
+}

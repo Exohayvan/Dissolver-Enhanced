@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "dissolver_enhanced:item/diamond_emc_core"
+  }
+}

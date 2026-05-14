@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "dissolver_enhanced:block/condenser_block"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+    "parent": "item/generated",
+    "textures": {
+        "layer0": "dissolver_enhanced:item/crystal_frame_item"
+    }
+}
