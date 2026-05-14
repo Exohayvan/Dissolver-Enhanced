@@ -23,6 +23,7 @@ public class ModConfig {
     public static EmcValueSet DEFAULT_EMC_VALUES;
     public static EmcValueSet EMC_OVERRIDES;
     private static Path defaultValuesFile;
+    private static Path overridesFile;
 
     public static void init() {
         configs = new ModConfigProvider();
@@ -48,7 +49,7 @@ public class ModConfig {
 
         Path configDirectory = SimpleConfig.configDirectory();
         defaultValuesFile = configDirectory.resolve(DEFAULT_EMC_FILE_NAME);
-        Path overridesFile = configDirectory.resolve(EMC_OVERRIDES_FILE_NAME);
+        overridesFile = configDirectory.resolve(EMC_OVERRIDES_FILE_NAME);
 
         DefaultEmcValues.writeDefaultFile(defaultValuesFile);
         DefaultEmcValues.writeOverrideTemplateIfMissing(overridesFile);
@@ -59,5 +60,9 @@ public class ModConfig {
 
     public static Path defaultValuesFile() {
         return defaultValuesFile;
+    }
+
+    public static Path overridesFile() {
+        return overridesFile;
     }
 }
