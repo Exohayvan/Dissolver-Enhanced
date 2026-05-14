@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.particle.EndRodParticle;
 import net.minecraft.client.render.RenderLayer;
+import net.exohayvan.dissolver_enhanced.analytics.ClientAnalytics;
 import net.exohayvan.dissolver_enhanced.block.ModBlocks;
 import net.exohayvan.dissolver_enhanced.entity.ModEntities;
 import net.exohayvan.dissolver_enhanced.overlay.EMCOverlay;
@@ -18,6 +19,7 @@ public class DissolverEnhancedClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		DataReceiverClient.init();
+		ClientAnalytics.init();
 		
         ClientScreenHandlers.registerScreenHandlers();
 
