@@ -89,7 +89,6 @@ processResources {
 
 	from(commonDir) {
 		include 'emc-values/**'
-		include 'data/dissolver_enhanced/advancement/**'
 	}
 
 	from("${commonDir}/src/main/resources") {
