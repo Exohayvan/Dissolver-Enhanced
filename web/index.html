@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dissolver Enhanced EMC Converter</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Dissolver Enhanced</p>
+        <h1>EMC Config Converter</h1>
+      </div>
+      <div class="status" id="status">Ready</div>
+    </header>
+
+    <main class="workspace">
+      <section class="pane input-pane" aria-labelledby="input-title">
+        <div class="pane-header">
+          <div>
+            <h2 id="input-title">Input</h2>
+            <p>Paste or upload ProjectE / VanillaEMC values.</p>
+          </div>
+          <label class="file-button">
+            <input id="fileInput" type="file" accept=".json,.cfg,.toml,.yaml,.yml,.txt">
+            Open File
+          </label>
+        </div>
+
+        <div class="controls">
+          <label>
+            Source
+            <select id="sourceFormat">
+              <option value="auto">Auto detect</option>
+              <option value="projecte">ProjectE</option>
+              <option value="vanillaemc">VanillaEMC</option>
+              <option value="dissolver">Dissolver YAML</option>
+            </select>
+          </label>
+          <label>
+            Output
+            <select id="outputMode">
+              <option value="overrides">emc-overrides.yaml</option>
+              <option value="defaults">default-emc-values.yaml</option>
+            </select>
+          </label>
+          <label>
+            Namespace fallback
+            <input id="namespaceFallback" type="text" value="minecraft" spellcheck="false">
+          </label>
+        </div>
+
+        <textarea id="inputText" spellcheck="false" placeholder='Paste values here. Examples:
+{
+  "minecraft:diamond": 4200,
+  "minecraft:dirt": 1
+}
+
+or
+
+S:minecraft:diamond=4200
+minecraft:dirt=1'></textarea>
+      </section>
+
+      <section class="pane output-pane" aria-labelledby="output-title">
+        <div class="pane-header">
+          <div>
+            <h2 id="output-title">Dissolver YAML</h2>
+            <p>Use this content in your Dissolver Enhanced EMC file.</p>
+          </div>
+          <div class="actions">
+            <button id="convertButton" type="button">Convert</button>
+            <button id="copyButton" type="button">Copy</button>
+            <button id="downloadButton" type="button">Download</button>
+          </div>
+        </div>
+
+        <div class="options">
+          <label><input id="sortOutput" type="checkbox" checked> Sort keys</label>
+          <label><input id="dropZeroes" type="checkbox" checked> Drop zero/negative values</label>
+          <label><input id="includeHeader" type="checkbox" checked> Include comments</label>
+        </div>
+
+        <textarea id="outputText" spellcheck="false" readonly></textarea>
+
+        <div class="summary" id="summary">
+          <span>Items: 0</span>
+          <span>Tags: 0</span>
+          <span>Skipped: 0</span>
+        </div>
+      </section>
+    </main>
+
+    <section class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Accepted Input</h2>
+      <div class="note-grid">
+        <article>
+          <h3>JSON maps</h3>
+          <p><code>{"minecraft:diamond": 4200}</code> and nested objects with <code>item</code>/<code>id</code> plus <code>emc</code>/<code>value</code>.</p>
+        </article>
+        <article>
+          <h3>CFG / properties</h3>
+          <p><code>minecraft:diamond=4200</code>, <code>S:minecraft:diamond=4200</code>, and whitespace-separated rows.</p>
+        </article>
+        <article>
+          <h3>YAML-ish</h3>
+          <p>Existing <code>items:</code> and <code>tags:</code> sections can be cleaned and normalized.</p>
+        </article>
+      </div>
+    </section>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -128,9 +128,11 @@ tags:
   minecraft:logs: 32
 ```
 
+The static converter in `Common/web` can convert ProjectE or VanillaEMC-style value files into Dissolver Enhanced YAML.
+
 ## Advancements
 
-Advancement data lives in Common so Fabric and Forge builds package the same advancement tree. To add one, create a JSON file under `Common/data/dissolver_enhanced/advancement/`, set its `parent`, and set `display.x` / `display.y` to control the visible order in the advancement tab.
+Advancement data lives in Common so Fabric and Forge builds package the same advancement tree. To add one, create a JSON file under `Common/src/main/resources/data/dissolver_enhanced/advancement/`, set its `parent`, and set `display.x` / `display.y` to control the visible order in the advancement tab.
 
 ## Compatibility Goals
 
