@@ -10,7 +10,7 @@
         "sources": "https://github.com/ExoHayvan/Dissolver-Enhanced",
         "issues": "https://github.com/ExoHayvan/Dissolver-Enhanced/issues"
     },
-    "license": "CC0-1.0",
+    "license": "MIT",
     "icon": "assets/dissolver_enhanced/icon.png",
     "environment": "*",
     "entrypoints": {
