@@ -89,7 +89,11 @@ processResources {
 
 	from(commonDir) {
 		include 'emc-values/**'
-		include 'data/dissolver_enhanced/advancement/**'
+	}
+
+	from("${commonDir}/src/main/resources/data/dissolver_enhanced/advancement") {
+		include '**/*.json'
+		into 'data/dissolver_enhanced/advancement'
 		filter { line ->
 			line.replace(
 				'"background": "dissolver_enhanced:textures/block/dissolver_block.png"',
