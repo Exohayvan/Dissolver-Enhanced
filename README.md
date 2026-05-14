@@ -1,5 +1,7 @@
 # Dissolver Enhanced
 
+![CurseForge Downloads](https://img.shields.io/curseforge/dt/1533227?style=for-the-badge)
+
 Dissolver Enhanced is a multi-loader fork of [Dissolver / VanillaEMC](https://github.com/vassbo/Dissolver). It keeps the simple ProjectE-style loop: convert items into EMC, learn them, then spend EMC to recreate learned items.
 
 This fork is still in active development. The current focus is shared EMC value logic, better recipe and tag handling, cleaner player data, and new machine flows that can be carried across Fabric and Forge builds.
