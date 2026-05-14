@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import org.jetbrains.annotations.Nullable;
 
 
+import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.entity.MaterializerBlockEntity;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
@@ -42,6 +43,7 @@ public class MaterializerBlock extends BaseEntityBlock {
 
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (blockEntity instanceof MaterializerBlockEntity materializerBlockEntity) {
+            ModAnalytics.captureBlockUse("materializer_block");
             player.openMenu(materializerBlockEntity);
         }
 
