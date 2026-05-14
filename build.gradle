@@ -112,6 +112,11 @@ processResources {
 		include 'emc-values/**'
 	}
 
+	from("${commonDir}/src/main/resources") {
+		include 'assets/**'
+		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	}
+
 	from("${commonDir}/data/dissolver_enhanced/advancement") {
 		include '**/*.json'
 		into 'data/dissolver_enhanced/advancements'
