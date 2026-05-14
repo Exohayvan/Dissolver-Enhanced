@@ -1,7 +1,7 @@
 package net.exohayvan.dissolver_enhanced.config;
 
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
-import net.exohayvan.dissolver_enhanced.config.model.ConfigEntry;
+import net.exohayvan.dissolver_enhanced.common.config.ConfigEntry;
 import net.exohayvan.dissolver_enhanced.data.model.EMCRecord;
 
 import java.util.HashMap;

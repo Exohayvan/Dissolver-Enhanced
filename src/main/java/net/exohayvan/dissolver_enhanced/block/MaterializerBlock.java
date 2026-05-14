@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.MapCodec;
 
+import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.entity.MaterializerBlockEntity;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
@@ -48,6 +49,7 @@ public class MaterializerBlock extends BlockWithEntity {
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (world.isClient) return ActionResult.SUCCESS;
 
+        ModAnalytics.captureBlockUse("materializer_block");
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (blockEntity instanceof MaterializerBlockEntity materializerBlockEntity) {
             player.openHandledScreen(materializerBlockEntity);

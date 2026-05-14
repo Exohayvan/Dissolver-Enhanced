@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import net.fabricmc.api.ModInitializer;
 import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
+import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.ModBlocks;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
 import net.exohayvan.dissolver_enhanced.command.ModCommands;
@@ -34,6 +35,7 @@ public class DissolverEnhanced implements ModInitializer {
 		LOGGER.info("Initializing DissolverEnhanced!");
 
 		ModConfig.init();
+		ModAnalytics.init();
 		DefaultEmcValueUpdateMonitor.start(
 			ModConfig.defaultValuesFile(),
 			LOGGER::info,

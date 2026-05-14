@@ -2,8 +2,8 @@ package net.exohayvan.dissolver_enhanced.config;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.exohayvan.dissolver_enhanced.TestConstants;
-import net.exohayvan.dissolver_enhanced.config.model.ConfigConstants;
-import net.exohayvan.dissolver_enhanced.config.model.ConfigEntry;
+import net.exohayvan.dissolver_enhanced.common.config.ConfigConstants;
+import net.exohayvan.dissolver_enhanced.common.config.ConfigEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;

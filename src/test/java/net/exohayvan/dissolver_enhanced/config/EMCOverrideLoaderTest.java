@@ -1,6 +1,6 @@
 package net.exohayvan.dissolver_enhanced.config;
 
-import net.exohayvan.dissolver_enhanced.config.model.ConfigConstants;
+import net.exohayvan.dissolver_enhanced.common.config.ConfigConstants;
 import net.exohayvan.dissolver_enhanced.data.model.EMCRecord;
 import org.junit.jupiter.api.Test;
 

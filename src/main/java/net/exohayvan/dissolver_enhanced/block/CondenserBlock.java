@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.MapCodec;
 
+import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.entity.CondenserBlockEntity;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
 import net.minecraft.block.BlockRenderType;
@@ -44,6 +45,7 @@ public class CondenserBlock extends BlockWithEntity {
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (world.isClient) return ActionResult.SUCCESS;
 
+        ModAnalytics.captureBlockUse("condenser_block");
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (blockEntity instanceof CondenserBlockEntity condenserBlockEntity) {
             player.openHandledScreen(condenserBlockEntity);
