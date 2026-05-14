@@ -27,6 +27,7 @@ if (commonVersion == null || commonVersion.isBlank()) {
 	throw new GradleException("common_version is missing from ${commonPropertiesFile}.")
 }
 def releaseArchiveVersion = "${project.mod_version}-${project.mod_loader_name}-mc${project.minecraft_version}-c${commonVersion}"
+def translatedCommonResourcesDir = layout.buildDirectory.dir("generated/resources/translatedCommon")
 
 base {
 	archivesName = project.archives_base_name
@@ -80,7 +81,76 @@ dependencies {
 	
 }
 
+tasks.register("translateCommonResources") {
+	def itemModelsDir = file("${commonDir}/src/main/resources/assets/dissolver_enhanced/models/item")
+	def commonRecipesDir = file("${commonDir}/src/main/resources/data/dissolver_enhanced/recipe")
+	def commonRecipeAdvancementsDir = file("${commonDir}/src/main/resources/data/dissolver_enhanced/advancement/recipes/misc")
+
+	inputs.dir itemModelsDir
+	inputs.dir commonRecipesDir
+	inputs.dir commonRecipeAdvancementsDir
+	outputs.dir translatedCommonResourcesDir
+
+	doLast {
+		def outputDir = translatedCommonResourcesDir.get().asFile
+		delete outputDir
+
+		def jsonSlurper = new groovy.json.JsonSlurper()
+		def writeJson = { File outputFile, Object value ->
+			outputFile.parentFile.mkdirs()
+			outputFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(value)) + System.lineSeparator()
+		}
+
+		itemModelsDir.eachFileMatch(~/.*\.json/) { File modelFile ->
+			def modelJson = jsonSlurper.parse(modelFile)
+			def parent = modelJson.parent as String
+			def layer0 = modelJson.textures?.layer0 as String
+			def itemModel = parent?.startsWith("dissolver_enhanced:block/") ? parent : layer0
+			if (itemModel == null || itemModel.isBlank()) {
+				throw new GradleException("Could not translate item model ${modelFile}. Expected a block parent or layer0 texture.")
+			}
+
+			writeJson(
+				new File(outputDir, "assets/dissolver_enhanced/items/${modelFile.name}"),
+				[
+					model: [
+						type: "minecraft:model",
+						model: itemModel
+					]
+				]
+			)
+		}
+
+		commonRecipesDir.eachFileMatch(~/.*\.json/) { File recipeFile ->
+			def recipeJson = jsonSlurper.parse(recipeFile)
+			recipeJson.key?.each { key, ingredient ->
+				if (ingredient instanceof Map && ingredient.item instanceof String && ingredient.size() == 1) {
+					recipeJson.key[key] = ingredient.item
+				}
+			}
+
+			writeJson(
+				new File(outputDir, "data/dissolver_enhanced/recipe/${recipeFile.name}"),
+				recipeJson
+			)
+		}
+
+		commonRecipeAdvancementsDir.eachFileMatch(~/.*\.json/) { File advancementFile ->
+			if (advancementFile.name == "dissolver_block.json") {
+				return
+			}
+
+			writeJson(
+				new File(outputDir, "data/dissolver_enhanced/advancement/recipes/misc/${advancementFile.name}"),
+				jsonSlurper.parse(advancementFile)
+			)
+		}
+	}
+}
+
 processResources {
+	dependsOn tasks.named("translateCommonResources")
+
 	inputs.property "version", project.version
 
 	filesMatching("fabric.mod.json") {
@@ -102,6 +172,8 @@ processResources {
 			)
 		}
 	}
+
+	from(translatedCommonResourcesDir)
 
 	from("${commonDir}/src/main/resources") {
 		include 'assets/**'
