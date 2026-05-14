@@ -191,4 +191,4 @@ The mod is inspired by the Transmutation Table from ProjectE / Equivalent Exchan
 
 ## License
 
-Dissolver is licensed under the CC0-1.0 license. See [LICENSE](LICENSE) for details.
+Dissolver Enhanced is licensed under the MIT license. See [LICENSE](LICENSE) for details.
