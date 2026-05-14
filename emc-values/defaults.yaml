@@ -40,6 +40,8 @@ items:
   minecraft:rooted_dirt: 5
   minecraft:cactus: 5
   minecraft:dead_bush: 1
+  minecraft:spore_blossom: 16
+  minecraft:tuff: 2
   minecraft:snowball: 1
   minecraft:stripped_bamboo_block: 9
   minecraft:pitcher_pod: 2
@@ -80,6 +82,7 @@ items:
   minecraft:string: 12
   minecraft:cobweb: 12
   minecraft:gunpowder: 56
+  minecraft:scute: 180
   minecraft:turtle_scute: 180
   minecraft:armadillo_scute: 180
   minecraft:spider_eye: 25
@@ -147,6 +150,7 @@ items:
   minecraft:warped_wart_block: 5
   minecraft:chorus_fruit: 50
   minecraft:chorus_plant: 5
+  minecraft:chorus_flower: 80
   minecraft:shulker_shell: 1000
   minecraft:end_stone: 12
   minecraft:dragon_breath: 150
@@ -190,6 +194,8 @@ items:
   minecraft:guster_banner_pattern: 200
   minecraft:piglin_banner_pattern: 200
   minecraft:globe_banner_pattern: 200
+  minecraft:firework_rocket: 81
+  minecraft:turtle_helmet: 900
   minecraft:charcoal: 40
   minecraft:exposed_chiseled_copper: 864
   minecraft:waxed_exposed_chiseled_copper: 907
