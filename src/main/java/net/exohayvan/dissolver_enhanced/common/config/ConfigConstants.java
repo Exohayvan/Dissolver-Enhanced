@@ -31,21 +31,6 @@ public enum ConfigConstants {
     ANALYTICS_ENABLED(
         new ConfigEntry<>("analytics_enabled", true),
         "Send anonymous analytics and error reports."
-    ),
-
-    ANALYTICS_ENDPOINT(
-        new ConfigEntry<>("analytics_endpoint", "https://us.i.posthog.com/capture/"),
-        "PostHog capture endpoint."
-    ),
-
-    ANALYTICS_ERROR_ENDPOINT(
-        new ConfigEntry<>("analytics_error_endpoint", "https://us.i.posthog.com/i/v0/e/"),
-        "PostHog exception capture endpoint."
-    ),
-
-    ANALYTICS_PROJECT_TOKEN(
-        new ConfigEntry<>("analytics_project_token", "phc_y6HcjBmwz7UEPQhaqYmJhdtHbh6VzRrv9h2MthHoLkdY"),
-        "PostHog project token."
     );
 
     final ConfigEntry<?> configEntry;
