@@ -14,7 +14,10 @@ import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
 import net.exohayvan.dissolver_enhanced.item.ModItemGroups;
 import net.exohayvan.dissolver_enhanced.item.ModItems;
 import net.exohayvan.dissolver_enhanced.packets.Packets;
+import net.exohayvan.dissolver_enhanced.particle.ModParticles;
 import net.exohayvan.dissolver_enhanced.screen.ModScreenHandlers;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod(DissolverEnhanced.MOD_ID)
@@ -29,6 +32,15 @@ public class DissolverEnhanced {
 		// John 3:16
 
 		LOGGER.info("Initializing DissolverEnhanced!");
+		IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+
+		ModItems.init(modEventBus);
+		ModBlocks.init(modEventBus);
+		ModItemGroups.init(modEventBus);
+		ModBlockEntities.init(modEventBus);
+		ModScreenHandlers.init(modEventBus);
+		ModEntities.init(modEventBus);
+		ModParticles.init(modEventBus);
 
 		ModConfig.init();
 		DefaultEmcValueUpdateMonitor.start(
@@ -42,16 +54,6 @@ public class DissolverEnhanced {
 		EMCValues.init();
 
 		Packets.init();
-
-		ModItemGroups.init();
-		ModItems.init();
-		ModBlocks.init();
-
-		// ModParticles.init();
-		ModEntities.init();
-
-		ModBlockEntities.init();
-		ModScreenHandlers.init();
 
 		LOGGER.info("DissolverEnhanced ready!");
 	}

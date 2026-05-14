@@ -34,7 +34,7 @@ public class WirelessDissolver {
             BlockPos pos = new BlockPos(x, y, z);
             BlockState state = world.getBlockState(pos);
 
-            if (state.is(ModBlocks.DISSOLVER_BLOCK)) return pos;
+            if (state.is(ModBlocks.DISSOLVER_BLOCK.get())) return pos;
         }
         }
         }

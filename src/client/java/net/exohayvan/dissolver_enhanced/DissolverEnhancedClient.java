@@ -22,18 +22,18 @@ public class DissolverEnhancedClient {
 	public static void onClientSetup(FMLClientSetupEvent event) {
 		event.enqueueWork(() -> {
 			ClientScreenHandlers.registerScreenHandlers();
-			ItemBlockRenderTypes.setRenderLayer(ModBlocks.DISSOLVER_BLOCK, RenderType.translucent());
+			ItemBlockRenderTypes.setRenderLayer(ModBlocks.DISSOLVER_BLOCK.get(), RenderType.translucent());
 			EMCOverlay.init();
 		});
 	}
 
 	@SubscribeEvent
 	public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
-		event.registerEntityRenderer(ModEntities.CRYSTAL_ENTITY, CrystalEntityRenderer::new);
+		event.registerEntityRenderer(ModEntities.CRYSTAL_ENTITY.get(), CrystalEntityRenderer::new);
 	}
 
 	@SubscribeEvent
 	public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
-		event.registerSpriteSet(ModParticles.CRYSTAL, EndRodParticle.Provider::new);
+		event.registerSpriteSet(ModParticles.CRYSTAL.get(), EndRodParticle.Provider::new);
 	}
 }

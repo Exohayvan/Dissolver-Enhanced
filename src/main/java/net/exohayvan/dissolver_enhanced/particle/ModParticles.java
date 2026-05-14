@@ -1,27 +1,23 @@
 package net.exohayvan.dissolver_enhanced.particle;
 
-import net.minecraft.core.Registry;
-import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 public class ModParticles {
-    public static final SimpleParticleType CRYSTAL = new SimpleParticleType(false);
-    // public static final SimpleParticleType CRYSTAL = ParticleTypes.END_ROD.getType();
+    public static final DeferredRegister<ParticleType<?>> PARTICLES =
+            DeferredRegister.create(ForgeRegistries.PARTICLE_TYPES, DissolverEnhanced.MOD_ID);
 
-    // HELPERS
+    public static final RegistryObject<SimpleParticleType> CRYSTAL = PARTICLES.register(
+            "crystal_particle",
+            () -> new SimpleParticleType(false)
+    );
 
-    private static SimpleParticleType registerParticle(String id, SimpleParticleType particle) {
-        return Registry.register(BuiltInRegistries.PARTICLE_TYPE, new ResourceLocation(DissolverEnhanced.MOD_ID, id), particle);
-    }
-
-    // INITIALIZE
-    
-    public static void init() {
-        registerParticle("crystal_particle", CRYSTAL);
-        // ParticleTypes.END_ROD
-        // EndRodParticle
-        // EndRodBlock
+    public static void init(IEventBus eventBus) {
+        PARTICLES.register(eventBus);
     }
 }

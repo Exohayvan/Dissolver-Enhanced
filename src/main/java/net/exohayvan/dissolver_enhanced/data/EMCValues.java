@@ -19,6 +19,8 @@ import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 
 public class EMCValues {
@@ -30,6 +32,7 @@ public class EMCValues {
     private static final HashMap<String, BigInteger> CLIENT_SYNC_VALUES = new HashMap<String, BigInteger>();
     public static final HashMap<String, BigInteger> EMC_TAG_VALUES = new HashMap<String, BigInteger>();
     private static final HashMap<String, List<String>> TAG_ITEMS = new HashMap<String, List<String>>();
+    private static boolean query_started = false;
 
     public static Integer get(String key) {
         return EmcNumber.toIntSaturated(getBig(key));
@@ -256,6 +259,7 @@ public class EMCValues {
 
         applyDefaultValues(values);
         loadConfig();
+        applyConfiguredTagValues();
     }
 
     private static void applyDefaultValues(EmcValueSet values) {
@@ -438,6 +442,76 @@ public class EMCValues {
         }
 
         tagsLoaded(NEW_EMC_VALUES);
+        applyConfiguredTagValues();
+    }
+
+    private static void applyConfiguredTagValues() {
+        if (TAG_ITEMS.isEmpty() || EMC_TAG_VALUES.isEmpty()) return;
+
+        int appliedItems = 0;
+        for (Map.Entry<String, List<String>> tag : TAG_ITEMS.entrySet()) {
+            BigInteger tagEmc = getConfiguredTagEmc(tag.getKey());
+            if (tagEmc == null || tagEmc.signum() <= 0) continue;
+
+            for (String itemId : tag.getValue()) {
+                setEMC(itemId, tagEmc, "Tag #" + tag.getKey());
+                appliedItems++;
+            }
+        }
+
+        if (appliedItems > 0) {
+            DissolverEnhanced.LOGGER.debug("Applied configured EMC tag values to {} item entries.", appliedItems);
+        }
+    }
+
+    private static void applyRegistryTagValues() {
+        if (EMC_TAG_VALUES.isEmpty()) return;
+
+        int appliedItems = 0;
+        for (Item item : BuiltInRegistries.ITEM) {
+            String itemId = ItemHelper.getId(item);
+            for (TagKey<Item> tag : item.getDefaultInstance().getTags().toList()) {
+                String tagId = tag.location().toString();
+                rememberTagItem(tagId, itemId);
+
+                BigInteger tagEmc = getConfiguredTagEmc(tagId);
+                if (tagEmc == null || tagEmc.signum() <= 0) continue;
+
+                setEMC(itemId, tagEmc, "Tag #" + tagId);
+                appliedItems++;
+            }
+        }
+
+        if (appliedItems > 0) {
+            DissolverEnhanced.LOGGER.info("Applied configured EMC tag values to {} item entries from the item registry.", appliedItems);
+        }
+    }
+
+    private static void rememberTagItem(String tagId, String itemId) {
+        List<String> itemIds = TAG_ITEMS.get(tagId);
+        if (itemIds == null) {
+            itemIds = new ArrayList<>();
+            TAG_ITEMS.put(tagId, itemIds);
+        }
+
+        if (!itemIds.contains(itemId)) {
+            itemIds.add(itemId);
+        }
+    }
+
+    private static BigInteger getConfiguredTagEmc(String tagId) {
+        BigInteger value = EMC_TAG_VALUES.get(tagId);
+        if (value != null) return value;
+
+        if (tagId.startsWith("forge:")) {
+            return EMC_TAG_VALUES.get("c:" + tagId.substring("forge:".length()));
+        }
+
+        if (tagId.startsWith("c:")) {
+            return EMC_TAG_VALUES.get("forge:" + tagId.substring("c:".length()));
+        }
+
+        return null;
     }
 
     private static void inferTagEMCValues() {
@@ -492,7 +566,9 @@ public class EMCValues {
         RECIPES = recipes;
         STONE_CUTTER_LIST = stonecutter;
 
-        if (tags_loaded && !RECIPES.isEmpty()) {startQuery();}
+        applyRegistryTagValues();
+        tags_loaded = true;
+        if (!RECIPES.isEmpty()) {startQuery();}
     }
 
     public static void recipesLoaded(
@@ -515,6 +591,7 @@ public class EMCValues {
         itemsWithMultipleRecipes = 0;
         itemsWithoutRecipeOrEMC = 0;
         itemsWithoutEMC = 0;
+        query_started = false;
         resetRecipeState();
 
         DissolverEnhanced.LOGGER.info("----- DissolverEnhanced initialized Startup - {} recipes -----", recipeCount);
@@ -529,6 +606,8 @@ public class EMCValues {
     }
 
     private static void startQuery() {
+        if (query_started) return;
+        query_started = true;
         queryRecipes(RECIPES);
     }
 

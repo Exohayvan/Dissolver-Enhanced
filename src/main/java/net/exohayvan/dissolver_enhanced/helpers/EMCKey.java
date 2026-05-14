@@ -28,6 +28,6 @@ public class EMCKey {
     }
 
     private static String getItemId(ItemStack stack) {
-        return stack.getItem().toString();
+        return ItemHelper.getId(stack.getItem());
     }
 }

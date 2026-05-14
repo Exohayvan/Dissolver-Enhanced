@@ -14,16 +14,16 @@ public class DissolverBlockItem extends BlockItem {
     private static ChatFormatting TOOLTIP_FORMAT = ChatFormatting.GOLD;
 
     public DissolverBlockItem(Block block, Properties settings) {
-		super(block, settings);
+        super(block, settings);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, Level world, List<Component> tooltip, TooltipFlag type) {
         tooltip.add(Component.translatable(TOOLTIP_TEXT).withStyle(TOOLTIP_FORMAT));
     }
-    
+
     @Override
-	public boolean isFoil(ItemStack stack) {
-		return true;
-	}
+    public boolean isFoil(ItemStack stack) {
+        return true;
+    }
 }

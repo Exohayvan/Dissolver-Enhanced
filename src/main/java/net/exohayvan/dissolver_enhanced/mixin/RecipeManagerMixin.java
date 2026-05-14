@@ -17,6 +17,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
+import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.RegistryOps;
@@ -86,7 +87,7 @@ public class RecipeManagerMixin {
         }
         
         ItemStack resultItem = recipe.getResultItem(RegistryAccess.EMPTY);
-        String resultId = resultItem.getItem().toString();
+        String resultId = ItemHelper.getId(resultItem.getItem());
         int resultCount = resultItem.getCount();
 
         boolean isCooking = recipe.getType() == RecipeType.SMELTING || recipe.getType() == RecipeType.BLASTING || recipe.getType() == RecipeType.SMOKING || recipe.getType() == RecipeType.CAMPFIRE_COOKING;
@@ -103,7 +104,7 @@ public class RecipeManagerMixin {
             // mostly just one ingredient (per slot) - but e.g. stone cutter can have multiple!
             int index = -1;
             for (int rawId : ingredient.getStackingIds()) {
-                String itemId = Item.byId(rawId).toString();
+                String itemId = ItemHelper.getId(Item.byId(rawId));
                 index++;
 
                 if (index == 0) {

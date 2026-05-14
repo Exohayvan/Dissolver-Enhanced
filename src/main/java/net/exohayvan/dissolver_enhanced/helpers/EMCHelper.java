@@ -189,10 +189,10 @@ public class EMCHelper {
         int itemCount = itemStack.getCount();
         BigInteger addedEmcValue = stackValue(emcValue, itemCount, ItemHelper.getDurabilityPercentage(itemStack));
 
-        learnItem(player, storageKey(itemId), false);
+        String learnedItemId = storageKey(itemId);
+        StateSaverAndLoader.addPlayerEMCAndLearned(player, learnedItemId, addedEmcValue);
         ModCriteria.triggerLearnedItem(player, itemId);
-
-        EMCHelper.addEMCValue(player, addedEmcValue);
+        ModCriteria.triggerLearnedCount(player, StateSaverAndLoader.getPlayerState(player).LEARNED_ITEMS.size());
         sendEmcDeltaToClient(player, addedEmcValue);
 
         // refresh block inv content

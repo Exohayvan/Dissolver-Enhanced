@@ -78,7 +78,7 @@ public class DissolverBlock extends BaseEntityBlock {
     private void spawnEntity(Level world, BlockPos pos) {
         if (!(world instanceof ServerLevel)) return;
 
-        CrystalEntity crystalEntity = new CrystalEntity(ModEntities.CRYSTAL_ENTITY, world);
+        CrystalEntity crystalEntity = new CrystalEntity(ModEntities.CRYSTAL_ENTITY.get(), world);
         crystalEntity.setPos(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
         world.addFreshEntity(crystalEntity);
     }

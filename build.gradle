@@ -131,7 +131,8 @@ jar {
 			"Specification-Version": "1",
 			"Implementation-Title": project.name,
 			"Implementation-Version": project.version,
-			"Implementation-Vendor": "ExoHayvan"
+			"Implementation-Vendor": "ExoHayvan",
+			"MixinConfigs": "dissolver_enhanced.mixins.json"
 		])
 	}
 

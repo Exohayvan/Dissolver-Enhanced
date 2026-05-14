@@ -3,6 +3,7 @@ package net.exohayvan.dissolver_enhanced.command;
 import com.mojang.brigadier.context.CommandContext;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
+import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.network.chat.Component;
@@ -104,7 +105,7 @@ public class LearnItems {
 
     private static String getItemId(CommandContext<CommandSourceStack> context) {
         final Item item = ItemArgument.getItem(context, "item").getItem();
-        return item.toString();
+        return ItemHelper.getId(item);
     }
 
     private static String getItemName(CommandContext<CommandSourceStack> context) {

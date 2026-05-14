@@ -11,6 +11,9 @@ displayURL="https://github.com/ExoHayvan/Dissolver-Enhanced"
 authors="ExoHayvan"
 description='''Convert items into any other stored items based on its value (EMC).'''
 
+[[mixins]]
+config="dissolver_enhanced.mixins.json"
+
 [[dependencies.dissolver_enhanced]]
 modId="forge"
 mandatory=true

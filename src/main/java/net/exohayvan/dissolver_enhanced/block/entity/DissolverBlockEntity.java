@@ -17,7 +17,7 @@ public class DissolverBlockEntity extends CustomBlockEntity {
     private NonNullList<ItemStack> inputStacks;
 
     public DissolverBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.DISSOLVER_BLOCK_ENTITY, pos, state);
+        super(ModBlockEntities.DISSOLVER_BLOCK_ENTITY.get(), pos, state);
         // redstone input slot
         this.inputStacks = NonNullList.withSize(1, ItemStack.EMPTY); 
     }

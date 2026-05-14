@@ -17,6 +17,7 @@ import com.mojang.brigadier.context.CommandContext;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
+import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -40,7 +41,7 @@ public class DebugItem {
         HashMap<String, Integer> missingTagCounts = new HashMap<>();
 
         for (Item item : items) {
-            String itemId = item.toString();
+            String itemId = ItemHelper.getId(item);
             int emc = EMCValues.get(itemId);
 
             if (emc > 0) {
@@ -124,7 +125,7 @@ public class DebugItem {
         List<Item> items = BuiltInRegistries.ITEM
             .stream()
             .filter(item -> !item.getDefaultInstance().isEmpty())
-            .filter(item -> namespace == null || getNamespace(item.toString()).equals(namespace))
+            .filter(item -> namespace == null || getNamespace(ItemHelper.getId(item)).equals(namespace))
             .toList();
 
         int totalItems = items.size();
@@ -135,7 +136,7 @@ public class DebugItem {
         HashMap<String, Integer> missingTagCounts = new HashMap<>();
 
         for (Item item : items) {
-            String itemId = item.toString();
+            String itemId = ItemHelper.getId(item);
             int emc = EMCValues.get(itemId);
 
             if (emc > 0) {
@@ -243,7 +244,7 @@ public class DebugItem {
             return 0;
         }
 
-        String itemId = stack.getItem().toString();
+        String itemId = EMCKey.fromStack(stack);
         String emcKey = EMCKey.fromStack(stack);
         int emc = EMCValues.get(emcKey);
         String emcText = emc > 0 ? String.valueOf(emc) : "None";
@@ -293,7 +294,7 @@ public class DebugItem {
             return 0;
         }
 
-        String itemId = stack.getItem().toString();
+        String itemId = EMCKey.fromStack(stack);
         List<String> recipeLines = EMCValues.getRecipeDebugLines(itemId);
         Path reportPath = writeRecipeReport(itemId, recipeLines);
 

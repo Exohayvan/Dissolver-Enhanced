@@ -21,8 +21,7 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
     private static final ResourceLocation TEXTURE = new ResourceLocation(DissolverEnhanced.MOD_ID, "textures/gui/dissolver_block_gui.png");
     
     // scroll
-    private static final ResourceLocation SCROLLER_TEXTURE = new ResourceLocation("minecraft", "container/creative_inventory/scroller");
-    private static final ResourceLocation SCROLLER_DISABLED_TEXTURE = new ResourceLocation("minecraft", "container/creative_inventory/scroller_disabled");
+    private static final ResourceLocation CREATIVE_TABS_TEXTURE = new ResourceLocation("minecraft", "textures/gui/container/creative_inventory/tabs.png");
     private float scrollPosition;
     private boolean scrolling;
 
@@ -84,8 +83,8 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
         int j = this.topPos + SCROLL_BAR_Y;
         int k = j + SCROLL_AREA_HEIGHT;
         boolean scrollActive = PlayerDataClient.LEARNED_ITEMS_SIZE > this.menu.CUSTOM_INV_SIZE;
-        ResourceLocation identifier = scrollActive ? SCROLLER_TEXTURE : SCROLLER_DISABLED_TEXTURE;
-        context.blit(identifier, i, j + (int)((float)(k - j - 17) * this.scrollPosition), 0, 0, 12, 15, 12, 15);
+        int textureX = scrollActive ? 232 : 244;
+        context.blit(CREATIVE_TABS_TEXTURE, i, j + (int)((float)(k - j - 17) * this.scrollPosition), textureX, 0, 12, 15);
     }
 
     @Override

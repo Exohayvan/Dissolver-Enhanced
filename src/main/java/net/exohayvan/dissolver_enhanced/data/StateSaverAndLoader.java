@@ -220,6 +220,7 @@ public class StateSaverAndLoader extends SavedData {
         }
         if (state == null) {
             state = new StateSaverAndLoader();
+            persistentStateManager.set(DissolverEnhanced.MOD_ID, state);
         }
 
         // If state is not marked dirty, when Minecraft closes, 'writeNbt' won't be called and therefore nothing will be saved.
@@ -271,6 +272,24 @@ public class StateSaverAndLoader extends SavedData {
         PlayerData playerState = getPlayerState(player, serverState);
 
         playerState.LEARNED_ITEMS = learnedList;
+        updateState(player, serverState, playerState);
+    }
+
+    public static void addPlayerEMCAndLearned(LivingEntity player, String itemId, BigInteger addedEmc) {
+        if (player.getServer() == null) return;
+
+        StateSaverAndLoader serverState = getSaver(player);
+        PlayerData playerState = getPlayerState(player, serverState);
+
+        if (playerState.NAME == "") {
+            playerState.NAME = player.getDisplayName().getString();
+        }
+
+        if (!playerState.LEARNED_ITEMS.contains(itemId)) {
+            playerState.LEARNED_ITEMS.add(itemId);
+        }
+
+        playerState.EMC = EmcNumber.nonNegative(playerState.EMC).add(EmcNumber.nonNegative(addedEmc));
         updateState(player, serverState, playerState);
     }
 
