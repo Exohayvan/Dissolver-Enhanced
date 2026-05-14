@@ -1,0 +1,17 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "pattern": [
+        "ASA",
+        "SDS",
+        "ASA"
+    ],
+    "key": {
+        "A": { "item": "minecraft:amethyst_shard" },
+        "D": { "item": "dissolver_enhanced:dissolver_block" },
+        "S": { "item": "minecraft:smooth_stone" }
+    },
+    "result": {
+        "id": "dissolver_enhanced:condenser_block"
+    }
+}
