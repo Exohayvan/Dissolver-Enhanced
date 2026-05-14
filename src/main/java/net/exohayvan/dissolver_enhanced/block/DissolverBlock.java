@@ -23,6 +23,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
+import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.entity.DissolverBlockEntity;
 import net.exohayvan.dissolver_enhanced.entity.CrystalEntity;
 import net.exohayvan.dissolver_enhanced.entity.ModEntities;
@@ -72,6 +73,7 @@ public class DissolverBlock extends BlockWithEntity {
         } else {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof DissolverBlockEntity) {
+                ModAnalytics.captureBlockUse("dissolver_block");
                 player.openHandledScreen((DissolverBlockEntity)blockEntity);
             }
 
