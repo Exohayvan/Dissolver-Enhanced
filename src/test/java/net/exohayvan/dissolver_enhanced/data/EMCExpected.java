@@ -342,7 +342,15 @@ public class EMCExpected {
             new EMCRecord("minecraft:crying_obsidian", 140),
             new EMCRecord("minecraft:dead_bubble_coral_block", 4),
             new EMCRecord("minecraft:netherite_sword", 11966),
-            new EMCRecord("minecraft:host_armor_trim_smithing_template", 9200)
+            new EMCRecord("minecraft:host_armor_trim_smithing_template", 9200),
+            new EMCRecord("minecraft:grass", 1),
+            new EMCRecord("minecraft:chest", 32),
+            new EMCRecord("minecraft:spore_blossom", 16),
+            new EMCRecord("minecraft:tuff", 2),
+            new EMCRecord("minecraft:scute", 180),
+            new EMCRecord("minecraft:chorus_flower", 80),
+            new EMCRecord("minecraft:firework_rocket", 81),
+            new EMCRecord("minecraft:turtle_helmet", 900)
         ));
         list.addAll(eternalStarlightDefault());
         list.addAll(simpleHats());
@@ -689,7 +697,15 @@ public class EMCExpected {
             new EMCRecord("minecraft:crying_obsidian", 140),
             new EMCRecord("minecraft:dead_bubble_coral_block", 4),
             new EMCRecord("minecraft:netherite_sword", 19566),
-            new EMCRecord("minecraft:host_armor_trim_smithing_template", 9200)
+            new EMCRecord("minecraft:host_armor_trim_smithing_template", 9200),
+            new EMCRecord("minecraft:grass", 1),
+            new EMCRecord("minecraft:chest", 32),
+            new EMCRecord("minecraft:spore_blossom", 16),
+            new EMCRecord("minecraft:tuff", 2),
+            new EMCRecord("minecraft:scute", 180),
+            new EMCRecord("minecraft:chorus_flower", 80),
+            new EMCRecord("minecraft:firework_rocket", 81),
+            new EMCRecord("minecraft:turtle_helmet", 900)
         ));
         list.addAll(eternalStarlightSkyblocks());
         list.addAll(simpleHats());

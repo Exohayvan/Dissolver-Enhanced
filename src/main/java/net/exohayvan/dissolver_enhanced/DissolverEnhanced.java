@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
+import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.ModBlocks;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
 import net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValueUpdateMonitor;
@@ -45,6 +46,7 @@ public class DissolverEnhanced {
 		ModRecipeSerializers.init(modEventBus);
 
 		ModConfig.init();
+		ModAnalytics.init();
 		DefaultEmcValueUpdateMonitor.start(
 			ModConfig.defaultValuesFile(),
 			LOGGER::info,
