@@ -29,7 +29,9 @@ public final class ModAnalytics {
     private static final String CONFIG_LOADED_EVENT = "config_loaded";
     private static final String ITEM_LEARNED_EVENT = "dissolver_item_learned";
     private static final String ITEM_DISSOLVED_EVENT = "dissolver_item_dissolved";
+    private static final String ITEM_EXTRACTED_EVENT = "dissolver_item_extracted";
     private static final String ITEM_REJECTED_EVENT = "dissolver_item_rejected";
+    private static final String ACHIEVEMENT_EARNED_EVENT = "achevement_earned";
     private static final int HEARTBEAT_INTERVAL_TICKS = 20 * 60;
     private static PostHogCaptureClient client;
     private static PostHogErrorReporter errorReporter;
@@ -166,6 +168,27 @@ public final class ModAnalytics {
         client.capture(ITEM_DISSOLVED_EVENT, distinctId, properties);
     }
 
+    public static void captureDissolverItemExtracted(
+        String namespace,
+        String item,
+        String itemId,
+        int stackCount,
+        BigInteger singleValue,
+        BigInteger totalValue,
+        boolean creativeItem
+    ) {
+        if (!enabled()) {
+            return;
+        }
+
+        Map<String, Object> properties = itemProperties(namespace, item, itemId);
+        properties.put("stack_count", stackCount);
+        properties.put("single_value", singleValue.toString());
+        properties.put("total_value", totalValue.toString());
+        properties.put("creative_item", creativeItem);
+        client.capture(ITEM_EXTRACTED_EVENT, distinctId, properties);
+    }
+
     public static void captureDissolverItemRejected(String namespace, String item, String itemId, String reason) {
         if (!enabled()) {
             return;
@@ -174,6 +197,18 @@ public final class ModAnalytics {
         Map<String, Object> properties = itemProperties(namespace, item, itemId);
         properties.put("reason", reason);
         client.capture(ITEM_REJECTED_EVENT, distinctId, properties);
+    }
+
+    public static void captureAchievementEarned(String achievementId, Map<String, Object> achievementProperties) {
+        if (!enabled()) {
+            return;
+        }
+
+        Map<String, Object> properties = baseEventProperties();
+        properties.put("event_side", "server");
+        properties.put("achievement_id", achievementId);
+        properties.putAll(achievementProperties);
+        client.capture(ACHIEVEMENT_EARNED_EVENT, distinctId, properties);
     }
 
     public static void captureException(Throwable throwable, boolean handled) {
