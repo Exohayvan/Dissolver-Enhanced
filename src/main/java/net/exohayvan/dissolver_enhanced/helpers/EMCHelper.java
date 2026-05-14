@@ -180,6 +180,7 @@ public class EMCHelper {
 
         boolean learned = serverAddItem(world, storageKey(itemId), addedEmcValue);
         if (learned) {
+            captureDissolverItemDissolved(itemId, itemCount, emcValue, addedEmcValue, isCreativeItem(itemId));
             captureDissolverItemLearned(itemId, itemCount, emcValue, addedEmcValue, isCreativeItem(itemId));
         }
         return learned;
@@ -206,6 +207,7 @@ public class EMCHelper {
         ModCriteria.triggerLearnedCount(player, StateSaverAndLoader.getPlayerState(player).LEARNED_ITEMS.size());
         sendEmcDeltaToClient(player, addedEmcValue);
 
+        captureDissolverItemDissolved(itemId, itemCount, emcValue, addedEmcValue, isCreativeItem(itemId));
         if (learned) {
             captureDissolverItemLearned(itemId, itemCount, emcValue, addedEmcValue, isCreativeItem(itemId));
         }
@@ -401,6 +403,19 @@ public class EMCHelper {
     private static void captureDissolverItemLearned(String itemId, int stackCount, BigInteger singleValue, BigInteger totalValue, boolean creativeItem) {
         String baseItemId = EMCKey.baseItemId(itemId);
         ModAnalytics.captureDissolverItemLearned(
+            namespace(itemId),
+            itemName(itemId),
+            baseItemId,
+            stackCount,
+            singleValue,
+            totalValue,
+            creativeItem
+        );
+    }
+
+    private static void captureDissolverItemDissolved(String itemId, int stackCount, BigInteger singleValue, BigInteger totalValue, boolean creativeItem) {
+        String baseItemId = EMCKey.baseItemId(itemId);
+        ModAnalytics.captureDissolverItemDissolved(
             namespace(itemId),
             itemName(itemId),
             baseItemId,
