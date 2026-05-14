@@ -33,6 +33,10 @@ public class EMCValues {
     public static final HashMap<String, BigInteger> EMC_TAG_VALUES = new HashMap<String, BigInteger>();
     private static final HashMap<String, List<String>> TAG_ITEMS = new HashMap<String, List<String>>();
     private static boolean query_started = false;
+    private static final List<String> DYE_COLORS = Arrays.asList(
+        "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
+        "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"
+    );
 
     public static Integer get(String key) {
         return EmcNumber.toIntSaturated(getBig(key));
@@ -617,10 +621,14 @@ public class EMCValues {
         "minecraft:suspicious_stew", "minecraft:bundle", "minecraft:enchanted_book", "minecraft:air",
         "minecraft:ominous_bottle", "minecraft:structure_void", "minecraft:chipped_anvil", "minecraft:firework_star",
         "minecraft:knowledge_book", "minecraft:light", "minecraft:written_book", "minecraft:damaged_anvil",
-        "minecraft:medium_amethyst_bud"
+        "minecraft:medium_amethyst_bud", "dissolver_enhanced:emc_orb"
     );
     static int previousCompletedSize = 0;
     static int loops = 0;
+
+    public static boolean isMissingEmcIgnored(String itemId) {
+        return isIgnoredMissingEmcItem(itemId);
+    }
 
     public static void queryRecipes(HashMap<String, List<String>> RECIPES) {
         loops++;
@@ -653,6 +661,7 @@ public class EMCValues {
             });
 
             inferEquivalentTagValues();
+            inferDyedWoolProductValues();
 
             // if (HAS_MULTIPLE.size() > 0) DissolverEnhanced.LOGGER.info("FOUND " + (HAS_MULTIPLE.size()) + " ITEMS WITH MULTIPLE DIFFERENT VALUES!");
 
@@ -680,6 +689,17 @@ public class EMCValues {
         "end_portal_frame", "budding_amethyst", "reinforced_deepslate"
     );
 
+    private static boolean isIgnoredMissingEmcItem(String itemId) {
+        if (unused.contains(itemId)) return true;
+        if (!ModConfig.CREATIVE_ITEMS) {
+            for (String itemPart : creative_items) {
+                if (itemId.contains(itemPart)) return true;
+            }
+        }
+        return itemId.contains("bucket") || itemId.contains("potion") || itemId.contains("infested_") ||
+            itemId.equals("minecraft:air");
+    }
+
     private static boolean checkItem(String itemId) {
         // add dynamic (creative items)
         if (ModConfig.CREATIVE_ITEMS) {
@@ -689,12 +709,7 @@ public class EMCValues {
             return true;
         }
 
-        for (String itemPart : creative_items) {
-            if (itemId.contains(itemPart)) {return true;}
-        }
-
-        if (!EMC_VALUES.containsKey(itemId) && !unused.contains(itemId) && !itemId.contains("bucket") &&
-            !itemId.contains("potion") && !itemId.contains("infested_") && itemId != "minecraft:air") {
+        if (!EMC_VALUES.containsKey(itemId) && !isIgnoredMissingEmcItem(itemId)) {
             return false;
         }
 
@@ -737,6 +752,63 @@ public class EMCValues {
                 }
             }
         }
+    }
+
+    private static void inferDyedWoolProductValues() {
+        BigInteger stickEmc = getBig("minecraft:stick");
+        BigInteger planksEmc = getIngredientEMC("#minecraft:planks");
+        if (planksEmc.signum() == 0) {
+            planksEmc = getBig("minecraft:oak_planks");
+        }
+
+        for (String color : DYE_COLORS) {
+            String woolId = "minecraft:" + color + "_wool";
+            BigInteger woolEmc = getBig(woolId);
+            if (woolEmc.signum() == 0) continue;
+
+            setMissingCraftedEmc(
+                "minecraft:" + color + "_carpet",
+                woolEmc.multiply(BigInteger.valueOf(2)),
+                3,
+                "Dyed Wool Recipe",
+                "2x " + woolId + " = 3x " + color + "_carpet"
+            );
+
+            if (stickEmc.signum() > 0) {
+                setMissingCraftedEmc(
+                    "minecraft:" + color + "_banner",
+                    woolEmc.multiply(BigInteger.valueOf(6)).add(stickEmc),
+                    1,
+                    "Dyed Wool Recipe",
+                    "6x " + woolId + " + 1x minecraft:stick"
+                );
+            }
+
+            if (planksEmc.signum() > 0) {
+                setMissingCraftedEmc(
+                    "minecraft:" + color + "_bed",
+                    woolEmc.multiply(BigInteger.valueOf(3)).add(planksEmc.multiply(BigInteger.valueOf(3))),
+                    1,
+                    "Dyed Wool Recipe",
+                    "3x " + woolId + " + 3x #minecraft:planks"
+                );
+            }
+        }
+    }
+
+    private static void setMissingCraftedEmc(
+        String itemId,
+        BigInteger totalInputEmc,
+        int resultCount,
+        String source,
+        String sourceDetail
+    ) {
+        if (getBig(itemId).signum() > 0 || totalInputEmc.signum() <= 0 || resultCount <= 0) return;
+
+        BigInteger divisor = BigInteger.valueOf(resultCount);
+        BigInteger value = totalInputEmc.add(divisor).subtract(BigInteger.ONE).divide(divisor);
+        if (value.signum() < 1) value = BigInteger.ONE;
+        setEMC(itemId, value, source, sourceDetail);
     }
 
     private static final List<String> COMPLETED = new ArrayList<String>();

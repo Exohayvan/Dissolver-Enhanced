@@ -1,12 +1,14 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_emerald_core": {
+    "has_crystal_frame": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
           {
-            "items": ["dissolver_enhanced:emerald_emc_core"]
+            "items": [
+              "dissolver_enhanced:crystal_frame_item"
+            ]
           }
         ]
       }
@@ -14,19 +16,19 @@
     "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "dissolver_enhanced:diamond_emc_core"
+        "recipe": "dissolver_enhanced:dissolver_block"
       }
     }
   },
   "requirements": [
     [
-      "has_emerald_core",
+      "has_crystal_frame",
       "has_the_recipe"
     ]
   ],
   "rewards": {
     "recipes": [
-      "dissolver_enhanced:diamond_emc_core"
+      "dissolver_enhanced:dissolver_block"
     ]
   }
 }

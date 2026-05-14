@@ -1,0 +1,16 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "pattern": [
+        "QQQ",
+        "QDQ",
+        "QQQ"
+    ],
+    "key": {
+        "D": { "item": "dissolver_enhanced:dissolver_block" },
+        "Q": { "item": "minecraft:quartz_block" }
+    },
+    "result": {
+        "item": "dissolver_enhanced:materializer_block"
+    }
+}

@@ -33,6 +33,7 @@ public class DebugItem {
         List<Item> items = BuiltInRegistries.ITEM
             .stream()
             .filter(item -> !item.getDefaultInstance().isEmpty())
+            .filter(item -> !EMCValues.isMissingEmcIgnored(ItemHelper.getId(item)))
             .toList();
 
         int totalItems = items.size();
@@ -125,6 +126,7 @@ public class DebugItem {
         List<Item> items = BuiltInRegistries.ITEM
             .stream()
             .filter(item -> !item.getDefaultInstance().isEmpty())
+            .filter(item -> !EMCValues.isMissingEmcIgnored(ItemHelper.getId(item)))
             .filter(item -> namespace == null || getNamespace(ItemHelper.getId(item)).equals(namespace))
             .toList();
 

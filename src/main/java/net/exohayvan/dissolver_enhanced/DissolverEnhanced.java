@@ -15,6 +15,7 @@ import net.exohayvan.dissolver_enhanced.item.ModItemGroups;
 import net.exohayvan.dissolver_enhanced.item.ModItems;
 import net.exohayvan.dissolver_enhanced.packets.Packets;
 import net.exohayvan.dissolver_enhanced.particle.ModParticles;
+import net.exohayvan.dissolver_enhanced.recipe.ModRecipeSerializers;
 import net.exohayvan.dissolver_enhanced.screen.ModScreenHandlers;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -41,6 +42,7 @@ public class DissolverEnhanced {
 		ModScreenHandlers.init(modEventBus);
 		ModEntities.init(modEventBus);
 		ModParticles.init(modEventBus);
+		ModRecipeSerializers.init(modEventBus);
 
 		ModConfig.init();
 		DefaultEmcValueUpdateMonitor.start(
