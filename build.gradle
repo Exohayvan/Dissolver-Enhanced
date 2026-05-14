@@ -91,6 +91,11 @@ processResources {
 		include 'emc-values/**'
 		include 'data/dissolver_enhanced/advancement/**'
 	}
+
+	from("${commonDir}/src/main/resources") {
+		include 'assets/**'
+		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	}
 }
 
 tasks.withType(JavaCompile).configureEach {
