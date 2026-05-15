@@ -9,6 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.exohayvan.dissolver_enhanced.helpers.MinecraftVersionCompat;
+import net.exohayvan.dissolver_enhanced.helpers.WorldCompat;
 
 public class CrystalEntity extends Entity {
 	public int crystalAge;
@@ -26,7 +27,8 @@ public class CrystalEntity extends Entity {
 
 	public boolean isPowered() {
 		Vec3d pos = this.getPos();
-		World world = this.getWorld();
+		World world = WorldCompat.getWorld(this);
+		if (world == null) return false;
 		BlockPos blockPos = new BlockPos((int)pos.x - 1, (int)pos.y - 1, (int)pos.z - 1);
 
 		return world.isReceivingRedstonePower(blockPos);

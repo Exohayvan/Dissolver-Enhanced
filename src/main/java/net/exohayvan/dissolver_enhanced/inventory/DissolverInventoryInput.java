@@ -17,6 +17,7 @@ import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
+import net.exohayvan.dissolver_enhanced.helpers.WorldCompat;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
 
@@ -95,7 +96,7 @@ public class DissolverInventoryInput implements Inventory {
         boolean NOT_HOLDING_ITEM = stack.getItem() == Items.AIR;
         if (NOT_HOLDING_ITEM) return;
 
-        if (!player.getWorld().isClient()) {
+        if (!WorldCompat.isClient(player)) {
             if (EMCOrbItem.isEMCOrb(stack)) {
                 BigInteger emc = EMCOrbItem.getEmcBig(stack);
                 if (emc.signum() > 0) {
@@ -135,7 +136,7 @@ public class DissolverInventoryInput implements Inventory {
             }
         }
 
-        if (slot == 0 && player.getWorld().isClient()) return;
+        if (slot == 0 && WorldCompat.isClient(player)) return;
 
         this.stacks.set(slot, stack);
         this.handler.onContentChanged(this);
