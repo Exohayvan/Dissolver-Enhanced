@@ -12,7 +12,6 @@ import net.minecraft.util.Identifier;
 
 public class MaterializerScreen extends HandledScreen<MaterializerScreenHandler> {
     private static final Identifier TEXTURE = Identifier.ofVanilla("textures/gui/container/furnace.png");
-    private static final Identifier ARROW_PROGRESS_TEXTURE = Identifier.ofVanilla("container/furnace/burn_progress");
     private static final int FLAME_X = 56;
     private static final int FLAME_Y = 36;
     private static final int FLAME_WIDTH = 14;
@@ -21,6 +20,8 @@ public class MaterializerScreen extends HandledScreen<MaterializerScreenHandler>
     private static final int ARROW_Y = 34;
     private static final int ARROW_WIDTH = 24;
     private static final int ARROW_HEIGHT = 16;
+    private static final int ARROW_TEXTURE_U = 176;
+    private static final int ARROW_TEXTURE_V = 14;
     private static final int GUI_BACKGROUND = 0xFFC6C6C6;
     private static final int SLOT_DARK = 0xFF373737;
     private static final int SLOT_LIGHT = 0xFFFFFFFF;
@@ -78,17 +79,17 @@ public class MaterializerScreen extends HandledScreen<MaterializerScreenHandler>
         int width = Math.min(ARROW_WIDTH, progress);
 
         if (width > 0) {
-            DrawContextCompat.drawGuiTexture(
+            DrawContextCompat.drawTexture(
                     context,
-                    ARROW_PROGRESS_TEXTURE,
-                    ARROW_WIDTH,
-                    ARROW_HEIGHT,
-                    0,
-                    0,
+                    TEXTURE,
                     this.x + ARROW_X,
                     this.y + ARROW_Y,
+                    ARROW_TEXTURE_U,
+                    ARROW_TEXTURE_V,
                     width,
-                    ARROW_HEIGHT
+                    ARROW_HEIGHT,
+                    256,
+                    256
             );
         }
     }

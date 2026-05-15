@@ -35,7 +35,7 @@ public final class DrawContextCompat {
         Object pipeline = getGuiTexturedPipeline();
         if (pipeline != null) {
             Object[] pipelineArgs = new Object[] { pipeline, texture, x, y, u, v, width, height, textureWidth, textureHeight };
-            if (invoke(context, new Class<?>[] {
+            if (invokeNamed(context, new String[] { "method_25290", "drawTexture" }, new Class<?>[] {
                 pipeline.getClass(), Identifier.class, int.class, int.class, float.class, float.class, int.class, int.class, int.class, int.class
             }, pipelineArgs)) {
                 return;
@@ -63,7 +63,7 @@ public final class DrawContextCompat {
         Object pipeline = getGuiTexturedPipeline();
         if (pipeline != null) {
             Object[] pipelineArgs = new Object[] { pipeline, texture, x, y, width, height };
-            if (invoke(context, new Class<?>[] {
+            if (invokeNamed(context, new String[] { "method_52706", "drawGuiTexture" }, new Class<?>[] {
                 pipeline.getClass(), Identifier.class, int.class, int.class, int.class, int.class
             }, pipelineArgs)) {
                 return;
@@ -91,7 +91,7 @@ public final class DrawContextCompat {
         Object pipeline = getGuiTexturedPipeline();
         if (pipeline != null) {
             Object[] pipelineArgs = new Object[] { pipeline, texture, x, y, width, height, u, v, textureWidth, textureHeight };
-            if (invoke(context, new Class<?>[] {
+            if (invokeNamed(context, new String[] { "method_70846", "drawGuiTexture" }, new Class<?>[] {
                 pipeline.getClass(), Identifier.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class
             }, pipelineArgs)) {
                 return;
@@ -104,7 +104,7 @@ public final class DrawContextCompat {
     public static void drawText(DrawContext context, TextRenderer textRenderer, Text text, int x, int y, int color, boolean shadow) {
         if (invokeDrawText(context, new Class<?>[] {
             TextRenderer.class, Text.class, int.class, int.class, int.class, boolean.class
-        }, new Object[] { textRenderer, text, x, y, color, shadow })) {
+        }, new Object[] { textRenderer, text, x, y, opaqueColor(color), shadow })) {
             return;
         }
 
@@ -114,7 +114,7 @@ public final class DrawContextCompat {
     public static void drawText(DrawContext context, TextRenderer textRenderer, String text, int x, int y, int color, boolean shadow) {
         if (invokeDrawText(context, new Class<?>[] {
             TextRenderer.class, String.class, int.class, int.class, int.class, boolean.class
-        }, new Object[] { textRenderer, text, x, y, color, shadow })) {
+        }, new Object[] { textRenderer, text, x, y, opaqueColor(color), shadow })) {
             return;
         }
 
@@ -134,6 +134,26 @@ public final class DrawContextCompat {
                 return true;
             } catch (ReflectiveOperationException | RuntimeException exception) {
                 return false;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean invokeNamed(DrawContext context, String[] methodNames, Class<?>[] parameterTypes, Object[] arguments) {
+        for (String methodName : methodNames) {
+            for (Method method : DrawContext.class.getDeclaredMethods()) {
+                if (!method.getName().equals(methodName) || method.getReturnType() != Void.TYPE || !hasParameters(method, parameterTypes)) {
+                    continue;
+                }
+
+                try {
+                    method.setAccessible(true);
+                    method.invoke(context, arguments);
+                    return true;
+                } catch (ReflectiveOperationException | RuntimeException exception) {
+                    return false;
+                }
             }
         }
 
@@ -171,6 +191,10 @@ public final class DrawContextCompat {
         }
 
         return true;
+    }
+
+    private static int opaqueColor(int color) {
+        return (color & 0xFF000000) == 0 ? color | 0xFF000000 : color;
     }
 
     private static RenderLayer getGuiTexturedLayer(Identifier texture) {

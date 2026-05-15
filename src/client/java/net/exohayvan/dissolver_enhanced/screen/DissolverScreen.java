@@ -52,7 +52,7 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
         this.searchBox.setMaxLength(50);
         this.searchBox.setDrawsBackground(false);
         this.searchBox.setVisible(true);
-        this.searchBox.setEditableColor(16777215);
+        this.searchBox.setEditableColor(0xFFFFFFFF);
         // this.searchBox.setFocusUnlocked(false);
         this.searchBox.setFocused(true);
         this.addSelectableChild(this.searchBox);
