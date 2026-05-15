@@ -49,7 +49,7 @@ public class DissolverEnhanced implements ModInitializer {
 		Packets.init();
 		DataReceiver.init();
 
-        JoinEvent.init();
+		JoinEvent.init();
 		
 		ModCommands.init();
 

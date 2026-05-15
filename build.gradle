@@ -95,6 +95,8 @@ processResources {
 	from("${commonDir}/src/main/resources") {
 		include 'assets/**'
 		include 'data/**'
+		include 'overlay_*/**'
+		include 'pack.mcmeta'
 		include 'wthit_plugins.json'
 		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	}

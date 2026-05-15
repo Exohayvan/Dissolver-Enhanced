@@ -15,21 +15,34 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Formatting;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
+import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
+import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 
 @Mixin(value = ItemStack.class, priority = 500)
 public class ItemStackTooltipMixin {
     @Inject(method = "getTooltip", at = @At(value = "RETURN", ordinal = 1))
     private void addEmcTooltip(Item.TooltipContext context, @Nullable PlayerEntity player, TooltipType type, CallbackInfoReturnable<List<Text>> cir) {
         ItemStack stack = (ItemStack)(Object)this;
+        List<Text> tooltip = cir.getReturnValue();
+        addEmcOrbTooltip(stack, tooltip);
+
         String itemId = EMCKey.fromStack(stack);
         Text formattedText = EMCHelper.tooltipValue(itemId, ItemHelper.getDurabilityPercentage(stack));
         if ("".equals(formattedText.getLiteralString())) return;
 
-        List<Text> tooltip = cir.getReturnValue();
         tooltip.add(getInsertIndexAfterModName(stack, tooltip), formattedText);
+    }
+
+    private void addEmcOrbTooltip(ItemStack stack, List<Text> tooltip) {
+        if (!EMCOrbItem.isEMCOrb(stack)) {
+            return;
+        }
+
+        tooltip.add(Text.translatable("item_tooltip.dissolver_enhanced.emc_orb", EmcNumber.format(EMCOrbItem.getEmcBig(stack))).formatted(Formatting.LIGHT_PURPLE));
     }
 
     private int getInsertIndexAfterModName(ItemStack stack, List<Text> tooltip) {

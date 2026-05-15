@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import net.minecraft.component.ComponentType;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ItemEnchantmentsComponent;
 import net.minecraft.component.type.PotionContentsComponent;
@@ -44,7 +47,7 @@ public class EMCKey {
     public static List<String> describe(ItemStack stack) {
         List<String> lines = new ArrayList<>();
 
-        PotionContentsComponent potionContents = stack.get(DataComponentTypes.POTION_CONTENTS);
+        PotionContentsComponent potionContents = getComponent(stack, DataComponentTypes.POTION_CONTENTS);
         if (potionContents != null) {
             lines.add("Potion: " + potionId(potionContents).orElse("custom"));
             if (!potionContents.customEffects().isEmpty()) {
@@ -52,7 +55,7 @@ public class EMCKey {
             }
         }
 
-        ItemEnchantmentsComponent storedEnchantments = stack.get(DataComponentTypes.STORED_ENCHANTMENTS);
+        ItemEnchantmentsComponent storedEnchantments = getComponent(stack, DataComponentTypes.STORED_ENCHANTMENTS);
         if (storedEnchantments != null && !storedEnchantments.isEmpty()) {
             lines.add("Stored Enchantments: " + formatEnchantments(storedEnchantments));
         }
@@ -66,7 +69,7 @@ public class EMCKey {
             return null;
         }
 
-        PotionContentsComponent potionContents = stack.get(DataComponentTypes.POTION_CONTENTS);
+        PotionContentsComponent potionContents = getComponent(stack, DataComponentTypes.POTION_CONTENTS);
         if (potionContents == null) {
             return null;
         }
@@ -91,7 +94,7 @@ public class EMCKey {
             return null;
         }
 
-        ItemEnchantmentsComponent enchantments = stack.get(DataComponentTypes.STORED_ENCHANTMENTS);
+        ItemEnchantmentsComponent enchantments = getComponent(stack, DataComponentTypes.STORED_ENCHANTMENTS);
         if (enchantments == null || enchantments.isEmpty()) {
             return null;
         }
@@ -121,5 +124,55 @@ public class EMCKey {
 
     private static String getItemId(ItemStack stack) {
         return stack.getItem().toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T getComponent(ItemStack stack, ComponentType<T> componentType) {
+        Method method = findComponentGetter(stack.getClass());
+        if (method != null) {
+            try {
+                return (T) method.invoke(stack, componentType);
+            } catch (IllegalAccessException | InvocationTargetException exception) {
+                throw new IllegalStateException("Unable to read item component " + componentType, exception);
+            }
+        }
+
+        throw new IllegalStateException("No supported ItemStack component getter found");
+    }
+
+    private static Method findComponentGetter(Class<?> owner) {
+        Method modernGetter = findComponentGetter(owner, "method_58694");
+        if (modernGetter != null) {
+            return modernGetter;
+        }
+
+        String[] fallbackNames = {"get", "method_57824", "method_57381"};
+        for (String name : fallbackNames) {
+            Method method = findComponentGetter(owner, name);
+            if (method != null) {
+                return method;
+            }
+        }
+
+        return null;
+    }
+
+    private static Method findComponentGetter(Class<?> owner, String name) {
+        for (Method method : owner.getMethods()) {
+            if (method.getName().equals(name) && isComponentGetter(method)) {
+                return method;
+            }
+        }
+
+        return null;
+    }
+
+    private static boolean isComponentGetter(Method method) {
+        if (method.getParameterCount() != 1) {
+            return false;
+        }
+
+        return method.getParameterTypes()[0].isAssignableFrom(ComponentType.class) ||
+                method.getParameterTypes()[0].isInterface();
     }
 }

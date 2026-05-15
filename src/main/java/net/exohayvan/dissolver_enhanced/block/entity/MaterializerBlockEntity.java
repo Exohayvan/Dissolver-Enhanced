@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
+import net.exohayvan.dissolver_enhanced.helpers.NbtCompat;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.item.EmcCoreItem;
 import net.exohayvan.dissolver_enhanced.screen.MaterializerScreenHandler;
@@ -195,11 +196,11 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
         super.readNbt(nbt, registryLookup);
         this.stacks = DefaultedList.ofSize(SIZE, ItemStack.EMPTY);
         Inventories.readNbt(nbt, this.stacks, registryLookup);
-        this.progress = Math.max(0, nbt.getInt("Progress"));
-        if (nbt.contains("StoredEmcBig")) {
-            this.storedEmc = EmcNumber.parse(nbt.getString("StoredEmcBig"));
+        this.progress = Math.max(0, NbtCompat.getInt(nbt, "Progress"));
+        if (NbtCompat.hasKey(nbt, "StoredEmcBig")) {
+            this.storedEmc = EmcNumber.parse(NbtCompat.getString(nbt, "StoredEmcBig"));
         } else {
-            this.storedEmc = EmcNumber.of(nbt.getInt("StoredEmc"));
+            this.storedEmc = EmcNumber.of(NbtCompat.getInt(nbt, "StoredEmc"));
         }
     }
 

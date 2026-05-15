@@ -29,6 +29,8 @@ import net.minecraft.util.Nameable;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.exohayvan.dissolver_enhanced.helpers.ContainerLockCompat;
+import net.exohayvan.dissolver_enhanced.helpers.NbtCompat;
 
 public abstract class CustomBlockEntity extends BlockEntity implements SidedInventory, NamedScreenHandlerFactory, Nameable {
     private ContainerLock lock;
@@ -42,16 +44,16 @@ public abstract class CustomBlockEntity extends BlockEntity implements SidedInve
 
     protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
         super.readNbt(nbt, registryLookup);
-        this.lock = ContainerLock.fromNbt(nbt);
-        if (nbt.contains("CustomName", 8)) {
-            this.customName = tryParseCustomName(nbt.getString("CustomName"), registryLookup);
+        this.lock = ContainerLockCompat.read(nbt, registryLookup);
+        if (NbtCompat.hasKey(nbt, "CustomName")) {
+            this.customName = tryParseCustomName(NbtCompat.getString(nbt, "CustomName"), registryLookup);
         }
 
     }
 
     protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
         super.writeNbt(nbt, registryLookup);
-        writeLockNbt(nbt);
+        ContainerLockCompat.write(this.lock, nbt, registryLookup);
         if (this.customName != null) {
             nbt.putString("CustomName", Serialization.toJsonString(this.customName, registryLookup));
         }
@@ -165,17 +167,6 @@ public abstract class CustomBlockEntity extends BlockEntity implements SidedInve
         nbt.remove("CustomName");
         nbt.remove("Lock");
         nbt.remove("Items");
-    }
-
-    private void writeLockNbt(NbtCompound nbt) {
-        if (this.lock.equals(ContainerLock.EMPTY)) {
-            return;
-        }
-
-        String lockKey = this.lock.key();
-        if (!lockKey.isEmpty()) {
-            nbt.putString("Lock", lockKey);
-        }
     }
 
     // HOPPER/DROPPER INSERT
