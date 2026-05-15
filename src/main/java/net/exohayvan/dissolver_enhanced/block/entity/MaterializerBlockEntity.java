@@ -73,7 +73,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     }
 
     public static void tick(World world, BlockPos pos, BlockState state, MaterializerBlockEntity blockEntity) {
-        if (world.isClient) return;
+        if (world.isClient()) return;
 
         boolean changed = false;
         if (blockEntity.canOutputTarget()) {

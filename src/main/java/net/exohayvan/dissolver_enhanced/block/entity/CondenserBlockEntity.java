@@ -68,7 +68,7 @@ public class CondenserBlockEntity extends CustomBlockEntity {
     }
 
     public static void tick(World world, BlockPos pos, BlockState state, CondenserBlockEntity blockEntity) {
-        if (world.isClient) return;
+        if (world.isClient()) return;
 
         if (blockEntity.canCondense()) {
             if (EMCOrbItem.isEMCOrb(blockEntity.stacks.get(INPUT_SLOT))) {

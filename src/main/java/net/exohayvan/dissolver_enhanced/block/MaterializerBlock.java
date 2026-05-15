@@ -48,7 +48,7 @@ public class MaterializerBlock extends BlockWithEntity {
 
     @Override
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-        if (world.isClient) return ActionResultCompat.success(true);
+        if (world.isClient()) return ActionResultCompat.success(true);
 
         ModAnalytics.captureBlockUse("materializer_block");
         BlockEntity blockEntity = world.getBlockEntity(pos);
@@ -81,6 +81,6 @@ public class MaterializerBlock extends BlockWithEntity {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        return world.isClient ? null : validateTicker(type, ModBlockEntities.MATERIALIZER_BLOCK_ENTITY, MaterializerBlockEntity::tick);
+        return world.isClient() ? null : validateTicker(type, ModBlockEntities.MATERIALIZER_BLOCK_ENTITY, MaterializerBlockEntity::tick);
     }
 }

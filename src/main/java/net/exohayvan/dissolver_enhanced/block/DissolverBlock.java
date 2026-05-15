@@ -68,7 +68,7 @@ public class DissolverBlock extends BlockWithEntity {
 
 	    @Override
 	    protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-	        if (world.isClient) {
+	        if (world.isClient()) {
 	            return ActionResultCompat.success(true);
 	        } else if (!player.getAbilities().allowModifyWorld) {
 	            return ActionResultCompat.pass();
