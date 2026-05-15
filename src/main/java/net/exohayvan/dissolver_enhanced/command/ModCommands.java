@@ -19,6 +19,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.exohayvan.dissolver_enhanced.helpers.CommandSourceCompat;
 import net.exohayvan.dissolver_enhanced.helpers.WirelessDissolver;
 
 public class ModCommands {
@@ -37,7 +38,7 @@ public class ModCommands {
     }
 
     private static LiteralArgumentBuilder<ServerCommandSource> createRootCommand(String command) {
-        return literal(command).requires(source -> source.hasPermissionLevel(2)); // requires OP
+        return literal(command).requires(source -> CommandSourceCompat.hasPermissionLevel(source, 2)); // requires OP
     }
 
     private static LiteralArgumentBuilder<ServerCommandSource> createCommandWithPlayerArg(String command, ArgumentType<?> argType, CommandMethodInterface func, CommandMethodPlayerInterface playerFunc) {
