@@ -7,6 +7,7 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
+import net.exohayvan.dissolver_enhanced.helpers.ServerCompat;
 import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
 
 public class DissolverSlot extends Slot {
@@ -59,7 +60,7 @@ public class DissolverSlot extends Slot {
         } else if (!this.canTakePartial(player) && max < this.getStack().getCount()) {
             return Optional.empty();
         } else {
-            if (player.getServer() != null) { // getting double stack if this is not checked
+            if (ServerCompat.getServer(player) != null) { // getting double stack if this is not checked
                 boolean CANT_GET_ITEM = !EMCHelper.getItem(player, this.getStack(), this.handler, min);
                 if (CANT_GET_ITEM) return Optional.empty();
             }
@@ -80,7 +81,7 @@ public class DissolverSlot extends Slot {
 
     // often called by double clicking from another inventory
     public ItemStack takeStackRange(int min, int max, PlayerEntity player) {
-        if (player.getServer() == null) return ItemStack.EMPTY;
+        if (ServerCompat.getServer(player) == null) return ItemStack.EMPTY;
         
         Optional<ItemStack> optional = this.tryTakeStackRange(min, max, player);
         optional.ifPresent((stack) -> {

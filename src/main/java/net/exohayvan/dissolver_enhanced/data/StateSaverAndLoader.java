@@ -32,6 +32,7 @@ import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
+import net.exohayvan.dissolver_enhanced.helpers.ServerCompat;
 import net.exohayvan.dissolver_enhanced.migration.LegacyNamespaceMigration;
 
 // https://fabricmc.net/wiki/tutorial:persistent_states#player_specific_persistent_state
@@ -399,7 +400,7 @@ public class StateSaverAndLoader extends PersistentState {
     }
 
     public static PlayerData getPlayerState(LivingEntity player) {
-        if (player.getServer() == null) return new PlayerData();
+        if (ServerCompat.getServer(player) == null) return new PlayerData();
 
         // Either get the player by the uuid, or we don't have data for him yet, make a new player state
         PlayerData playerState = getPlayerState(player, getSaver(player));
@@ -408,7 +409,7 @@ public class StateSaverAndLoader extends PersistentState {
     }
 
     private static StateSaverAndLoader getSaver(LivingEntity player) {
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = ServerCompat.getServer(player);
         return getServerState(server);
     }
 
@@ -419,7 +420,7 @@ public class StateSaverAndLoader extends PersistentState {
     }
 
     public static void setPlayerEMC(LivingEntity player, BigInteger emc) {
-        if (player.getServer() == null) return;
+        if (ServerCompat.getServer(player) == null) return;
 
         StateSaverAndLoader serverState = getSaver(player);
         PlayerData playerState = getPlayerState(player, serverState);
@@ -435,7 +436,7 @@ public class StateSaverAndLoader extends PersistentState {
     }
 
     public static void setPlayerLearned(LivingEntity player, List<String> learnedList) {
-        if (player.getServer() == null) return;
+        if (ServerCompat.getServer(player) == null) return;
 
         StateSaverAndLoader serverState = getSaver(player);
         PlayerData playerState = getPlayerState(player, serverState);
@@ -450,7 +451,7 @@ public class StateSaverAndLoader extends PersistentState {
             EMCHelper.sendStateToClient((PlayerEntity)player);
         } else {
             serverState.sharedData = playerState;
-            updateAllServerPlayers(player.getServer());
+            updateAllServerPlayers(ServerCompat.getServer(player));
         }
     }
 

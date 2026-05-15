@@ -55,7 +55,7 @@ public class EMCHelper {
     }
 
     public static void addEMCValue(PlayerEntity player, BigInteger addedValue) {
-        if (player.getServer() == null) return;
+        if (ServerCompat.getServer(player) == null) return;
 
         BigInteger currentValue = getEMCValue(player);
         BigInteger newValue = currentValue.add(EmcNumber.nonNegative(addedValue));
@@ -68,7 +68,7 @@ public class EMCHelper {
     }
 
     public static boolean removeEMCValue(PlayerEntity player, BigInteger removedValue) {
-        if (player.getServer() == null) return false;
+        if (ServerCompat.getServer(player) == null) return false;
 
         BigInteger currentValue = getEMCValue(player);
         BigInteger newValue = currentValue.subtract(EmcNumber.nonNegative(removedValue));

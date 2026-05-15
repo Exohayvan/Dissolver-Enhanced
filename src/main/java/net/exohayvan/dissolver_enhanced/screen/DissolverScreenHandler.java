@@ -22,6 +22,7 @@ import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
+import net.exohayvan.dissolver_enhanced.helpers.ServerCompat;
 import net.exohayvan.dissolver_enhanced.inventory.DissolverInventory;
 import net.exohayvan.dissolver_enhanced.inventory.DissolverInventoryInput;
 import net.exohayvan.dissolver_enhanced.inventory.DissolverSlot;
@@ -129,7 +130,7 @@ public class DissolverScreenHandler extends ScreenHandler {
 
     private List<Item> convertIdsToItems(List<String> itemIds) {
         // send to client (for scroll bar)
-        if (player.getServer() != null) {
+        if (ServerCompat.getServer(player) != null) {
             // copy so items stored don't get deleted!
             PlayerData playerState = StateSaverAndLoader.getPlayerState(player);
             PlayerData newData = new PlayerData();
@@ -290,7 +291,7 @@ public class DissolverScreenHandler extends ScreenHandler {
         if (slot == null || !slot.hasStack()) return newStack;
 
         // getting double stack if server is not checked
-        if (player.getServer() == null) return ItemStack.EMPTY;
+        if (ServerCompat.getServer(player) == null) return ItemStack.EMPTY;
 
         if (invSlot < PLAYER_INV_SIZE) {
             if (EMCOrbItem.isEMCOrb(slot.getStack())) {

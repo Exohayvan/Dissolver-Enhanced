@@ -10,6 +10,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
+import net.exohayvan.dissolver_enhanced.helpers.ServerCompat;
 import net.exohayvan.dissolver_enhanced.packets.clientbound.EMCValuesPayload;
 import net.exohayvan.dissolver_enhanced.packets.clientbound.PlayerDataPayload;
 
@@ -17,7 +18,7 @@ public class DataSender {
     private static final Map<UUID, Integer> EMC_SYNC_VERSIONS = new HashMap<>();
 
     public static void sendPlayerData(PlayerEntity player, PlayerData data) {
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = ServerCompat.getServer(player);
         ServerPlayerEntity playerEntity = getServerPlayer(server, player);
         if (playerEntity == null) return;
 
