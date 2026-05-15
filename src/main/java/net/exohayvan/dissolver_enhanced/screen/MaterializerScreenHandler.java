@@ -2,6 +2,7 @@ package net.exohayvan.dissolver_enhanced.screen;
 
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
+import net.exohayvan.dissolver_enhanced.helpers.InventoryCompat;
 import net.exohayvan.dissolver_enhanced.inventory.CondenserCoreSlot;
 import net.exohayvan.dissolver_enhanced.inventory.MaterializerTemplateSlot;
 import net.exohayvan.dissolver_enhanced.inventory.OutputOnlySlot;
@@ -40,7 +41,7 @@ public class MaterializerScreenHandler extends ScreenHandler {
         checkSize(inventory, MATERIALIZER_SLOT_COUNT);
         this.inventory = inventory;
         this.propertyDelegate = propertyDelegate;
-        inventory.onOpen(playerInventory.player);
+        InventoryCompat.onOpen(inventory, playerInventory.player);
 
         this.addSlot(new MaterializerTemplateSlot(inventory, TARGET_SLOT, 56, 17));
         this.addSlot(new MaterializerTemplateSlot(inventory, EMC_INPUT_SLOT, 38, 53));
@@ -122,7 +123,7 @@ public class MaterializerScreenHandler extends ScreenHandler {
     @Override
     public void onClosed(PlayerEntity player) {
         super.onClosed(player);
-        this.inventory.onClose(player);
+        InventoryCompat.onClose(this.inventory, player);
     }
 
     private boolean isMaterializableTarget(ItemStack stack) {

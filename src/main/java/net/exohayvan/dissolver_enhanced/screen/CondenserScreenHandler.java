@@ -3,6 +3,7 @@ package net.exohayvan.dissolver_enhanced.screen;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
+import net.exohayvan.dissolver_enhanced.helpers.InventoryCompat;
 import net.exohayvan.dissolver_enhanced.inventory.CondenserCoreSlot;
 import net.exohayvan.dissolver_enhanced.inventory.CondenserInputSlot;
 import net.exohayvan.dissolver_enhanced.inventory.OutputOnlySlot;
@@ -40,7 +41,7 @@ public class CondenserScreenHandler extends ScreenHandler {
         checkSize(inventory, 3);
         this.inventory = inventory;
         this.propertyDelegate = propertyDelegate;
-        inventory.onOpen(playerInventory.player);
+        InventoryCompat.onOpen(inventory, playerInventory.player);
 
         this.addSlot(new CondenserInputSlot(inventory, INPUT_SLOT, 56, 17));
         this.addSlot(new CondenserCoreSlot(inventory, CORE_SLOT, 56, 53));
@@ -121,7 +122,7 @@ public class CondenserScreenHandler extends ScreenHandler {
     @Override
     public void onClosed(PlayerEntity player) {
         super.onClosed(player);
-        this.inventory.onClose(player);
+        InventoryCompat.onClose(this.inventory, player);
     }
 
     private boolean isCondensable(ItemStack stack) {
