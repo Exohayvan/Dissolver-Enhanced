@@ -90,7 +90,7 @@ public final class DrawContextCompat {
 
         Object pipeline = getGuiTexturedPipeline();
         if (pipeline != null) {
-            Object[] pipelineArgs = new Object[] { pipeline, texture, x, y, width, height, u, v, textureWidth, textureHeight };
+            Object[] pipelineArgs = new Object[] { pipeline, texture, textureWidth, textureHeight, u, v, x, y, width, height };
             if (invokeNamed(context, new String[] { "method_70846", "drawGuiTexture" }, new Class<?>[] {
                 pipeline.getClass(), Identifier.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class
             }, pipelineArgs)) {
