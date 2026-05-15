@@ -74,6 +74,7 @@ public final class ModAnalytics {
             );
             Runtime.getRuntime().addShutdownHook(new Thread(ModAnalytics::close, "dissolver-enhanced-analytics-shutdown"));
             installUncaughtExceptionHandler();
+            markInternalTester();
             client.capture(SESSION_STARTED_EVENT, distinctId, startupProperties());
             client.capture(STARTUP_EVENT, distinctId, startupProperties());
             captureConfigLoaded();
@@ -86,6 +87,12 @@ public final class ModAnalytics {
 
     public static boolean enabled() {
         return client != null && distinctId != null;
+    }
+
+    private static void markInternalTester() {
+        if (ModConfig.ANALYTICS_TESTER) {
+            client.setUserProperties(ModConfig.ANALYTICS_ERROR_ENDPOINT, distinctId, Map.of("is_internal", true));
+        }
     }
 
     public static void captureClientHeartbeat(Map<String, Object> clientProperties) {
