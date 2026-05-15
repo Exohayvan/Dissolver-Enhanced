@@ -1,6 +1,5 @@
 {
     "dissolver_enhanced.modname": "Dissolver",
-
     "item.dissolver_enhanced.crystal_frame_item": "Crystal Frame",
     "item.dissolver_enhanced.emc_orb": "EMC Orb",
     "item.dissolver_enhanced.copper_emc_core": "Copper EMC Core",
@@ -17,22 +16,18 @@
     "block.dissolver_enhanced.materializer_block": "Materializer",
     "entity.dissolver_enhanced.crystal_entity": "Crystal Entity",
     "gui.dissolver_enhanced.search": "Search",
-
     "item_tooltip.dissolver_enhanced.emc": "§dEMC:§r %s",
     "item_tooltip.dissolver_enhanced.emc_orb": "Stored EMC: %s",
     "item_tooltip.dissolver_enhanced.emc_core_rate": "+%sx EMC transfer effectiveness",
     "item_tooltip.dissolver_enhanced.crystal_frame_item": "Something's missing, I just can't frame it...",
     "item_tooltip.dissolver_enhanced.dissolver_block_item": "Dissolving & Reassembling!",
-
     "emc.title": "EMC: §6%s",
     "emc.empty": "No EMC! §8:(",
     "emc.action.not_enough": "You do not have enough EMC!",
     "emc.action.not_enough_short": "§cNot enough!",
     "emc.action.stored_short": "§aStored!",
     "emc.action.removed_short": "§cRemoved!",
-
     "wireless_open.fail": "No Dissolver block found in a %d block radius!",
-
     "advancements.dissolver_enhanced.root.title": "Thanks for Dissolving",
     "advancements.dissolver_enhanced.root.description": "Try Dissolver Enhanced. Seriously, thanks.",
     "advancements.story.place_dissolver.title": "Deconstruct Reconstruct",
@@ -83,7 +78,6 @@
     "advancements.dissolver_enhanced.orb.condensed_wealth.description": "Create an EMC Orb worth at least 1,000 EMC. Conveniently spherical.",
     "advancements.dissolver_enhanced.orb.heavy_little_marble.title": "Heavy Little Marble",
     "advancements.dissolver_enhanced.orb.heavy_little_marble.description": "Create an EMC Orb worth at least 1,000,000 EMC. Please lift with your knees.",
-
     "command.feedback.get": "EMC of player: §6%s",
     "command.feedback.get.not_found": "Could not find a player with the name '%s'!",
     "command.feedback.list": "§lFull list (%d):",
