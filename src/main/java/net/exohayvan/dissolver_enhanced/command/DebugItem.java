@@ -267,7 +267,7 @@ public class DebugItem {
             "EMC Source: " + EMCValues.getSource(emcKey),
             "EMC Source Detail: " + EMCValues.getSourceDetail(emcKey),
             "Config Override: " + (configOverride ? "Yes" : "No"),
-            "Has NBT: " + (stack.hasTag() ? "Yes" : "No"),
+            "Has NBT: " + (stack.getComponents().has(net.minecraft.core.component.DataComponents.CUSTOM_DATA) ? "Yes" : "No"),
             "Learnable: " + (emc > 0 ? "Yes" : "No")
         ));
         List<String> componentLines = EMCKey.describe(stack);

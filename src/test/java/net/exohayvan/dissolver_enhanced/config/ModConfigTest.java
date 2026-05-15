@@ -43,7 +43,7 @@ class ModConfigTest {
         VisibilityModifier.CREATIVE_ITEMS = false;
         VisibilityModifier.EMC_ON_HUD = false;
         VisibilityModifier.PRIVATE_EMC = false;
-        SimpleConfig.configDirSupplier = net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR::get;
+        SimpleConfig.configDirSupplier = () -> Path.of("config");
     }
 
     @Test

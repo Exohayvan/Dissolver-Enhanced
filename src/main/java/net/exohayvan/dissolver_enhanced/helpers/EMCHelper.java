@@ -29,7 +29,7 @@ import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
 import net.exohayvan.dissolver_enhanced.packets.DataSender;
 import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.fml.ModList;
 
 public class EMCHelper {
     public static boolean serverAddItem(Level world, String itemId, BigInteger addedValue) {
@@ -325,7 +325,7 @@ public class EMCHelper {
             + "  \"name\": \"" + jsonEscape(itemStack.getHoverName().getString()) + "\",\n"
             + "  \"count\": " + itemStack.getCount() + ",\n"
             + "  \"sourceNamespace\": \"" + jsonEscape(namespace) + "\",\n"
-            + "  \"tag\": \"" + jsonEscape(String.valueOf(itemStack.getTag())) + "\"\n"
+            + "  \"tag\": \"" + jsonEscape(String.valueOf(itemStack.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.EMPTY).copyTag())) + "\"\n"
             + "}";
     }
 

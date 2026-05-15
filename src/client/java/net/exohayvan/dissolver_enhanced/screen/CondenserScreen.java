@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 public class CondenserScreen extends AbstractContainerScreen<CondenserScreenHandler> {
-    private static final ResourceLocation TEXTURE = new ResourceLocation("minecraft", "textures/gui/container/furnace.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/gui/container/furnace.png");
     private static final int FLAME_X = 56;
     private static final int FLAME_Y = 36;
     private static final int FLAME_WIDTH = 14;
@@ -76,7 +76,7 @@ public class CondenserScreen extends AbstractContainerScreen<CondenserScreenHand
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        renderBackground(context);
+        renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
         renderTooltip(context, mouseX, mouseY);
     }

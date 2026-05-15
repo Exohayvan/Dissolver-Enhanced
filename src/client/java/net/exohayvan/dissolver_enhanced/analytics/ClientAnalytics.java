@@ -2,8 +2,8 @@ package net.exohayvan.dissolver_enhanced.analytics;
 
 import net.exohayvan.dissolver_enhanced.data.PlayerDataClient;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -16,14 +16,10 @@ public final class ClientAnalytics {
     }
 
     public static void init() {
-        MinecraftForge.EVENT_BUS.addListener(ClientAnalytics::onClientTick);
+        NeoForge.EVENT_BUS.addListener(ClientAnalytics::onClientTick);
     }
 
-    private static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-
+    private static void onClientTick(ClientTickEvent.Post event) {
         heartbeatTicks++;
         if (heartbeatTicks < HEARTBEAT_INTERVAL_TICKS) {
             return;

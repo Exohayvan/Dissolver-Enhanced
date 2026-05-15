@@ -18,9 +18,8 @@ import net.exohayvan.dissolver_enhanced.packets.Packets;
 import net.exohayvan.dissolver_enhanced.particle.ModParticles;
 import net.exohayvan.dissolver_enhanced.recipe.ModRecipeSerializers;
 import net.exohayvan.dissolver_enhanced.screen.ModScreenHandlers;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
 
 @Mod(DissolverEnhanced.MOD_ID)
 public class DissolverEnhanced {
@@ -28,13 +27,12 @@ public class DissolverEnhanced {
 	public static final String OLD_MOD_ID = "vanillaemc";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	public DissolverEnhanced() {
+	public DissolverEnhanced(IEventBus modEventBus) {
 		// Please use this code as inspiration for your projects! :)
 		// For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.
 		// John 3:16
 
 		LOGGER.info("Initializing DissolverEnhanced!");
-		IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
 		ModItems.init(modEventBus);
 		ModBlocks.init(modEventBus);
@@ -44,6 +42,7 @@ public class DissolverEnhanced {
 		ModEntities.init(modEventBus);
 		ModParticles.init(modEventBus);
 		ModRecipeSerializers.init(modEventBus);
+		modEventBus.addListener(Packets::registerPayloads);
 
 		ModConfig.init();
 		ModAnalytics.init();

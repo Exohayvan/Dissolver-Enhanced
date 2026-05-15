@@ -8,15 +8,15 @@ import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTab.ItemDisplayParameters;
 import net.minecraft.world.item.CreativeModeTab.Output;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.DeferredHolder;
 
 public class ModItemGroups {
     public static final DeferredRegister<CreativeModeTab> ITEM_GROUPS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, DissolverEnhanced.MOD_ID);
 
-    public static final RegistryObject<CreativeModeTab> VANILLAEMC_GROUP = ITEM_GROUPS.register(
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> VANILLAEMC_GROUP = ITEM_GROUPS.register(
             "dissolver_enhanced_group",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("dissolver_enhanced.modname"))

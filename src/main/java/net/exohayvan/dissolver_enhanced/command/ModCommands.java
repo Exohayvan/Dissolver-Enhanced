@@ -20,11 +20,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.helpers.WirelessDissolver;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
-@Mod.EventBusSubscriber(modid = DissolverEnhanced.MOD_ID)
+@EventBusSubscriber(modid = DissolverEnhanced.MOD_ID)
 public class ModCommands {
     private static CommandDispatcher<CommandSourceStack> activeDispatcher;
     private static CommandBuildContext activeRegistryAccess;

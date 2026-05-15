@@ -13,12 +13,13 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraftforge.event.server.ServerStartedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
-@Mod.EventBusSubscriber(modid = DissolverEnhanced.MOD_ID)
+@EventBusSubscriber(modid = DissolverEnhanced.MOD_ID)
 public class ForgeEmcValueLoader {
     private static final HashMap<String, List<String>> RECIPES = new HashMap<>();
     private static final HashMap<String, String> RECIPE_SOURCES = new HashMap<>();
@@ -39,23 +40,24 @@ public class ForgeEmcValueLoader {
         RECIPE_JSON.clear();
         STONE_CUTTER_LIST.clear();
 
-        List<Recipe<?>> recipes = new ArrayList<>(server.getRecipeManager().getRecipes());
+        List<RecipeHolder<?>> recipes = new ArrayList<>(server.getRecipeManager().getRecipes());
         EMCValues.beginStartup(recipes.size());
 
-        for (Recipe<?> recipe : recipes) {
+        for (RecipeHolder<?> recipe : recipes) {
             try {
                 addRecipe(server, recipe);
             } catch (RuntimeException exception) {
                 EMCValues.incrementRecipesNotUnderstood();
-                DissolverEnhanced.LOGGER.debug("Could not read recipe {} for EMC calculation.", recipe.getId(), exception);
+                DissolverEnhanced.LOGGER.debug("Could not read recipe {} for EMC calculation.", recipe.id(), exception);
             }
         }
 
         EMCValues.recipesLoaded(RECIPES, RECIPE_SOURCES, RECIPE_JSON, STONE_CUTTER_LIST);
     }
 
-    private static void addRecipe(MinecraftServer server, Recipe<?> recipe) {
-        ResourceLocation recipeId = recipe.getId();
+    private static void addRecipe(MinecraftServer server, RecipeHolder<?> recipeHolder) {
+        ResourceLocation recipeId = recipeHolder.id();
+        Recipe<?> recipe = recipeHolder.value();
         RecipeType<?> recipeType = recipe.getType();
 
         ItemStack resultItem = recipe.getResultItem(server.registryAccess());

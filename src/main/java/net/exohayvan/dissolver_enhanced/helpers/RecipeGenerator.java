@@ -15,14 +15,14 @@ public class RecipeGenerator {
     public static void init() {
         String craftingDifficulty = ModConfig.DIFFICULTY.toLowerCase();
         // hard
-        ResourceLocation frameItem = new ResourceLocation(DissolverEnhanced.MOD_ID, "crystal_frame_item");
-        ResourceLocation centerItem = new ResourceLocation("minecraft", "nether_star");
+        ResourceLocation frameItem = ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "crystal_frame_item");
+        ResourceLocation centerItem = ResourceLocation.fromNamespaceAndPath("minecraft", "nether_star");
 
         if (craftingDifficulty.contains("easy")) {
-            frameItem = new ResourceLocation("minecraft", "glass_pane");
-            centerItem = new ResourceLocation("minecraft", "redstone");
+            frameItem = ResourceLocation.fromNamespaceAndPath("minecraft", "glass_pane");
+            centerItem = ResourceLocation.fromNamespaceAndPath("minecraft", "redstone");
         } else if (craftingDifficulty.contains("normal")) {
-            centerItem = new ResourceLocation("minecraft", "phantom_membrane");
+            centerItem = ResourceLocation.fromNamespaceAndPath("minecraft", "phantom_membrane");
         }
 
         DISSOLVER_RECIPE = createShapedRecipeJson(
@@ -34,7 +34,7 @@ public class RecipeGenerator {
                 "C#C",
                 "CCC"
             ),
-            new ResourceLocation(DissolverEnhanced.MOD_ID, "dissolver_block")
+            ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block")
         );
     }
 

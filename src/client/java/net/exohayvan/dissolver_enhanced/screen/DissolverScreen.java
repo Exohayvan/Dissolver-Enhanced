@@ -18,10 +18,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 
 public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHandler> {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(DissolverEnhanced.MOD_ID, "textures/gui/dissolver_block_gui.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "textures/gui/dissolver_block_gui.png");
     
     // scroll
-    private static final ResourceLocation CREATIVE_TABS_TEXTURE = new ResourceLocation("minecraft", "textures/gui/container/creative_inventory/tabs.png");
+    private static final ResourceLocation CREATIVE_TABS_TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/gui/container/creative_inventory/tabs.png");
     private float scrollPosition;
     private boolean scrolling;
 
@@ -89,7 +89,7 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
 
     @Override
     public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        renderBackground(context);
+        renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
         renderTooltip(context, mouseX, mouseY);
     }
@@ -220,7 +220,7 @@ public class DissolverScreen extends AbstractContainerScreen<DissolverScreenHand
     }
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount) {
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double verticalAmount) {
         // setting scroll when reaced end will clear all items, so just return
         if (this.scrollPosition == 0 && verticalAmount > 0 || this.scrollPosition == 1 && verticalAmount < 0) return false;
 

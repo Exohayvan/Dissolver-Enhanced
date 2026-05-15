@@ -5,7 +5,6 @@ import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
 
@@ -34,7 +33,7 @@ public class EmcCoreItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Level world, java.util.List<Component> tooltip, TooltipFlag type) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, java.util.List<Component> tooltip, TooltipFlag type) {
         tooltip.add(Component.translatable(
             "item_tooltip.dissolver_enhanced.emc_core_rate",
             EmcNumber.format(java.math.BigInteger.valueOf(this.emcPerSecond))

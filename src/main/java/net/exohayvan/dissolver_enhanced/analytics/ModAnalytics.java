@@ -10,10 +10,10 @@ import net.exohayvan.dissolver_enhanced.config.SimpleConfig;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.FMLLoader;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.FMLLoader;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -78,7 +78,7 @@ public final class ModAnalytics {
             client.capture(SESSION_STARTED_EVENT, distinctId, startupProperties());
             client.capture(STARTUP_EVENT, distinctId, startupProperties());
             captureConfigLoaded();
-            MinecraftForge.EVENT_BUS.addListener(ModAnalytics::onServerTick);
+            NeoForge.EVENT_BUS.addListener(ModAnalytics::onServerTick);
             DissolverEnhanced.LOGGER.info("Queued Dissolver Enhanced analytics startup event.");
         } catch (IOException | IllegalArgumentException exception) {
             DissolverEnhanced.LOGGER.warn("Could not initialize Dissolver Enhanced analytics.", exception);
@@ -234,11 +234,7 @@ public final class ModAnalytics {
         });
     }
 
-    private static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-
+    private static void onServerTick(ServerTickEvent.Post event) {
         serverHeartbeatTicks++;
         if (serverHeartbeatTicks < HEARTBEAT_INTERVAL_TICKS) {
             return;

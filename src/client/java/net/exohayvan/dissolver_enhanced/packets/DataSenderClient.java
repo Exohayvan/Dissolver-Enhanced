@@ -2,13 +2,13 @@ package net.exohayvan.dissolver_enhanced.packets;
 
 import java.util.List;
 
-import net.exohayvan.dissolver_enhanced.packets.Packets;
 import net.exohayvan.dissolver_enhanced.packets.serverbound.ClientPayload;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 public class DataSenderClient {
 	public static void sendDataToServer(String messageId, String data) {
         ClientPayload payload = new ClientPayload(messageId, data);
-		Packets.CHANNEL.sendToServer(payload);
+		PacketDistributor.sendToServer(payload);
 	}
 
 	// HELPERS

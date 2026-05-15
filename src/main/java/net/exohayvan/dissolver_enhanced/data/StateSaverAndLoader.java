@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -95,7 +96,7 @@ public class StateSaverAndLoader extends SavedData {
     // STORE DATA
 
     @Override
-    public CompoundTag save(CompoundTag nbt) {
+    public CompoundTag save(CompoundTag nbt, HolderLookup.Provider registries) {
         nbt = storePlayersData(nbt, StateSaverAndLoader::storeData);
 
         return nbt;
@@ -129,7 +130,7 @@ public class StateSaverAndLoader extends SavedData {
 
     // GET DATA
 
-    public static StateSaverAndLoader createFromNbt(CompoundTag nbt) {
+    public static StateSaverAndLoader createFromNbt(CompoundTag nbt, HolderLookup.Provider registries) {
         StateSaverAndLoader state = new StateSaverAndLoader();
 
         state = getPlayersData(nbt, state, StateSaverAndLoader::getData);
@@ -210,9 +211,10 @@ public class StateSaverAndLoader extends SavedData {
         // The first time the following 'getOrCreate' function is called, it creates a brand new 'StateSaverAndLoader' and
         // stores it inside the 'PersistentStateManager'. The subsequent calls to 'getOrCreate' pass in the saved
         // 'StateSaverAndLoader' NBT on disk to our function 'StateSaverAndLoader::createFromNbt'.
-        StateSaverAndLoader state = persistentStateManager.get(StateSaverAndLoader::createFromNbt, DissolverEnhanced.MOD_ID);
+        SavedData.Factory<StateSaverAndLoader> factory = new SavedData.Factory<>(StateSaverAndLoader::new, StateSaverAndLoader::createFromNbt);
+        StateSaverAndLoader state = persistentStateManager.get(factory, DissolverEnhanced.MOD_ID);
         if (state == null) {
-            state = persistentStateManager.get(StateSaverAndLoader::createFromNbt, DissolverEnhanced.OLD_MOD_ID);
+            state = persistentStateManager.get(factory, DissolverEnhanced.OLD_MOD_ID);
             if (state != null) {
                 DissolverEnhanced.LOGGER.info("Migrating player EMC state from {} to {}.", DissolverEnhanced.OLD_MOD_ID, DissolverEnhanced.MOD_ID);
                 persistentStateManager.set(DissolverEnhanced.MOD_ID, state);

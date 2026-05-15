@@ -7,11 +7,11 @@ import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
 import net.exohayvan.dissolver_enhanced.packets.DataSender;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
-@Mod.EventBusSubscriber(modid = DissolverEnhanced.MOD_ID)
+@EventBusSubscriber(modid = DissolverEnhanced.MOD_ID)
 public class JoinEvent {
     public static void init() {
     }

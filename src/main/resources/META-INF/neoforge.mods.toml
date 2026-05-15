@@ -15,15 +15,15 @@ description='''Convert items into any other stored items based on its value (EMC
 config="dissolver_enhanced.mixins.json"
 
 [[dependencies.dissolver_enhanced]]
-modId="forge"
-mandatory=true
-versionRange="${loader_version_range}"
+modId="neoforge"
+type="required"
+versionRange="${neo_version_range}"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.dissolver_enhanced]]
 modId="minecraft"
-mandatory=true
+type="required"
 versionRange="${minecraft_version_range}"
 ordering="NONE"
 side="BOTH"

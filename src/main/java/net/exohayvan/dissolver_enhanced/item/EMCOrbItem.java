@@ -2,11 +2,12 @@ package net.exohayvan.dissolver_enhanced.item;
 
 import java.math.BigInteger;
 
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
@@ -34,7 +35,7 @@ public class EMCOrbItem extends Item {
     }
 
     public static BigInteger getEmcBig(ItemStack stack) {
-        CompoundTag nbt = stack.getOrCreateTag();
+        CompoundTag nbt = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         if (nbt.contains(EMC_KEY, NBT_STRING_TYPE)) {
             return EmcNumber.parse(nbt.getString(EMC_KEY));
         }
@@ -47,7 +48,7 @@ public class EMCOrbItem extends Item {
     }
 
     public static void setEMC(ItemStack stack, BigInteger emc) {
-        stack.getOrCreateTag().putString(EMC_KEY, EmcNumber.nonNegative(emc).toString());
+        CustomData.update(DataComponents.CUSTOM_DATA, stack, nbt -> nbt.putString(EMC_KEY, EmcNumber.nonNegative(emc).toString()));
     }
 
     public static boolean isEMCOrb(ItemStack stack) {
@@ -55,7 +56,7 @@ public class EMCOrbItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, Level world, java.util.List<Component> tooltip, TooltipFlag type) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, java.util.List<Component> tooltip, TooltipFlag type) {
         tooltip.add(Component.translatable("item_tooltip.dissolver_enhanced.emc_orb", EmcNumber.format(getEmcBig(stack))).withStyle(ChatFormatting.LIGHT_PURPLE));
     }
 

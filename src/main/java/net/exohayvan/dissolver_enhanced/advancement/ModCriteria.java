@@ -10,10 +10,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 public class ModCriteria {
-    public static final LearnedItemCriterion LEARNED_ITEM = CriteriaTriggers.register(new LearnedItemCriterion());
-    public static final EmcBalanceCriterion EMC_BALANCE = CriteriaTriggers.register(new EmcBalanceCriterion());
-    public static final LearnedCountCriterion LEARNED_COUNT = CriteriaTriggers.register(new LearnedCountCriterion());
-    public static final EmcOrbCriterion EMC_ORB = CriteriaTriggers.register(new EmcOrbCriterion());
+    public static final LearnedItemCriterion LEARNED_ITEM = CriteriaTriggers.register("dissolver_enhanced:learned_item", new LearnedItemCriterion());
+    public static final EmcBalanceCriterion EMC_BALANCE = CriteriaTriggers.register("dissolver_enhanced:emc_balance", new EmcBalanceCriterion());
+    public static final LearnedCountCriterion LEARNED_COUNT = CriteriaTriggers.register("dissolver_enhanced:learned_count", new LearnedCountCriterion());
+    public static final EmcOrbCriterion EMC_ORB = CriteriaTriggers.register("dissolver_enhanced:emc_orb", new EmcOrbCriterion());
 
     public static void init() {
     }

@@ -3,6 +3,7 @@ package net.exohayvan.dissolver_enhanced.block.entity;
 import java.util.Iterator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -34,20 +35,20 @@ public abstract class CustomBlockEntity extends BlockEntity implements WorldlyCo
         this.lock = LockCode.NO_LOCK;
     }
 
-    public void load(CompoundTag nbt) {
-        super.load(nbt);
+    protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
+        super.loadAdditional(nbt, registries);
         this.lock = LockCode.fromTag(nbt);
         if (nbt.contains("CustomName", 8)) {
-            this.customName = Serializer.fromJson(nbt.getString("CustomName"));
+            this.customName = Serializer.fromJson(nbt.getString("CustomName"), registries);
         }
 
     }
 
-    protected void saveAdditional(CompoundTag nbt) {
-        super.saveAdditional(nbt);
+    protected void saveAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
+        super.saveAdditional(nbt, registries);
         this.lock.addToTag(nbt);
         if (this.customName != null) {
-            nbt.putString("CustomName", Serializer.toJson(this.customName));
+            nbt.putString("CustomName", Serializer.toJson(this.customName, registries));
         }
 
     }

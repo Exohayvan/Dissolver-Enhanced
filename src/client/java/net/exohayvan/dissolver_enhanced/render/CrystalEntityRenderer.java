@@ -24,7 +24,7 @@ import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.entity.CrystalEntity;
 
 public class CrystalEntityRenderer extends EntityRenderer<CrystalEntity> {
-	private static final ResourceLocation TEXTURE = new ResourceLocation(DissolverEnhanced.MOD_ID, "textures/entity/crystal_entity.png");
+	private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "textures/entity/crystal_entity.png");
 	private static final RenderType CRYSTAL_RENDER = RenderType.entityCutoutNoCull(TEXTURE);
 	private static final float SINE_45_DEGREES = (float)Math.sin(Math.PI / 4);
 	// private static final String GLASS = "glass";

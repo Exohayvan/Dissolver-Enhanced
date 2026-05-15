@@ -19,6 +19,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.network.chat.Component;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -122,7 +123,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
 
         ItemStack output = this.stacks.get(OUTPUT_SLOT);
         if (output.isEmpty()) return true;
-        return ItemStack.isSameItemSameTags(output, target) && output.getCount() < output.getMaxStackSize();
+        return ItemStack.isSameItemSameComponents(output, target) && output.getCount() < output.getMaxStackSize();
     }
 
     private void outputTarget() {
@@ -135,7 +136,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
             ItemStack materialized = target.copy();
             materialized.setCount(1);
             this.stacks.set(OUTPUT_SLOT, materialized);
-        } else if (ItemStack.isSameItemSameTags(output, target) && output.getCount() < output.getMaxStackSize()) {
+        } else if (ItemStack.isSameItemSameComponents(output, target) && output.getCount() < output.getMaxStackSize()) {
             output.grow(1);
         } else {
             return;
@@ -190,10 +191,10 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     }
 
     @Override
-    public void load(CompoundTag nbt) {
-        super.load(nbt);
+    protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
+        super.loadAdditional(nbt, registries);
         this.stacks = NonNullList.withSize(SIZE, ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(nbt, this.stacks);
+        ContainerHelper.loadAllItems(nbt, this.stacks, registries);
         this.progress = Math.max(0, nbt.getInt("Progress"));
         if (nbt.contains("StoredEmcBig")) {
             this.storedEmc = EmcNumber.parse(nbt.getString("StoredEmcBig"));
@@ -203,9 +204,9 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag nbt) {
-        super.saveAdditional(nbt);
-        ContainerHelper.saveAllItems(nbt, this.stacks);
+    protected void saveAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
+        super.saveAdditional(nbt, registries);
+        ContainerHelper.saveAllItems(nbt, this.stacks, registries);
         nbt.putInt("Progress", this.progress);
         nbt.putString("StoredEmcBig", EmcNumber.nonNegative(this.storedEmc).toString());
         nbt.putInt("StoredEmc", EmcNumber.toIntSaturated(this.storedEmc));

@@ -19,7 +19,7 @@ public class DissolverSlotInput extends Slot {
 
         if (itemStack.isEmpty()) {
             this.set(stack.split(i));
-        } else if (ItemStack.isSameItemSameTags(itemStack, stack)) {
+        } else if (ItemStack.isSameItemSameComponents(itemStack, stack)) {
             stack.shrink(i);
             itemStack.grow(i);
             this.set(itemStack);

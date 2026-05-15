@@ -4,40 +4,39 @@ import net.exohayvan.dissolver_enhanced.block.ModBlocks;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.item.ModItems;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 
 public class DynamicDissolverRecipe extends CustomRecipe {
-    public DynamicDissolverRecipe(ResourceLocation id, CraftingBookCategory category) {
-        super(id, category);
+    public DynamicDissolverRecipe(CraftingBookCategory category) {
+        super(category);
     }
 
     @Override
-    public boolean matches(CraftingContainer container, Level level) {
-        if (container.getWidth() < 3 || container.getHeight() < 3) return false;
+    public boolean matches(CraftingInput container, Level level) {
+        if (container.width() < 3 || container.height() < 3) return false;
 
         NonNullList<Ingredient> ingredients = getIngredients();
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 3; column++) {
                 int ingredientIndex = row * 3 + column;
-                int containerIndex = row * container.getWidth() + column;
+                int containerIndex = row * container.width() + column;
                 if (!ingredients.get(ingredientIndex).test(container.getItem(containerIndex))) {
                     return false;
                 }
             }
         }
 
-        for (int slot = 0; slot < container.getContainerSize(); slot++) {
-            int row = slot / container.getWidth();
-            int column = slot % container.getWidth();
+        for (int slot = 0; slot < container.size(); slot++) {
+            int row = slot / container.width();
+            int column = slot % container.width();
             if ((row >= 3 || column >= 3) && !container.getItem(slot).isEmpty()) {
                 return false;
             }
@@ -47,8 +46,8 @@ public class DynamicDissolverRecipe extends CustomRecipe {
     }
 
     @Override
-    public ItemStack assemble(CraftingContainer container, RegistryAccess registryAccess) {
-        return getResultItem(registryAccess).copy();
+    public ItemStack assemble(CraftingInput container, HolderLookup.Provider registries) {
+        return getResultItem(registries).copy();
     }
 
     @Override
@@ -57,7 +56,7 @@ public class DynamicDissolverRecipe extends CustomRecipe {
     }
 
     @Override
-    public ItemStack getResultItem(RegistryAccess registryAccess) {
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
         return new ItemStack(ModBlocks.DISSOLVER_BLOCK_ITEM.get());
     }
 

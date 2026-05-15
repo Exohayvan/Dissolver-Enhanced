@@ -1,28 +1,19 @@
 package net.exohayvan.dissolver_enhanced.advancement;
 
-import com.google.gson.JsonObject;
+import java.util.Optional;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
-import net.minecraft.advancements.critereon.AbstractCriterionTriggerInstance;
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
-import net.minecraft.advancements.critereon.DeserializationContext;
 import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 public class LearnedItemCriterion extends SimpleCriterionTrigger<LearnedItemCriterion.Conditions> {
-    public static final ResourceLocation ID = new ResourceLocation("dissolver_enhanced", "learned_item");
-
     @Override
-    public ResourceLocation getId() {
-        return ID;
-    }
-
-    @Override
-    protected Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate player, DeserializationContext context) {
-        String item = jsonObject.has("item") ? jsonObject.get("item").getAsString() : null;
-        boolean hasExternalNamespace = jsonObject.has("external_namespace");
-        Boolean externalNamespace = hasExternalNamespace ? jsonObject.get("external_namespace").getAsBoolean() : null;
-        return new Conditions(player, item, externalNamespace);
+    public Codec<Conditions> codec() {
+        return Conditions.CODEC;
     }
 
     public void trigger(ServerPlayer player, String itemId) {
@@ -30,22 +21,19 @@ public class LearnedItemCriterion extends SimpleCriterionTrigger<LearnedItemCrit
         trigger(player, conditions -> conditions.matches(baseItemId));
     }
 
-    public static class Conditions extends AbstractCriterionTriggerInstance {
-        private final String item;
-        private final Boolean externalNamespace;
-
-        public Conditions(ContextAwarePredicate player, String item, Boolean externalNamespace) {
-            super(ID, player);
-            this.item = item;
-            this.externalNamespace = externalNamespace;
-        }
+    public record Conditions(Optional<ContextAwarePredicate> player, Optional<String> item, Optional<Boolean> externalNamespace) implements SimpleCriterionTrigger.SimpleInstance {
+        public static final Codec<Conditions> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                ContextAwarePredicate.CODEC.optionalFieldOf("player").forGetter(Conditions::player),
+                Codec.STRING.optionalFieldOf("item").forGetter(Conditions::item),
+                Codec.BOOL.optionalFieldOf("external_namespace").forGetter(Conditions::externalNamespace)
+        ).apply(instance, Conditions::new));
 
         public boolean matches(String itemId) {
-            if (item != null && !item.equals(itemId)) {
+            if (item.isPresent() && !item.get().equals(itemId)) {
                 return false;
             }
 
-            if (externalNamespace != null && externalNamespace != isExternalNamespace(itemId)) {
+            if (externalNamespace.isPresent() && externalNamespace.get() != isExternalNamespace(itemId)) {
                 return false;
             }
 

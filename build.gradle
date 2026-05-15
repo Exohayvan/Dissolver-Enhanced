@@ -1,5 +1,5 @@
 plugins {
-	id 'net.minecraftforge.gradle' version '6.0.53'
+	id 'net.neoforged.moddev' version '1.0.11'
 	id 'maven-publish'
 }
 
@@ -36,32 +36,31 @@ tasks.withType(AbstractArchiveTask).configureEach {
 	archiveVersion = releaseArchiveVersion
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-minecraft {
-	mappings channel: 'official', version: project.minecraft_version
+neoForge {
+	version = project.neo_version
 
 	runs {
 		client {
-			workingDirectory project.file('run')
-			property 'forge.logging.markers', 'REGISTRIES'
-			property 'forge.logging.console.level', 'debug'
-			mods {
-				dissolver_enhanced {
-					source sourceSets.main
-				}
-			}
+			client()
+			gameDirectory = project.file('run')
+			systemProperty 'forge.logging.markers', 'REGISTRIES'
+			systemProperty 'forge.logging.console.level', 'debug'
 		}
 
 		server {
-			workingDirectory project.file('run')
-			property 'forge.logging.markers', 'REGISTRIES'
-			property 'forge.logging.console.level', 'debug'
-			mods {
-				dissolver_enhanced {
-					source sourceSets.main
-				}
-			}
+			server()
+			gameDirectory = project.file('run')
+			programArgument '--nogui'
+			systemProperty 'forge.logging.markers', 'REGISTRIES'
+			systemProperty 'forge.logging.console.level', 'debug'
+		}
+	}
+
+	mods {
+		dissolver_enhanced {
+			sourceSet sourceSets.main
 		}
 	}
 }
@@ -87,24 +86,28 @@ repositories {
 }
 
 dependencies {
-	minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
-
-	compileOnly fg.deobf("maven.modrinth:wthit:${project.wthit_version}")
+	compileOnly "maven.modrinth:wthit:${project.wthit_version}"
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 	testImplementation 'org.assertj:assertj-core:3.26.3'
 	testImplementation 'org.mockito:mockito-core:5.12.0'
+	testImplementation 'org.slf4j:slf4j-api:2.0.13'
+	testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.13'
+	testImplementation 'org.apache.logging.log4j:log4j-api:2.23.1'
+	testRuntimeOnly 'org.apache.logging.log4j:log4j-core:2.23.1'
+	testRuntimeOnly 'net.neoforged.fancymodloader:loader:4.0.42'
 }
 
 processResources {
 	inputs.property "version", project.version
 	inputs.property "minecraft_version", project.minecraft_version
-	inputs.property "forge_version", project.forge_version
+	inputs.property "neo_version", project.neo_version
 	inputs.property "loader_version_range", project.loader_version_range
+	inputs.property "neo_version_range", project.neo_version_range
 	inputs.property "minecraft_version_range", project.minecraft_version_range
 
-	filesMatching("META-INF/mods.toml") {
+	filesMatching("META-INF/neoforge.mods.toml") {
 		expand inputs.properties
 	}
 
@@ -144,9 +147,13 @@ processResources {
 	}
 }
 
+processTestResources {
+	exclude 'config/empty.broken/**'
+}
+
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
-	options.release = 17
+	options.release = 21
 }
 
 test {

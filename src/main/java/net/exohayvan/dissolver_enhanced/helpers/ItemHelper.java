@@ -1,19 +1,20 @@
 package net.exohayvan.dissolver_enhanced.helpers;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.Registries;
 
 public class ItemHelper {
     public static Item getById(String itemId) {
-        Item item = ForgeRegistries.ITEMS.getValue(identifierById(itemId));
+        Item item = BuiltInRegistries.ITEM.get(identifierById(itemId));
         return item == null ? Items.AIR : item;
     }
 
     public static String getId(Item item) {
-        ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
+        ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
         return id == null ? item.toString() : id.toString();
     }
 
@@ -36,6 +37,6 @@ public class ItemHelper {
         String modId = parts.length > 1 ? parts[0] : "minecraft";
         String itemId = parts.length > 1 ? parts[1] : parts[0];
 
-        return new ResourceLocation(modId, itemId);
+        return ResourceLocation.fromNamespaceAndPath(modId, itemId);
     }
 }

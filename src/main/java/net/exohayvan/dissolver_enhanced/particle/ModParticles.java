@@ -3,16 +3,16 @@ package net.exohayvan.dissolver_enhanced.particle;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.minecraft.core.registries.Registries;
+import net.neoforged.neoforge.registries.DeferredHolder;
 
 public class ModParticles {
     public static final DeferredRegister<ParticleType<?>> PARTICLES =
-            DeferredRegister.create(ForgeRegistries.PARTICLE_TYPES, DissolverEnhanced.MOD_ID);
+            DeferredRegister.create(Registries.PARTICLE_TYPE, DissolverEnhanced.MOD_ID);
 
-    public static final RegistryObject<SimpleParticleType> CRYSTAL = PARTICLES.register(
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> CRYSTAL = PARTICLES.register(
             "crystal_particle",
             () -> new SimpleParticleType(false)
     );

@@ -15,13 +15,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
@@ -33,11 +35,15 @@ import net.minecraft.world.item.crafting.RecipeType;
 
 @Mixin(RecipeManager.class)
 public class RecipeManagerMixin {
+    @Shadow
+    @Final
+    private HolderLookup.Provider registries;
+
     // CUSTOM RECIPE
     @Inject(method = "apply", at = @At("HEAD"))
     public void interceptApply(Map<ResourceLocation, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
         if (RecipeGenerator.DISSOLVER_RECIPE != null) {
-            map.put(new ResourceLocation(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
+            map.put(ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
         }
     }
 
@@ -75,7 +81,7 @@ public class RecipeManagerMixin {
     private void getRecipe(Map.Entry<ResourceLocation, JsonElement> entry) {
         ResourceLocation identifier = entry.getKey(); // JSON RECIPE FILE NAME
         String recipeId = identifier.toString();
-        Recipe<?> recipe = RecipeManager.fromJson(identifier, entry.getValue().getAsJsonObject());
+        Recipe<?> recipe = Recipe.CODEC.parse(registries.createSerializationContext(JsonOps.INSTANCE), entry.getValue().getAsJsonObject()).getOrThrow(JsonParseException::new);
 
         // could filter by crafting only, but nice to have all recipes like smelting & stone cutting for more coverage!
         // if (recipe.getType() != RecipeType.CRAFTING) return;
@@ -86,7 +92,7 @@ public class RecipeManagerMixin {
             return;
         }
         
-        ItemStack resultItem = recipe.getResultItem(RegistryAccess.EMPTY);
+        ItemStack resultItem = recipe.getResultItem(registries);
         String resultId = ItemHelper.getId(resultItem.getItem());
         int resultCount = resultItem.getCount();
 

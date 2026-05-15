@@ -7,11 +7,11 @@ import net.minecraft.network.chat.Component;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.data.PlayerDataClient;
 import net.exohayvan.dissolver_enhanced.helpers.NumberHelpers;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
-@Mod.EventBusSubscriber(modid = DissolverEnhanced.MOD_ID)
+@EventBusSubscriber(modid = DissolverEnhanced.MOD_ID)
 public class EMCOverlay {
     private static final int WHITE_COLOR = 0xFFFFFF;
 
@@ -23,7 +23,7 @@ public class EMCOverlay {
         Minecraft client = Minecraft.getInstance();
 
         if (client == null) return;
-        if (client.options.renderDebug || client.gui.getSpectatorGui().isMenuActive() || client.options.hideGui) return;
+        if (client.gui.getDebugOverlay().showDebugScreen() || client.gui.getSpectatorGui().isMenuActive() || client.options.hideGui) return;
 
         if (ModConfig.EMC_ON_HUD == false) return;
 

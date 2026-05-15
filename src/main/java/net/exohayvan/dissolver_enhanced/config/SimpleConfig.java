@@ -24,7 +24,7 @@ package net.exohayvan.dissolver_enhanced.config;
  * THE SOFTWARE.
  */
 
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

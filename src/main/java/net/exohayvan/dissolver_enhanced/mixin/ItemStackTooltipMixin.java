@@ -16,7 +16,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.fml.ModList;
 
 @Mixin(value = ItemStack.class, priority = 500)
 public class ItemStackTooltipMixin {
