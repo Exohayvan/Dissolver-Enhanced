@@ -2,16 +2,22 @@
   "pack": {
     "pack_format": 48,
     "supported_formats": [34, 99],
+    "min_format": 34,
+    "max_format": 99,
     "description": "Dissolver Enhanced shared resources"
   },
   "overlays": {
     "entries": [
       {
         "formats": [57, 99],
+        "min_format": 57,
+        "max_format": 99,
         "directory": "overlay_1_21_2"
       },
       {
         "formats": [46, 99],
+        "min_format": 46,
+        "max_format": 99,
         "directory": "overlay_1_21_4_assets"
       }
     ]
