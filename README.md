@@ -21,9 +21,11 @@ This repository is split into worktrees/branches by target platform.
 | Folder | Purpose |
 | --- | --- |
 | `Common` | Shared EMC values, reusable machine rules, and cross-loader Java logic. |
-| `Fabric-1.21.1` | Fabric build for Minecraft `1.21.1`. |
-| `Fabric-26.1.2` | Fabric beta build for Minecraft `26.1.2`. |
-| `Forge-1.20.1` | Forge alpha build for Minecraft `1.20.1`. |
+| `Minecraft-Fabric-1.21.1` | Fabric build for Minecraft `1.21.1`. |
+| `Minecraft-Fabric-26.1.2` | Fabric beta build for Minecraft `26.1.2`. |
+| `Minecraft-Forge-1.20.1` | Forge alpha build for Minecraft `1.20.1`. |
+| `Minecraft-NeoForge-1.21.1` | NeoForge build for Minecraft `1.21.1`. |
+| `Minecraft-Quilt-1.21.1` | Quilt build for Minecraft `1.21.1`. |
 
 Common is not a complete mod by itself. Loader projects include it so shared logic can stay consistent across versions.
 
