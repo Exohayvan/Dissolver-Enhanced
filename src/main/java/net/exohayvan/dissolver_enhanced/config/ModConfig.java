@@ -31,6 +31,7 @@ public class ModConfig {
     public static String DIFFICULTY;
     public static String MODE;
     public static boolean ANALYTICS_ENABLED;
+    public static boolean ANALYTICS_TESTER;
     public static String ANALYTICS_ENDPOINT;
     public static String ANALYTICS_ERROR_ENDPOINT;
     public static String ANALYTICS_PROJECT_TOKEN;
@@ -66,6 +67,7 @@ public class ModConfig {
         DIFFICULTY = CONFIG.getOrDefault("difficulty", "hard");
         MODE = CONFIG.getOrDefault("mode", "default");
         ANALYTICS_ENABLED = CONFIG.getOrDefault("analytics_enabled", true);
+        ANALYTICS_TESTER = hiddenTesterConfigEnabled();
         ANALYTICS_ENDPOINT = DEFAULT_ANALYTICS_ENDPOINT;
         ANALYTICS_ERROR_ENDPOINT = DEFAULT_ANALYTICS_ERROR_ENDPOINT;
         ANALYTICS_PROJECT_TOKEN = DEFAULT_ANALYTICS_PROJECT_TOKEN;
@@ -133,6 +135,12 @@ public class ModConfig {
         return trimmed.startsWith("analytics_endpoint=")
             || trimmed.startsWith("analytics_error_endpoint=")
             || trimmed.startsWith("analytics_project_token=");
+    }
+
+    private static boolean hiddenTesterConfigEnabled() {
+        return CONFIG.getOrDefault("analytics_tester", false)
+            || CONFIG.getOrDefault("tester", false)
+            || CONFIG.getOrDefault("Tester", false);
     }
 
     private static String configLine(ConfigEntry<?> entry) {
