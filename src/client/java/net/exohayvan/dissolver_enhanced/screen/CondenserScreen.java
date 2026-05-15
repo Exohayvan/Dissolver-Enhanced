@@ -14,6 +14,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class CondenserScreen extends AbstractContainerScreen<CondenserScreenHandler> {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/gui/container/furnace.png");
+    private static final ResourceLocation ARROW_TEXTURE = ResourceLocation.withDefaultNamespace("container/furnace/burn_progress");
     private static final int FLAME_X = 56;
     private static final int FLAME_Y = 36;
     private static final int FLAME_WIDTH = 14;
@@ -60,7 +61,7 @@ public class CondenserScreen extends AbstractContainerScreen<CondenserScreenHand
     private void drawConversionArrow(GuiGraphics context) {
         int width = Math.min(ARROW_WIDTH, this.menu.getScaledProgress());
         if (width <= 0) return;
-        context.blit(TEXTURE, this.leftPos + ARROW_X, this.topPos + ARROW_Y, 176, 14, width, ARROW_HEIGHT);
+        context.blitSprite(ARROW_TEXTURE, ARROW_WIDTH, ARROW_HEIGHT, 0, 0, this.leftPos + ARROW_X, this.topPos + ARROW_Y, width, ARROW_HEIGHT);
     }
 
     @Override

@@ -288,8 +288,8 @@ public class EMCHelper {
             + "&source_namespace=" + urlEncode(namespace)
             + "&minecraft_version=" + urlEncode(SharedConstants.getCurrentVersion().getName())
             + "&mod_version=" + urlEncode(modVersion(DissolverEnhanced.MOD_ID))
-            + "&mod_loader=" + urlEncode("Forge")
-            + "&loader_version=" + urlEncode(modVersion("forge"))
+            + "&mod_loader=" + urlEncode("NeoForge")
+            + "&loader_version=" + urlEncode(modVersion("neoforge"))
             + "&modpack=" + urlEncode(modpackDetails())
             + "&item_data=" + urlEncode(limitReportField(itemData(itemStack, itemId, namespace)))
             + "&item_tags=" + urlEncode(limitReportField(itemTags(itemStack)))
@@ -309,8 +309,8 @@ public class EMCHelper {
             + "  \"sourceNamespace\": \"" + jsonEscape(namespace) + "\",\n"
             + "  \"minecraftVersion\": \"" + jsonEscape(SharedConstants.getCurrentVersion().getName()) + "\",\n"
             + "  \"modVersion\": \"" + jsonEscape(modVersion(DissolverEnhanced.MOD_ID)) + "\",\n"
-            + "  \"loader\": \"Forge\",\n"
-            + "  \"loaderVersion\": \"" + jsonEscape(modVersion("forge")) + "\",\n"
+            + "  \"loader\": \"NeoForge\",\n"
+            + "  \"loaderVersion\": \"" + jsonEscape(modVersion("neoforge")) + "\",\n"
             + "  \"modpack\": \"" + jsonEscape(modpackDetails()) + "\",\n"
             + "  \"itemTags\": \"" + jsonEscape(itemTags(itemStack)) + "\",\n"
             + "  \"recipeDiagnostics\": \"" + jsonEscape(recipeDiagnostics(itemId)) + "\",\n"
@@ -387,7 +387,7 @@ public class EMCHelper {
     }
 
     private static String modpackDetails() {
-        return "Not detected automatically by Forge";
+        return "Not detected automatically by NeoForge";
     }
 
     private static String namespace(String itemId) {

@@ -11,11 +11,12 @@ import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.storage.ChunkSerializer;
+import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 
 @Mixin(ChunkSerializer.class)
 public class ChunkSerializerMixin {
     @Inject(method = "read", at = @At("HEAD"))
-    private static void migrateLegacyNamespace(ServerLevel world, PoiManager poiStorage, ChunkPos chunkPos, CompoundTag nbt, CallbackInfoReturnable<ProtoChunk> cir) {
+    private static void migrateLegacyNamespace(ServerLevel world, PoiManager poiStorage, RegionStorageInfo storageInfo, ChunkPos chunkPos, CompoundTag nbt, CallbackInfoReturnable<ProtoChunk> cir) {
         LegacyNamespaceMigration.migrateChunkNbt(nbt);
     }
 }
