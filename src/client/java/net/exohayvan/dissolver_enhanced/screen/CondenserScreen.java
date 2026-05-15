@@ -2,12 +2,10 @@ package net.exohayvan.dissolver_enhanced.screen;
 
 import java.math.BigInteger;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
+import net.exohayvan.dissolver_enhanced.helpers.DrawContextCompat;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.render.GameRenderer;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -46,11 +44,7 @@ public class CondenserScreen extends HandledScreen<CondenserScreenHandler> {
 
     @Override
     protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-        RenderSystem.setShaderTexture(0, TEXTURE);
-
-        context.drawTexture(TEXTURE, this.x, this.y, 0, 0, this.backgroundWidth, this.backgroundHeight);
+        DrawContextCompat.drawTexture(context, TEXTURE, this.x, this.y, 0.0F, 0.0F, this.backgroundWidth, this.backgroundHeight, 256, 256);
 
         hideFuelFlame(context);
         drawConversionArrow(context);
@@ -71,7 +65,8 @@ public class CondenserScreen extends HandledScreen<CondenserScreenHandler> {
         int width = Math.min(ARROW_WIDTH, progress);
 
         if (width > 0) {
-            context.drawGuiTexture(
+            DrawContextCompat.drawGuiTexture(
+                    context,
                     ARROW_PROGRESS_TEXTURE,
                     ARROW_WIDTH,
                     ARROW_HEIGHT,

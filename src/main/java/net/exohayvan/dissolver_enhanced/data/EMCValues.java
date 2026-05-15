@@ -515,6 +515,10 @@ public class EMCValues {
         itemsWithMultipleRecipes = 0;
         itemsWithoutRecipeOrEMC = 0;
         itemsWithoutEMC = 0;
+        RECIPES = new HashMap<>();
+        RECIPE_SOURCES = new HashMap<>();
+        RECIPE_JSON = new HashMap<>();
+        STONE_CUTTER_LIST = new ArrayList<>();
         resetRecipeState();
 
         DissolverEnhanced.LOGGER.info("----- DissolverEnhanced initialized Startup - {} recipes -----", recipeCount);

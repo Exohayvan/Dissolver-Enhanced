@@ -27,6 +27,8 @@ import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.entity.DissolverBlockEntity;
 import net.exohayvan.dissolver_enhanced.entity.CrystalEntity;
 import net.exohayvan.dissolver_enhanced.entity.ModEntities;
+import net.exohayvan.dissolver_enhanced.helpers.ActionResultCompat;
+import net.exohayvan.dissolver_enhanced.helpers.MinecraftVersionCompat;
 
 public class DissolverBlock extends BlockWithEntity {
 	public static final MapCodec<DissolverBlock> CODEC = createCodec(DissolverBlock::new);
@@ -64,13 +66,13 @@ public class DissolverBlock extends BlockWithEntity {
         return BlockRenderType.MODEL;
     }
 
-    @Override
-    protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-        if (world.isClient) {
-            return ActionResult.SUCCESS;
-        } else if (!player.getAbilities().allowModifyWorld) {
-            return ActionResult.PASS;
-        } else {
+	    @Override
+	    protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+	        if (world.isClient) {
+	            return ActionResultCompat.success(true);
+	        } else if (!player.getAbilities().allowModifyWorld) {
+	            return ActionResultCompat.pass();
+	        } else {
             ModAnalytics.captureBlockUse("dissolver_block");
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof DissolverBlockEntity) {
@@ -81,12 +83,13 @@ public class DissolverBlock extends BlockWithEntity {
             List<Entity> list = blockEntityList(world, pos);
             if (list.isEmpty()) spawnEntity(world, pos);
 
-            return ActionResult.CONSUME;
-        }
-    }
+	            return ActionResultCompat.consume();
+	        }
+	    }
 
     private void spawnEntity(World world, BlockPos pos) {
         if (!(world instanceof ServerWorld)) return;
+        if (!MinecraftVersionCompat.isLegacyRendererVersion()) return;
 
         CrystalEntity crystalEntity = new CrystalEntity(ModEntities.CRYSTAL_ENTITY, world);
         crystalEntity.setPosition(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);

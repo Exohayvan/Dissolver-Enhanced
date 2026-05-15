@@ -9,6 +9,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
+import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 
 public class LearnItems {
     public static int everything(CommandContext<ServerCommandSource> context, String command) {
@@ -110,6 +111,6 @@ public class LearnItems {
 
     private static String getItemName(CommandContext<ServerCommandSource> context) {
         final Item item = ItemStackArgumentType.getItemStackArgument(context, "item").getItem();
-        return item.getName().getString();
+        return ItemHelper.getName(item);
     }
 }

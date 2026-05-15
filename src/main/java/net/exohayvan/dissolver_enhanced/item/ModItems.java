@@ -5,10 +5,11 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.exohayvan.dissolver_enhanced.helpers.RegistryKeyCompat;
 
 public class ModItems {
-    public static final Item CRYSTAL_FRAME_ITEM = registerItem("crystal_frame_item", new CrystalFrameItem(new Item.Settings()));
-    public static final Item EMC_ORB = registerItem("emc_orb", new EMCOrbItem(new Item.Settings().maxCount(1)));
+    public static final Item CRYSTAL_FRAME_ITEM = registerItem("crystal_frame_item", new CrystalFrameItem(RegistryKeyCompat.itemSettings("crystal_frame_item")));
+    public static final Item EMC_ORB = registerItem("emc_orb", new EMCOrbItem(RegistryKeyCompat.itemSettings("emc_orb").maxCount(1)));
     public static final Item COPPER_EMC_CORE = registerEmcCore("copper_emc_core", 2);
     public static final Item IRON_EMC_CORE = registerEmcCore("iron_emc_core", 8);
     public static final Item GOLD_EMC_CORE = registerEmcCore("gold_emc_core", 16);
@@ -30,7 +31,7 @@ public class ModItems {
     }
 
     private static Item registerEmcCore(String id, int emcPerSecond) {
-        return registerItem(id, new EmcCoreItem(new Item.Settings().maxCount(1), emcPerSecond));
+        return registerItem(id, new EmcCoreItem(RegistryKeyCompat.itemSettings(id).maxCount(1), emcPerSecond));
     }
 
     // INITIALIZE

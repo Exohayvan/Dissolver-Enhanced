@@ -26,7 +26,8 @@ def commonVersion = commonProperties.getProperty("common_version")
 if (commonVersion == null || commonVersion.isBlank()) {
 	throw new GradleException("common_version is missing from ${commonPropertiesFile}.")
 }
-def releaseArchiveVersion = "${project.mod_version}-${project.mod_loader_name}-mc${project.minecraft_version}-c${commonVersion}"
+def releaseMinecraftVersion = project.findProperty("minecraft_release_range") ?: project.minecraft_version
+def releaseArchiveVersion = "${project.mod_version}-${project.mod_loader_name}-mc${releaseMinecraftVersion}-c${commonVersion}"
 
 base {
 	archivesName = project.archives_base_name

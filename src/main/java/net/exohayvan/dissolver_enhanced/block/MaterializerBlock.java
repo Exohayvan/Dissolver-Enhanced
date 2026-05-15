@@ -9,6 +9,7 @@ import com.mojang.serialization.MapCodec;
 import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.entity.MaterializerBlockEntity;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
+import net.exohayvan.dissolver_enhanced.helpers.ActionResultCompat;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -47,7 +48,7 @@ public class MaterializerBlock extends BlockWithEntity {
 
     @Override
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-        if (world.isClient) return ActionResult.SUCCESS;
+        if (world.isClient) return ActionResultCompat.success(true);
 
         ModAnalytics.captureBlockUse("materializer_block");
         BlockEntity blockEntity = world.getBlockEntity(pos);
@@ -55,7 +56,7 @@ public class MaterializerBlock extends BlockWithEntity {
             player.openHandledScreen(materializerBlockEntity);
         }
 
-        return ActionResult.CONSUME;
+        return ActionResultCompat.consume();
     }
 
     @Override

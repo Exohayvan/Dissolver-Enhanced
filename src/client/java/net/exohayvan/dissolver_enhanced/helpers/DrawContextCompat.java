@@ -1,0 +1,132 @@
+package net.exohayvan.dissolver_enhanced.helpers;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.function.Function;
+
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.util.Identifier;
+
+public final class DrawContextCompat {
+    private static final Function<Identifier, RenderLayer> GUI_LAYER = DrawContextCompat::getGuiTexturedLayer;
+
+    private DrawContextCompat() {
+    }
+
+    public static void drawTexture(DrawContext context, Identifier texture, int x, int y, float u, float v, int width, int height, int textureWidth, int textureHeight) {
+        Object[] legacyArgs = new Object[] { texture, x, y, u, v, width, height, textureWidth, textureHeight };
+        if (invoke(context, new Class<?>[] {
+            Identifier.class, int.class, int.class, float.class, float.class, int.class, int.class, int.class, int.class
+        }, legacyArgs)) {
+            return;
+        }
+
+        Object[] layeredArgs = new Object[] { GUI_LAYER, texture, x, y, u, v, width, height, textureWidth, textureHeight };
+        if (invoke(context, new Class<?>[] {
+            Function.class, Identifier.class, int.class, int.class, float.class, float.class, int.class, int.class, int.class, int.class
+        }, layeredArgs)) {
+            return;
+        }
+
+        throw new IllegalStateException("Could not find compatible DrawContext.drawTexture overload.");
+    }
+
+    public static void drawGuiTexture(DrawContext context, Identifier texture, int x, int y, int width, int height) {
+        Object[] legacyArgs = new Object[] { texture, x, y, width, height };
+        if (invoke(context, new Class<?>[] {
+            Identifier.class, int.class, int.class, int.class, int.class
+        }, legacyArgs)) {
+            return;
+        }
+
+        Object[] layeredArgs = new Object[] { GUI_LAYER, texture, x, y, width, height };
+        if (invoke(context, new Class<?>[] {
+            Function.class, Identifier.class, int.class, int.class, int.class, int.class
+        }, layeredArgs)) {
+            return;
+        }
+
+        throw new IllegalStateException("Could not find compatible DrawContext.drawGuiTexture overload.");
+    }
+
+    public static void drawGuiTexture(DrawContext context, Identifier texture, int textureWidth, int textureHeight, int u, int v, int x, int y, int width, int height) {
+        Object[] legacyArgs = new Object[] { texture, textureWidth, textureHeight, u, v, x, y, width, height };
+        if (invoke(context, new Class<?>[] {
+            Identifier.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class
+        }, legacyArgs)) {
+            return;
+        }
+
+        Object[] layeredArgs = new Object[] { GUI_LAYER, texture, textureWidth, textureHeight, u, v, x, y, width, height };
+        if (invoke(context, new Class<?>[] {
+            Function.class, Identifier.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class
+        }, layeredArgs)) {
+            return;
+        }
+
+        throw new IllegalStateException("Could not find compatible DrawContext.drawGuiTexture overload.");
+    }
+
+    private static boolean invoke(DrawContext context, Class<?>[] parameterTypes, Object[] arguments) {
+        for (Method method : DrawContext.class.getDeclaredMethods()) {
+            if (method.getReturnType() != Void.TYPE || !hasParameters(method, parameterTypes)) {
+                continue;
+            }
+
+            try {
+                method.setAccessible(true);
+                method.invoke(context, arguments);
+                return true;
+            } catch (ReflectiveOperationException | RuntimeException exception) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean hasParameters(Method method, Class<?>[] parameterTypes) {
+        Class<?>[] actualTypes = method.getParameterTypes();
+        if (actualTypes.length != parameterTypes.length) {
+            return false;
+        }
+
+        for (int i = 0; i < actualTypes.length; i++) {
+            if (!parameterTypes[i].isAssignableFrom(actualTypes[i]) && !actualTypes[i].isAssignableFrom(parameterTypes[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static RenderLayer getGuiTexturedLayer(Identifier texture) {
+        RenderLayer layer = invokeRenderLayer("method_62277", texture);
+        if (layer != null) {
+            return layer;
+        }
+
+        layer = invokeRenderLayer("getGuiTextured", texture);
+        return layer != null ? layer : RenderLayer.getGui();
+    }
+
+    private static RenderLayer invokeRenderLayer(String methodName, Identifier texture) {
+        for (Method method : RenderLayer.class.getDeclaredMethods()) {
+            if (!method.getName().equals(methodName) || !Modifier.isStatic(method.getModifiers()) ||
+                    method.getReturnType() != RenderLayer.class || method.getParameterCount() != 1 ||
+                    !method.getParameterTypes()[0].isAssignableFrom(Identifier.class)) {
+                continue;
+            }
+
+            try {
+                method.setAccessible(true);
+                return (RenderLayer)method.invoke(null, texture);
+            } catch (ReflectiveOperationException | RuntimeException exception) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+}

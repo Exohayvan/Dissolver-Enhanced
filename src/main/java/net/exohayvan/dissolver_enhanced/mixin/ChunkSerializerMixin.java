@@ -16,7 +16,7 @@ import net.exohayvan.dissolver_enhanced.migration.LegacyNamespaceMigration;
 
 @Mixin(ChunkSerializer.class)
 public class ChunkSerializerMixin {
-    @Inject(method = "deserialize", at = @At("HEAD"))
+    @Inject(method = "deserialize", at = @At("HEAD"), require = 0)
     private static void migrateLegacyNamespace(ServerWorld world, PointOfInterestStorage poiStorage, StorageKey key, ChunkPos chunkPos, NbtCompound nbt, CallbackInfoReturnable<ProtoChunk> cir) {
         LegacyNamespaceMigration.migrateChunkNbt(nbt);
     }

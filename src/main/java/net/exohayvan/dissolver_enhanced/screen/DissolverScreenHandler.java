@@ -118,7 +118,9 @@ public class DissolverScreenHandler extends ScreenHandler {
         List<String> newItems = new ArrayList<>();
         for (String itemId : items) {
             Item item = ItemHelper.getById(itemId);
-            String itemName = item.getName().getString().toLowerCase();
+            if (item == null) continue;
+
+            String itemName = ItemHelper.getName(item).toLowerCase();
             if (itemName.contains(searchValue.toLowerCase())) newItems.add(itemId);
         }
         
@@ -141,6 +143,8 @@ public class DissolverScreenHandler extends ScreenHandler {
         List<Item> ITEMS = new ArrayList<>();
         itemIds.forEach((itemId) -> {
             Item item = ItemHelper.getById(itemId);
+            if (item == null) return;
+
             ITEMS.add(item);
         });
         

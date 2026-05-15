@@ -8,6 +8,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.exohayvan.dissolver_enhanced.helpers.MinecraftVersionCompat;
 
 public class CrystalEntity extends Entity {
 	public int crystalAge;
@@ -42,6 +43,11 @@ public class CrystalEntity extends Entity {
 
 	@Override
 	public void tick() {
+		if (!MinecraftVersionCompat.isLegacyRendererVersion()) {
+			this.discard();
+			return;
+		}
+
 		this.crystalAge++;
 		this.checkBlockCollision();
 		this.tickPortalTeleportation();

@@ -2,12 +2,9 @@ package net.exohayvan.dissolver_enhanced.screen;
 
 import java.util.Objects;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.text.Text;
@@ -16,6 +13,7 @@ import net.minecraft.util.math.MathHelper;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerDataClient;
+import net.exohayvan.dissolver_enhanced.helpers.DrawContextCompat;
 import net.exohayvan.dissolver_enhanced.helpers.NumberHelpers;
 import net.exohayvan.dissolver_enhanced.packets.DataSenderClient;
 
@@ -69,14 +67,11 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
     int SCROLL_AREA_HEIGHT = 108;
     @Override
     protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-        RenderSystem.setShader(GameRenderer::getPositionTexProgram);
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-        RenderSystem.setShaderTexture(0, TEXTURE);
         int x = (width - backgroundWidth) / 2;
         int y = (height - backgroundHeight) / 2;
 
         // custom text
-        context.drawTexture(TEXTURE, x, y, 0, 0, backgroundWidth, backgroundHeight);
+        DrawContextCompat.drawTexture(context, TEXTURE, x, y, 0.0F, 0.0F, backgroundWidth, backgroundHeight, 256, 256);
 
         // search box
         this.searchBox.render(context, mouseX, mouseY, delta);
@@ -87,7 +82,7 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
         int k = j + SCROLL_AREA_HEIGHT;
         boolean scrollActive = PlayerDataClient.LEARNED_ITEMS_SIZE > this.handler.CUSTOM_INV_SIZE;
         Identifier identifier = scrollActive ? SCROLLER_TEXTURE : SCROLLER_DISABLED_TEXTURE;
-        context.drawGuiTexture(identifier, i, j + (int)((float)(k - j - 17) * this.scrollPosition), 12, 15);
+        DrawContextCompat.drawGuiTexture(context, identifier, i, j + (int)((float)(k - j - 17) * this.scrollPosition), 12, 15);
     }
 
     @Override

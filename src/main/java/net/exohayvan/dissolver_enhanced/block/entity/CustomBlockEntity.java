@@ -51,7 +51,7 @@ public abstract class CustomBlockEntity extends BlockEntity implements SidedInve
 
     protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
         super.writeNbt(nbt, registryLookup);
-        this.lock.writeNbt(nbt);
+        writeLockNbt(nbt);
         if (this.customName != null) {
             nbt.putString("CustomName", Serialization.toJsonString(this.customName, registryLookup));
         }
@@ -165,6 +165,17 @@ public abstract class CustomBlockEntity extends BlockEntity implements SidedInve
         nbt.remove("CustomName");
         nbt.remove("Lock");
         nbt.remove("Items");
+    }
+
+    private void writeLockNbt(NbtCompound nbt) {
+        if (this.lock.equals(ContainerLock.EMPTY)) {
+            return;
+        }
+
+        String lockKey = this.lock.key();
+        if (!lockKey.isEmpty()) {
+            nbt.putString("Lock", lockKey);
+        }
     }
 
     // HOPPER/DROPPER INSERT

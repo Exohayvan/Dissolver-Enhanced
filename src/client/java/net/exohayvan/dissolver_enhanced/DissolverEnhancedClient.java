@@ -9,6 +9,7 @@ import net.minecraft.client.render.RenderLayer;
 import net.exohayvan.dissolver_enhanced.analytics.ClientAnalytics;
 import net.exohayvan.dissolver_enhanced.block.ModBlocks;
 import net.exohayvan.dissolver_enhanced.entity.ModEntities;
+import net.exohayvan.dissolver_enhanced.helpers.MinecraftVersionCompat;
 import net.exohayvan.dissolver_enhanced.overlay.EMCOverlay;
 import net.exohayvan.dissolver_enhanced.packets.DataReceiverClient;
 import net.exohayvan.dissolver_enhanced.particle.ModParticles;
@@ -26,7 +27,9 @@ public class DissolverEnhancedClient implements ClientModInitializer {
 		// transparent
 		BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.DISSOLVER_BLOCK, RenderLayer.getTranslucent());
 
-		EntityRendererRegistry.register(ModEntities.CRYSTAL_ENTITY, CrystalEntityRenderer::new);
+		if (MinecraftVersionCompat.isLegacyRendererVersion()) {
+			EntityRendererRegistry.register(ModEntities.CRYSTAL_ENTITY, CrystalEntityRenderer::new);
+		}
 
 		// particle
 		ParticleFactoryRegistry.getInstance().register(ModParticles.CRYSTAL, EndRodParticle.Factory::new);

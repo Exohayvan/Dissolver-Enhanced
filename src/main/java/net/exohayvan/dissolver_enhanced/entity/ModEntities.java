@@ -6,9 +6,13 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.exohayvan.dissolver_enhanced.helpers.RegistryKeyCompat;
 
 public class ModEntities {
-    public static final EntityType<CrystalEntity> CRYSTAL_ENTITY = EntityType.Builder.create(CrystalEntity::new, SpawnGroup.MISC).dimensions(0.5F, 0.5F).build();
+    public static final EntityType<CrystalEntity> CRYSTAL_ENTITY = RegistryKeyCompat.buildEntityType(
+        "crystal_entity",
+        EntityType.Builder.create(CrystalEntity::new, SpawnGroup.MISC).dimensions(0.5F, 0.5F)
+    );
 
     // HELPERS
 
