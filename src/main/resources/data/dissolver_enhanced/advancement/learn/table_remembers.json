@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "The Table Remembers"
+      "translate": "advancements.dissolver_enhanced.learn.table_remembers.title"
     },
     "description": {
-      "text": "Learn 100 items. Memory is just organized hoarding."
+      "translate": "advancements.dissolver_enhanced.learn.table_remembers.description"
     },
     "x": 2,
     "y": 4

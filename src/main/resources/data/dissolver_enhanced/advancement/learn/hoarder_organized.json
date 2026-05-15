@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "Hoarder, But Organized"
+      "translate": "advancements.dissolver_enhanced.learn.hoarder_organized.title"
     },
     "description": {
-      "text": "Learn 500 items. There is probably a system here."
+      "translate": "advancements.dissolver_enhanced.learn.hoarder_organized.description"
     },
     "x": 3,
     "y": 4

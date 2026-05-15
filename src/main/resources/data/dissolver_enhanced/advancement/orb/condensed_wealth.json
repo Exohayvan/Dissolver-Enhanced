@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "Condensed Wealth"
+      "translate": "advancements.dissolver_enhanced.orb.condensed_wealth.title"
     },
     "description": {
-      "text": "Create an EMC Orb worth at least 1,000 EMC. Conveniently spherical."
+      "translate": "advancements.dissolver_enhanced.orb.condensed_wealth.description"
     },
     "x": 3,
     "y": 6

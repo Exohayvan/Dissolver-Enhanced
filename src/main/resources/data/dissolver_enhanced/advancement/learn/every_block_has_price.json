@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "Every Block Has a Price"
+      "translate": "advancements.dissolver_enhanced.learn.every_block_has_price.title"
     },
     "description": {
-      "text": "Learn 1,000 items. The catalog has become the product."
+      "translate": "advancements.dissolver_enhanced.learn.every_block_has_price.description"
     },
     "x": 4,
     "y": 4

@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "Heavy Little Marble"
+      "translate": "advancements.dissolver_enhanced.orb.heavy_little_marble.title"
     },
     "description": {
-      "text": "Create an EMC Orb worth at least 1,000,000 EMC. Please lift with your knees."
+      "translate": "advancements.dissolver_enhanced.orb.heavy_little_marble.description"
     },
     "x": 4,
     "y": 6

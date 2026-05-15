@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "Billionaire in a Box"
+      "translate": "advancements.dissolver_enhanced.balance.one_billion.title"
     },
     "description": {
-      "text": "Hold 1,000,000,000 EMC. Please stop pricing cobblestone futures."
+      "translate": "advancements.dissolver_enhanced.balance.one_billion.description"
     },
     "x": 4,
     "y": 3

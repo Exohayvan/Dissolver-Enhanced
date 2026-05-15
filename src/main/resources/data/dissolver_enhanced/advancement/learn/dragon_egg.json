@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "Dragon Accounting Department"
+      "translate": "advancements.dissolver_enhanced.learn.dragon_egg.title"
     },
     "description": {
-      "text": "Learn the Dragon Egg. The end has been itemized."
+      "translate": "advancements.dissolver_enhanced.learn.dragon_egg.description"
     },
     "x": 4,
     "y": 2

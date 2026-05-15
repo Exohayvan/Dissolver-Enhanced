@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "Round Trip Transaction"
+      "translate": "advancements.dissolver_enhanced.orb.round_trip_transaction.title"
     },
     "description": {
-      "text": "Put an EMC Orb into the Dissolver. The orb has completed its paperwork."
+      "translate": "advancements.dissolver_enhanced.orb.round_trip_transaction.description"
     },
     "x": 3,
     "y": 5

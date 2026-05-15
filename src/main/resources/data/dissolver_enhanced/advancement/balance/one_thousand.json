@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "Pocket Change Alchemy"
+      "translate": "advancements.dissolver_enhanced.balance.one_thousand.title"
     },
     "description": {
-      "text": "Hold 1,000 EMC. The dirt is starting to respect you."
+      "translate": "advancements.dissolver_enhanced.balance.one_thousand.description"
     },
     "x": 2,
     "y": 3

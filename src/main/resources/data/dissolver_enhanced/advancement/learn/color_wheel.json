@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "The Color Wheel Has Value"
+      "translate": "advancements.dissolver_enhanced.learn.color_wheel.title"
     },
     "description": {
-      "text": "Learn every dye color. The spreadsheet is now festive."
+      "translate": "advancements.dissolver_enhanced.learn.color_wheel.description"
     },
     "x": 4,
     "y": -3

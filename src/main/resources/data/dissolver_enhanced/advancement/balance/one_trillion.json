@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "Trillionaire Table Manners"
+      "translate": "advancements.dissolver_enhanced.balance.one_trillion.title"
     },
     "description": {
-      "text": "Hold 1,000,000,000,000 EMC. At this point the universe owes you change."
+      "translate": "advancements.dissolver_enhanced.balance.one_trillion.description"
     },
     "x": 5,
     "y": 3

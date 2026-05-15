@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "Seven Figure Soup"
+      "translate": "advancements.dissolver_enhanced.balance.one_million.title"
     },
     "description": {
-      "text": "Hold 1,000,000 EMC. The economy is now mostly decorative."
+      "translate": "advancements.dissolver_enhanced.balance.one_million.description"
     },
     "x": 3,
     "y": 3

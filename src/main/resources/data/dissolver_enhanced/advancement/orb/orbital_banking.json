@@ -6,10 +6,10 @@
       "count": 1
     },
     "title": {
-      "text": "Orbital Banking"
+      "translate": "advancements.dissolver_enhanced.orb.orbital_banking.title"
     },
     "description": {
-      "text": "Create your first EMC Orb. Banking is round now."
+      "translate": "advancements.dissolver_enhanced.orb.orbital_banking.description"
     },
     "x": 2,
     "y": 5
