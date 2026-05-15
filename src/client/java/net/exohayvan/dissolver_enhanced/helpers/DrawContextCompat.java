@@ -1,5 +1,6 @@
 package net.exohayvan.dissolver_enhanced.helpers;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.function.Function;
@@ -29,6 +30,16 @@ public final class DrawContextCompat {
             return;
         }
 
+        Object pipeline = getGuiTexturedPipeline();
+        if (pipeline != null) {
+            Object[] pipelineArgs = new Object[] { pipeline, texture, x, y, u, v, width, height, textureWidth, textureHeight };
+            if (invoke(context, new Class<?>[] {
+                pipeline.getClass(), Identifier.class, int.class, int.class, float.class, float.class, int.class, int.class, int.class, int.class
+            }, pipelineArgs)) {
+                return;
+            }
+        }
+
         throw new IllegalStateException("Could not find compatible DrawContext.drawTexture overload.");
     }
 
@@ -47,6 +58,16 @@ public final class DrawContextCompat {
             return;
         }
 
+        Object pipeline = getGuiTexturedPipeline();
+        if (pipeline != null) {
+            Object[] pipelineArgs = new Object[] { pipeline, texture, x, y, width, height };
+            if (invoke(context, new Class<?>[] {
+                pipeline.getClass(), Identifier.class, int.class, int.class, int.class, int.class
+            }, pipelineArgs)) {
+                return;
+            }
+        }
+
         throw new IllegalStateException("Could not find compatible DrawContext.drawGuiTexture overload.");
     }
 
@@ -63,6 +84,16 @@ public final class DrawContextCompat {
             Function.class, Identifier.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class
         }, layeredArgs)) {
             return;
+        }
+
+        Object pipeline = getGuiTexturedPipeline();
+        if (pipeline != null) {
+            Object[] pipelineArgs = new Object[] { pipeline, texture, x, y, width, height, u, v, textureWidth, textureHeight };
+            if (invoke(context, new Class<?>[] {
+                pipeline.getClass(), Identifier.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class
+            }, pipelineArgs)) {
+                return;
+            }
         }
 
         throw new IllegalStateException("Could not find compatible DrawContext.drawGuiTexture overload.");
@@ -109,6 +140,25 @@ public final class DrawContextCompat {
 
         layer = invokeRenderLayer("getGuiTextured", texture);
         return layer != null ? layer : RenderLayer.getGui();
+    }
+
+    private static Object getGuiTexturedPipeline() {
+        Object pipeline = getStaticField("net.minecraft.class_10799", "field_56883");
+        if (pipeline != null) {
+            return pipeline;
+        }
+
+        return getStaticField("net.minecraft.client.gl.RenderPipelines", "GUI_TEXTURED");
+    }
+
+    private static Object getStaticField(String className, String fieldName) {
+        try {
+            Class<?> owner = Class.forName(className);
+            Field field = owner.getField(fieldName);
+            return field.get(null);
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            return null;
+        }
     }
 
     private static RenderLayer invokeRenderLayer(String methodName, Identifier texture) {
