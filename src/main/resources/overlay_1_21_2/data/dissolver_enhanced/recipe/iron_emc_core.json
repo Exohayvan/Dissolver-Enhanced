@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IAI",
+    "RCR",
+    "IAI"
+  ],
+  "key": {
+    "A": "minecraft:amethyst_shard",
+    "C": "dissolver_enhanced:copper_emc_core",
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "dissolver_enhanced:iron_emc_core"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "EAE",
+    "RGR",
+    "EAE"
+  ],
+  "key": {
+    "A": "minecraft:amethyst_shard",
+    "E": "minecraft:emerald",
+    "G": "dissolver_enhanced:gold_emc_core",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "dissolver_enhanced:emerald_emc_core"
+  }
+}

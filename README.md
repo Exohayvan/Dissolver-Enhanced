@@ -8,11 +8,8 @@ This fork is still in active development. The current focus is shared EMC value 
 
 ## Versions
 
-| Minecraft | Loader | Status | Notes |
-| --- | --- | --- | --- |
-| `1.21.1` | Fabric | Released, with beta builds available | Main playable build line. New features usually start here before being ported. |
-| `26.1.2` | Fabric | Beta builds | Active compatibility branch for the newer Minecraft/Fabric API stack. Expect UI and mapping fixes while APIs settle. |
-| `1.20.1` | Forge | Alpha builds | Early Forge port. Use for testing only until parity work is finished. |
+Supported Minecraft versions and launchers are tracked on the Wiki:
+https://github.com/Exohayvan/Dissolver-Enhanced/wiki/Supported-Versions-Launchers
 
 ## Project Layout
 
