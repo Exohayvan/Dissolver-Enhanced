@@ -51,7 +51,22 @@ public final class PostHogCaptureClient implements AutoCloseable {
         body.put("properties", eventProperties);
         body.put("timestamp", Instant.now().toString());
 
-        HttpRequest request = HttpRequest.newBuilder(endpoint)
+        return send(endpoint, body);
+    }
+
+    public CompletableFuture<Void> setUserProperties(String endpoint, String distinctId, Map<String, ?> properties) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("api_key", apiKey);
+        body.put("event", "$set");
+        body.put("distinct_id", distinctId);
+        body.put("properties", Map.of("$set", properties));
+        body.put("timestamp", Instant.now().toString());
+
+        return send(URI.create(Objects.requireNonNull(endpoint, "endpoint")), body);
+    }
+
+    private CompletableFuture<Void> send(URI requestEndpoint, Map<String, Object> body) {
+        HttpRequest request = HttpRequest.newBuilder(requestEndpoint)
             .timeout(REQUEST_TIMEOUT)
             .header("Content-Type", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(PostHogJson.toJson(body)))
