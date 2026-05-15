@@ -83,8 +83,8 @@ public class CondenserScreen extends HandledScreen<CondenserScreenHandler> {
     @Override
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
         super.drawForeground(context, mouseX, mouseY);
-        context.drawText(this.textRenderer, "Rate: +" + format(this.handler.getCondensingRatePerSecond()) + " EMC/s", STATUS_X, RATE_Y, STATUS_COLOR, false);
-        context.drawText(this.textRenderer, "Stored: " + format(this.handler.getStoredEmc()), STATUS_X, STORED_Y, STATUS_COLOR, false);
+        DrawContextCompat.drawText(context, this.textRenderer, "Rate: +" + format(this.handler.getCondensingRatePerSecond()) + " EMC/s", STATUS_X, RATE_Y, STATUS_COLOR, false);
+        DrawContextCompat.drawText(context, this.textRenderer, "Stored: " + format(this.handler.getStoredEmc()), STATUS_X, STORED_Y, STATUS_COLOR, false);
     }
 
     private String format(BigInteger value) {

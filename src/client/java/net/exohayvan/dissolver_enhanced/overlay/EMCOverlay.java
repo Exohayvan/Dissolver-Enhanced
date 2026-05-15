@@ -7,6 +7,7 @@ import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.data.PlayerDataClient;
+import net.exohayvan.dissolver_enhanced.helpers.DrawContextCompat;
 import net.exohayvan.dissolver_enhanced.helpers.NumberHelpers;
 
 public class EMCOverlay implements HudRenderCallback {
@@ -27,6 +28,6 @@ public class EMCOverlay implements HudRenderCallback {
 
         String emc = NumberHelpers.format(PlayerDataClient.EMC);
         Text text = Text.translatable("emc.title", emc);
-        drawContext.drawText(client.textRenderer, text, 4, 4, WHITE_COLOR, false);
+        DrawContextCompat.drawText(drawContext, client.textRenderer, text, 4, 4, WHITE_COLOR, false);
     }
 }

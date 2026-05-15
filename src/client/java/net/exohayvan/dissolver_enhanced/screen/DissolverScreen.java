@@ -95,7 +95,7 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
     @Override
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
         // context.drawText(this.textRenderer, this.title, this.titleX, this.titleY, 4210752, false);
-        context.drawText(this.textRenderer, this.playerInventoryTitle, this.playerInventoryTitleX, this.playerInventoryTitleY, 4210752, false);
+        DrawContextCompat.drawText(context, this.textRenderer, this.playerInventoryTitle, this.playerInventoryTitleX, this.playerInventoryTitleY, 4210752, false);
         renderLearnedSummary(context);
 
         renderText(context, 33, 6);
@@ -104,7 +104,7 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
     private void renderLearnedSummary(DrawContext context) {
         String learnedSummary = getLearnedSummary();
         int summaryX = this.backgroundWidth - 19 - this.textRenderer.getWidth(learnedSummary);
-        context.drawText(this.textRenderer, learnedSummary, Math.max(84, summaryX), this.playerInventoryTitleY, 4210752, false);
+        DrawContextCompat.drawText(context, this.textRenderer, learnedSummary, Math.max(84, summaryX), this.playerInventoryTitleY, 4210752, false);
     }
 
     private String getLearnedSummary() {
@@ -118,7 +118,7 @@ public class DissolverScreen extends HandledScreen<DissolverScreenHandler> {
     private void renderText(DrawContext context, int x, int y) {
         // https://learn.microsoft.com/en-us/office/vba/api/word.wdcolor
         String MESSAGE = getMessage();
-        context.drawText(this.textRenderer, MESSAGE, x, y, 16777215, false);
+        DrawContextCompat.drawText(context, this.textRenderer, MESSAGE, x, y, 16777215, false);
     }
 
     private String getMessage() {

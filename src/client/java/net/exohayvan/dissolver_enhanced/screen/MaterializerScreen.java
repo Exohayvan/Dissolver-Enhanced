@@ -96,8 +96,8 @@ public class MaterializerScreen extends HandledScreen<MaterializerScreenHandler>
     @Override
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
         super.drawForeground(context, mouseX, mouseY);
-        context.drawText(this.textRenderer, "Stored: " + format(this.handler.getStoredEmc()) + " / " + format(this.handler.getTargetValue()), STATUS_X, STORED_Y, STATUS_COLOR, false);
-        context.drawText(this.textRenderer, "Rate: +" + format(this.handler.getMaterializingRatePerSecond()) + " EMC/s", STATUS_X, INPUT_Y, STATUS_COLOR, false);
+        DrawContextCompat.drawText(context, this.textRenderer, "Stored: " + format(this.handler.getStoredEmc()) + " / " + format(this.handler.getTargetValue()), STATUS_X, STORED_Y, STATUS_COLOR, false);
+        DrawContextCompat.drawText(context, this.textRenderer, "Rate: +" + format(this.handler.getMaterializingRatePerSecond()) + " EMC/s", STATUS_X, INPUT_Y, STATUS_COLOR, false);
     }
 
     private String format(int value) {

@@ -7,6 +7,8 @@ import java.util.function.Function;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public final class DrawContextCompat {
@@ -97,6 +99,45 @@ public final class DrawContextCompat {
         }
 
         throw new IllegalStateException("Could not find compatible DrawContext.drawGuiTexture overload.");
+    }
+
+    public static void drawText(DrawContext context, TextRenderer textRenderer, Text text, int x, int y, int color, boolean shadow) {
+        if (invokeDrawText(context, new Class<?>[] {
+            TextRenderer.class, Text.class, int.class, int.class, int.class, boolean.class
+        }, new Object[] { textRenderer, text, x, y, color, shadow })) {
+            return;
+        }
+
+        throw new IllegalStateException("Could not find compatible DrawContext.drawText overload.");
+    }
+
+    public static void drawText(DrawContext context, TextRenderer textRenderer, String text, int x, int y, int color, boolean shadow) {
+        if (invokeDrawText(context, new Class<?>[] {
+            TextRenderer.class, String.class, int.class, int.class, int.class, boolean.class
+        }, new Object[] { textRenderer, text, x, y, color, shadow })) {
+            return;
+        }
+
+        throw new IllegalStateException("Could not find compatible DrawContext.drawText overload.");
+    }
+
+    private static boolean invokeDrawText(DrawContext context, Class<?>[] parameterTypes, Object[] arguments) {
+        for (Method method : DrawContext.class.getDeclaredMethods()) {
+            if ((!method.getName().equals("drawText") && !method.getName().equals("method_51439") &&
+                    !method.getName().equals("method_51433")) || !hasParameters(method, parameterTypes)) {
+                continue;
+            }
+
+            try {
+                method.setAccessible(true);
+                method.invoke(context, arguments);
+                return true;
+            } catch (ReflectiveOperationException | RuntimeException exception) {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private static boolean invoke(DrawContext context, Class<?>[] parameterTypes, Object[] arguments) {
