@@ -18,11 +18,11 @@ This repository is split into worktrees/branches by target platform.
 | Folder | Purpose |
 | --- | --- |
 | `Common` | Shared EMC values, reusable machine rules, and cross-loader Java logic. |
-| `Minecraft-Fabric-1.21.1` | Fabric build for Minecraft `1.21.1`. |
-| `Minecraft-Fabric-26.1.2` | Fabric beta build for Minecraft `26.1.2`. |
-| `Minecraft-Forge-1.20.1` | Forge alpha build for Minecraft `1.20.1`. |
-| `Minecraft-NeoForge-1.21.1` | NeoForge build for Minecraft `1.21.1`. |
-| `Minecraft-Quilt-1.21.1` | Quilt build for Minecraft `1.21.1`. |
+| `Minecraft-Fabric-1.21.x` | Fabric build for Minecraft `1.21.x`. |
+| `Minecraft-Fabric-26.1.x` | Fabric beta build for Minecraft `26.1.x`. |
+| `Minecraft-Forge-1.20.x` | Forge alpha build for Minecraft `1.20.x`. |
+| `Minecraft-NeoForge-1.21.x` | NeoForge build for Minecraft `1.21.x`. |
+| `Minecraft-Quilt-1.21.x` | Quilt build for Minecraft `1.21.x`. |
 
 Common is not a complete mod by itself. Loader projects include it so shared logic can stay consistent across versions.
 
@@ -43,7 +43,7 @@ Common is not a complete mod by itself. Loader projects include it so shared log
 
 ## Stability
 
-`1.21.1` is the most stable line. The `26.1.2` branch is beta quality and may need fixes as Minecraft and Fabric internals change. The `1.20.1` Forge branch is alpha quality and may lag behind Fabric features.
+`1.21.x` is the most stable line. The `26.1.x` branch is beta quality and may need fixes as Minecraft and Fabric internals change. The `1.20.x` Forge branch is alpha quality and may lag behind Fabric features.
 
 Modpacks are allowed, but beta and alpha builds should be tested before being added to a pack intended for regular play.
 
