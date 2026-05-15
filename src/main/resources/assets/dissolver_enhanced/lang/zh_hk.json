@@ -22,7 +22,7 @@
     "item_tooltip.dissolver_enhanced.crystal_frame_item": "缺少了一些東西，我無法將其框起來......",
     "item_tooltip.dissolver_enhanced.dissolver_block_item": "溶解和重新組裝！",
     "emc.title": "EMC：§6%s",
-    "emc.empty": "無電磁相容！ §8:(",
+    "emc.empty": "沒有 EMC！§8:(",
     "emc.action.not_enough": "你的 EMC 還不夠！",
     "emc.action.not_enough_short": "§c還不夠！",
     "emc.action.stored_short": "§a已儲存！",

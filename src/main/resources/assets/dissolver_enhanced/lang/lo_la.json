@@ -25,7 +25,7 @@
     "emc.empty": "ບໍ່ມີ EMC! §8:(",
     "emc.action.not_enough": "ທ່ານບໍ່ມີ EMC ພຽງພໍ!",
     "emc.action.not_enough_short": "§c ບໍ່​ພຽງ​ພໍ​!",
-    "emc.action.stored_short": "§a Stored!",
+    "emc.action.stored_short": "§aບັນທຶກແລ້ວ!",
     "emc.action.removed_short": "§c ເອົາ​ອອກ​!",
     "wireless_open.fail": "ບໍ່ພົບບລັອກ Dissolver ໃນລັດສະໝີ %d block!",
     "advancements.dissolver_enhanced.root.title": "ຂອບໃຈສໍາລັບການລະລາຍ",

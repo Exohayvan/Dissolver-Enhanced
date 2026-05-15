@@ -22,7 +22,7 @@
     "item_tooltip.dissolver_enhanced.crystal_frame_item": "Falta alguma coisa, simplesmente não consigo enquadrar...",
     "item_tooltip.dissolver_enhanced.dissolver_block_item": "Dissolvendo e remontando!",
     "emc.title": "EMC: §6%s",
-    "emc.empty": "Sem CEM! §8:(",
+    "emc.empty": "Sem EMC! §8:(",
     "emc.action.not_enough": "Você não tem EMC suficiente!",
     "emc.action.not_enough_short": "§cNão é suficiente!",
     "emc.action.stored_short": "§aArmazenado!",
