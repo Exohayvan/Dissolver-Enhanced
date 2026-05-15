@@ -1,7 +1,8 @@
 package net.exohayvan.dissolver_enhanced;
 
+import java.lang.reflect.Method;
+
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.particle.EndRodParticle;
@@ -25,7 +26,7 @@ public class DissolverEnhancedClient implements ClientModInitializer {
         ClientScreenHandlers.registerScreenHandlers();
 
 		// transparent
-		BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.DISSOLVER_BLOCK, RenderLayer.getTranslucent());
+		registerBlockRenderLayer();
 
 		if (MinecraftVersionCompat.isLegacyRendererVersion()) {
 			EntityRendererRegistry.register(ModEntities.CRYSTAL_ENTITY, CrystalEntityRenderer::new);
@@ -35,5 +36,25 @@ public class DissolverEnhancedClient implements ClientModInitializer {
 		ParticleFactoryRegistry.getInstance().register(ModParticles.CRYSTAL, EndRodParticle.Factory::new);
 
 		EMCOverlay.init();
+	}
+
+	private static void registerBlockRenderLayer() {
+		try {
+			Class<?> mapClass = Class.forName("net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap");
+			Object map = mapClass.getField("INSTANCE").get(null);
+
+			for (Method method : mapClass.getMethods()) {
+				if (!method.getName().equals("putBlock") || method.getParameterCount() != 2) {
+					continue;
+				}
+
+				method.invoke(map, ModBlocks.DISSOLVER_BLOCK, RenderLayer.getTranslucent());
+				return;
+			}
+		} catch (ClassNotFoundException exception) {
+			DissolverEnhanced.LOGGER.debug("Fabric block render layer API is unavailable; skipping dissolver block render layer registration.");
+		} catch (ReflectiveOperationException exception) {
+			DissolverEnhanced.LOGGER.warn("Unable to register dissolver block render layer.", exception);
+		}
 	}
 }
