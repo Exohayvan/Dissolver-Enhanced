@@ -41,6 +41,7 @@ public final class ClientAnalytics {
             properties.put("world_state", "menus");
             properties.put("world_info", "menus");
             properties.put("world_mode", "menu");
+            properties.put("game_mode", "menu");
             properties.put("session_location", "menu");
             properties.put("emc_value", "0");
             properties.put("stored_item_count", 0);
@@ -52,9 +53,17 @@ public final class ClientAnalytics {
         properties.put("world_state", "in_world");
         properties.put("world_info", client.level.dimension().toString());
         properties.put("world_mode", worldMode);
+        properties.put("game_mode", playerGameMode(client));
         properties.put("session_location", worldMode + "_world");
         properties.put("emc_value", PlayerDataClient.EMC.toString());
         properties.put("stored_item_count", PlayerDataClient.LEARNED_ITEMS_SIZE);
         ModAnalytics.captureClientHeartbeat(properties);
+    }
+
+    private static String playerGameMode(Minecraft client) {
+        if (client.player.isSpectator()) {
+            return "spectator";
+        }
+        return client.player.getAbilities().instabuild ? "creative" : "survival";
     }
 }
