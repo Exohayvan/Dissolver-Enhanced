@@ -7,9 +7,9 @@ version = project.mod_version
 group = project.maven_group
 
 def commonDir = [
-	"../Common",
-	"../Dissolver Enhanced (Common)",
-	"Common"
+	"../Common/minecraft",
+	"../Dissolver Enhanced (Common)/minecraft",
+	"Common/minecraft"
 ].collect { file(it) }.find { it.exists() }
 if (commonDir == null) {
 	throw new GradleException("Common worktree not found. Expected one of ../Common, ../Dissolver Enhanced (Common), or ./Common.")
@@ -26,7 +26,8 @@ def commonVersion = commonProperties.getProperty("common_version")
 if (commonVersion == null || commonVersion.isBlank()) {
 	throw new GradleException("common_version is missing from ${commonPropertiesFile}.")
 }
-def releaseArchiveVersion = "${project.mod_version}-${project.mod_loader_name}-mc${project.minecraft_version}-c${commonVersion}"
+def releaseMinecraftVersion = project.findProperty("minecraft_release_range") ?: project.minecraft_version
+def releaseArchiveVersion = "${project.mod_version}-${project.mod_loader_name}-mc${releaseMinecraftVersion}-c${commonVersion}"
 
 base {
 	archivesName = project.archives_base_name
@@ -118,6 +119,7 @@ processResources {
 	from("${commonDir}/src/main/resources") {
 		include 'assets/**'
 		include 'data/**'
+		include 'overlay_*/**'
 		include 'wthit_plugins.json'
 		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	}

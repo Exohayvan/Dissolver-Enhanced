@@ -23,6 +23,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.exohayvan.dissolver_enhanced.helpers.NbtCompat;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CustomBlockEntity extends BlockEntity implements WorldlyContainer, MenuProvider, Nameable {
@@ -39,7 +40,7 @@ public abstract class CustomBlockEntity extends BlockEntity implements WorldlyCo
         super.loadAdditional(nbt, registries);
         this.lock = LockCode.fromTag(nbt);
         if (nbt.contains("CustomName", 8)) {
-            this.customName = Serializer.fromJson(nbt.getString("CustomName"), registries);
+            this.customName = Serializer.fromJson(NbtCompat.getString(nbt, "CustomName"), registries);
         }
 
     }

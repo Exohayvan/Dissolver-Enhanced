@@ -18,6 +18,7 @@ import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
+import net.exohayvan.dissolver_enhanced.helpers.NbtCompat;
 import net.exohayvan.dissolver_enhanced.migration.LegacyNamespaceMigration;
 
 // https://fabricmc.net/wiki/tutorial:persistent_states#player_specific_persistent_state
@@ -35,7 +36,7 @@ public class StateSaverAndLoader extends SavedData {
     }
 
     private static PlayerData getData(CompoundTag playerNbt, PlayerData playerData) {
-        playerData.NAME = playerNbt.getString("NAME");
+        playerData.NAME = NbtCompat.getString(playerNbt, "NAME");
         playerData.EMC = loadEmc(playerNbt);
         playerData.LEARNED_ITEMS = migrateLearnedItemIds(getList(playerNbt, "LEARNED_ITEMS"));
 
@@ -43,11 +44,11 @@ public class StateSaverAndLoader extends SavedData {
     }
 
     private static BigInteger loadEmc(CompoundTag playerNbt) {
-        if (playerNbt.contains("EMC_BIG")) {
-            return EmcNumber.parse(playerNbt.getString("EMC_BIG"));
+        if (NbtCompat.hasKey(playerNbt, "EMC_BIG")) {
+            return EmcNumber.parse(NbtCompat.getString(playerNbt, "EMC_BIG"));
         }
 
-        return EmcNumber.of(playerNbt.getInt("EMC"));
+        return EmcNumber.of(NbtCompat.getInt(playerNbt, "EMC"));
     }
 
     private static List<String> migrateLearnedItemIds(List<String> learnedItems) {
@@ -83,11 +84,11 @@ public class StateSaverAndLoader extends SavedData {
     }
 
     private static List<String> getList(CompoundTag playerNbt, String key) {
-        int listLength = playerNbt.getInt(key + "_SIZE");
+        int listLength = NbtCompat.getInt(playerNbt, key + "_SIZE");
         List<String> list = new ArrayList<>();
 
         for (int i = 0; i < listLength; i++) {
-            list.add(playerNbt.getString(key + ":" + i));
+            list.add(NbtCompat.getString(playerNbt, key + ":" + i));
         }
 
         return list;

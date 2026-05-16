@@ -11,6 +11,7 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
+import net.exohayvan.dissolver_enhanced.helpers.NbtCompat;
 
 public class EMCOrbItem extends Item {
     private static final String EMC_KEY = "dissolver_enhanced.emc";
@@ -37,10 +38,10 @@ public class EMCOrbItem extends Item {
     public static BigInteger getEmcBig(ItemStack stack) {
         CompoundTag nbt = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         if (nbt.contains(EMC_KEY, NBT_STRING_TYPE)) {
-            return EmcNumber.parse(nbt.getString(EMC_KEY));
+            return EmcNumber.parse(NbtCompat.getString(nbt, EMC_KEY));
         }
 
-        return EmcNumber.of(nbt.getInt(EMC_KEY));
+        return EmcNumber.of(NbtCompat.getInt(nbt, EMC_KEY));
     }
 
     public static void setEMC(ItemStack stack, int emc) {

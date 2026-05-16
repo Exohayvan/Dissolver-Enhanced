@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
+import net.exohayvan.dissolver_enhanced.helpers.NbtCompat;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.item.EmcCoreItem;
 import net.exohayvan.dissolver_enhanced.screen.CondenserScreenHandler;
@@ -159,7 +160,7 @@ public class CondenserBlockEntity extends CustomBlockEntity {
         super.loadAdditional(nbt, registries);
         this.stacks = NonNullList.withSize(SIZE, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(nbt, this.stacks, registries);
-        this.progress = nbt.getInt("Progress");
+        this.progress = NbtCompat.getInt(nbt, "Progress");
     }
 
     @Override
