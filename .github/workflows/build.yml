@@ -36,11 +36,20 @@ jobs:
           java-version: 21
           distribution: microsoft
 
-      - name: Build Common
+      - name: Setup .NET 6
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Build Minecraft Common
         working-directory: ${{ env.COMMON_DIR }}/minecraft
         run: |
           chmod +x ./gradlew
           ./gradlew build -x test --no-daemon
+
+      - name: Build Stardew Valley Common
+        working-directory: ${{ env.COMMON_DIR }}
+        run: dotnet build stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj --configuration Release
 
       - name: Upload Common artifacts
         uses: actions/upload-artifact@v4
@@ -65,7 +74,7 @@ jobs:
           branches="$(git ls-remote --heads origin \
             | awk '{print $2}' \
             | sed 's#refs/heads/##' \
-            | grep -E '^minecraft-' \
+            | grep -E '^(minecraft|stardewvalley)-' \
             | jq -R -s -c 'split("\n") | map(select(length > 0))')"
           echo "branches=${branches}" >> "$GITHUB_OUTPUT"
           echo "Discovered branches: ${branches}"
@@ -94,11 +103,13 @@ jobs:
           path: ${{ env.TARGET_DIR }}
 
       - name: Validate Gradle wrappers
+        if: ${{ startsWith(matrix.branch, 'minecraft-') }}
         uses: gradle/actions/wrapper-validation@v4
         with:
           min-wrapper-count: 2
 
       - name: Select Java version
+        if: ${{ startsWith(matrix.branch, 'minecraft-') }}
         id: java
         shell: bash
         run: |
@@ -118,22 +129,46 @@ jobs:
           esac
 
       - name: Setup Java ${{ steps.java.outputs.version }}
+        if: ${{ startsWith(matrix.branch, 'minecraft-') }}
         uses: actions/setup-java@v4
         with:
           java-version: ${{ steps.java.outputs.version }}
           distribution: ${{ steps.java.outputs.distribution }}
 
-      - name: Build ${{ matrix.branch }}
+      - name: Build Minecraft ${{ matrix.branch }}
+        if: ${{ startsWith(matrix.branch, 'minecraft-') }}
         working-directory: ${{ env.TARGET_DIR }}
         run: |
           chmod +x ./gradlew
           ./gradlew build -x test --no-daemon
 
-      - name: Upload ${{ matrix.branch }} artifacts
+      - name: Upload Minecraft ${{ matrix.branch }} artifacts
+        if: ${{ startsWith(matrix.branch, 'minecraft-') }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.branch }}-${{ github.sha }}
           path: ${{ env.TARGET_DIR }}/build/libs/
+
+      - name: Setup .NET 6
+        if: ${{ startsWith(matrix.branch, 'stardewvalley-') }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Build Stardew Valley ${{ matrix.branch }}
+        if: ${{ startsWith(matrix.branch, 'stardewvalley-') }}
+        working-directory: ${{ env.TARGET_DIR }}
+        run: |
+          dotnet build --configuration Release -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj"
+          cd build
+          zip -r "../${{ matrix.branch }}.zip" . -x '*.pdb' '*.deps.json' 'ref/*'
+
+      - name: Upload Stardew Valley ${{ matrix.branch }} artifacts
+        if: ${{ startsWith(matrix.branch, 'stardewvalley-') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.branch }}-${{ github.sha }}
+          path: ${{ env.TARGET_DIR }}/${{ matrix.branch }}.zip
 
   package-all-builds:
     name: Package All Builds
@@ -148,25 +183,32 @@ jobs:
         with:
           path: downloaded-artifacts
 
-      - name: Collect release jars
+      - name: Collect release artifacts
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p release-jars
+          mkdir -p release-artifacts
 
           while IFS= read -r -d '' jar; do
             relative_path="${jar#downloaded-artifacts/}"
-            target_path="release-jars/${relative_path}"
+            target_path="release-artifacts/${relative_path}"
             mkdir -p "$(dirname "${target_path}")"
             cp "${jar}" "${target_path}"
           done < <(find downloaded-artifacts -type f -iname '*.jar' ! -iname '*source*' -print0)
 
-          if ! find release-jars -type f -iname '*.jar' | grep -q .; then
-            echo "No non-source jars were found in downloaded artifacts." >&2
+          while IFS= read -r -d '' zip_file; do
+            relative_path="${zip_file#downloaded-artifacts/}"
+            target_path="release-artifacts/${relative_path}"
+            mkdir -p "$(dirname "${target_path}")"
+            cp "${zip_file}" "${target_path}"
+          done < <(find downloaded-artifacts -type f -iname '*.zip' -print0)
+
+          if ! find release-artifacts -type f \( -iname '*.jar' -o -iname '*.zip' \) | grep -q .; then
+            echo "No release artifacts were found in downloaded artifacts." >&2
             exit 1
           fi
 
-          zip -r "all_builds-${GITHUB_SHA}.zip" release-jars
+          zip -r "all_builds-${GITHUB_SHA}.zip" release-artifacts
 
       - name: Upload all builds zip
         uses: actions/upload-artifact@v4
@@ -192,24 +234,49 @@ jobs:
           path: ${{ env.TARGET_DIR }}
 
       - name: Validate Gradle wrappers
+        if: ${{ startsWith(github.ref_name, 'minecraft-') }}
         uses: gradle/actions/wrapper-validation@v4
         with:
           min-wrapper-count: 2
 
       - name: Setup Java 21
+        if: ${{ startsWith(github.ref_name, 'minecraft-') }}
         uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: microsoft
 
-      - name: Build current branch
+      - name: Build current Minecraft branch
+        if: ${{ startsWith(github.ref_name, 'minecraft-') }}
         working-directory: ${{ env.TARGET_DIR }}
         run: |
           chmod +x ./gradlew
           ./gradlew build -x test --no-daemon
 
-      - name: Upload current branch artifacts
+      - name: Upload current Minecraft branch artifacts
+        if: ${{ startsWith(github.ref_name, 'minecraft-') }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ github.ref_name }}-${{ github.sha }}
           path: ${{ env.TARGET_DIR }}/build/libs/
+
+      - name: Setup .NET 6
+        if: ${{ startsWith(github.ref_name, 'stardewvalley-') }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Build current Stardew Valley branch
+        if: ${{ startsWith(github.ref_name, 'stardewvalley-') }}
+        working-directory: ${{ env.TARGET_DIR }}
+        run: |
+          dotnet build --configuration Release -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj"
+          cd build
+          zip -r "../${{ github.ref_name }}.zip" . -x '*.pdb' '*.deps.json' 'ref/*'
+
+      - name: Upload current Stardew Valley branch artifacts
+        if: ${{ startsWith(github.ref_name, 'stardewvalley-') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.ref_name }}-${{ github.sha }}
+          path: ${{ env.TARGET_DIR }}/${{ github.ref_name }}.zip
