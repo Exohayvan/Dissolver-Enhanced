@@ -8,37 +8,24 @@
     <RootNamespace>DissolverEnhanced.StardewValley.Smapi</RootNamespace>
     <OutputPath>build/</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <GameVersion>1.6.15</GameVersion>
     <LoaderVersion>4.5.2</LoaderVersion>
-    <StardewValleyGamePath Condition="'$(StardewValleyGamePath)' == ''">/Volumes/Steam Drive/SteamLibrary/steamapps/common/Stardew Valley/Contents/MacOS</StardewValleyGamePath>
     <CommonProjectPath Condition="'$(CommonProjectPath)' == ''">../Common/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj</CommonProjectPath>
+    <SmapiReferenceProjectPath Condition="'$(SmapiReferenceProjectPath)' == ''">references/StardewModdingAPI.Stubs/StardewModdingAPI.Stubs.csproj</SmapiReferenceProjectPath>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="$(CommonProjectPath)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Stardew Valley">
-      <HintPath>$(StardewValleyGamePath)/Stardew Valley.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="StardewModdingAPI">
-      <HintPath>$(StardewValleyGamePath)/StardewModdingAPI.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="StardewValley.GameData">
-      <HintPath>$(StardewValleyGamePath)/StardewValley.GameData.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="MonoGame.Framework">
-      <HintPath>$(StardewValleyGamePath)/MonoGame.Framework.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
+    <ProjectReference Include="$(SmapiReferenceProjectPath)" Private="false" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="manifest.json" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Remove="references/**/*.cs" />
   </ItemGroup>
+
+  <Target Name="RemoveCompileOnlyReferences" AfterTargets="Build">
+    <Delete Files="$(OutputPath)StardewModdingAPI.dll;$(OutputPath)StardewModdingAPI.pdb" />
+  </Target>
 </Project>

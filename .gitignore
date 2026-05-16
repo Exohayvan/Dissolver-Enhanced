@@ -43,3 +43,7 @@ replay_*.log
 # dotnet
 
 obj/
+
+# stardew valley packages
+
+/stardewvalley-*.zip
