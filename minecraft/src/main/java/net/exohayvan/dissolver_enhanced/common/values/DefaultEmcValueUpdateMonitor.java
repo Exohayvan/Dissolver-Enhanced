@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 
 public final class DefaultEmcValueUpdateMonitor {
     public static final String UPDATE_MESSAGE = "Dissolver Enhanced had a Default EMC Values update from GitHub. Restart to apply the changes.";
-    public static final URI DEFAULT_VALUES_URI = URI.create("https://raw.githubusercontent.com/Exohayvan/Dissolver-Enhanced/refs/heads/main/emc-values/defaults.yaml");
+    public static final URI DEFAULT_VALUES_URI = URI.create("https://raw.githubusercontent.com/Exohayvan/Dissolver-Enhanced/refs/heads/main/minecraft/emc-values/defaults.yaml");
 
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
     private static final long CHECK_INTERVAL_MINUTES = 5;

@@ -33,8 +33,8 @@ Common is not a complete mod by itself. Loader projects include it so shared log
 - Crystal Frame item for crafting and remote Dissolver access.
 - EMC tooltip support.
 - WTHIT integration for showing EMC and learned state where supported.
-- Shared default EMC values in `Common/emc-values/defaults.yaml`.
-- Shared advancement JSON in `Common/data/dissolver_enhanced/advancement`.
+- Shared Minecraft default EMC values in `Common/minecraft/emc-values/defaults.yaml`.
+- Shared Minecraft advancement JSON in `Common/minecraft/src/main/resources/data/dissolver_enhanced/advancement`.
 - Recipe and item tag based EMC calculation improvements.
 - Condenser WIP machine for converting items into EMC Orbs.
 - EMC Orb item that stores EMC metadata and can feed value back into the Dissolver.
@@ -131,7 +131,7 @@ tags:
 
 ## Advancements
 
-Advancement data lives in Common so Fabric and Forge builds package the same advancement tree. To add one, create a JSON file under `Common/src/main/resources/data/dissolver_enhanced/advancement/`, set its `parent`, and set `display.x` / `display.y` to control the visible order in the advancement tab.
+Advancement data lives in the Minecraft Common area so Fabric and Forge builds package the same advancement tree. To add one, create a JSON file under `Common/minecraft/src/main/resources/data/dissolver_enhanced/advancement/`, set its `parent`, and set `display.x` / `display.y` to control the visible order in the advancement tab.
 
 ## Compatibility Goals
 

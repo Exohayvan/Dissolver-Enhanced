@@ -12,10 +12,20 @@ base {
 
 sourceSets {
     main {
+        java {
+            setSrcDirs(['src/main/java'])
+        }
         resources {
-            srcDir '.'
+            setSrcDirs(['.'])
             include 'emc-values/**'
-            include 'data/dissolver_enhanced/advancement/**'
+        }
+    }
+    test {
+        java {
+            setSrcDirs(['src/test/java'])
+        }
+        resources {
+            setSrcDirs(['src/test/resources'])
         }
     }
 }

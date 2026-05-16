@@ -84,13 +84,4 @@
     "command.feedback.list.user": "Vous disposez actuellement de §6%s§r EMC!",
     "command.feedback.update.give": "%s EMC a été fourni. Nouvelle valeur: §6",
     "command.feedback.update.take": "A pris %s EMC. Nouvelle valeur: §6",
-    "command.feedback.update.set": "Réglez la EMC sur §6%s",
-    "command.feedback.memory.fill": "Tous les articles sont stockés!",
-    "command.feedback.memory.forget": "J'ai oublié tous les objets stockés!",
-    "command.feedback.memory.add": "%s stocké!",
-    "command.feedback.memory.add.fail": "C'est déjà stocké!",
-    "command.feedback.memory.remove": "%s oublié!",
-    "command.feedback.memory.remove.fail": "Déjà oublié!",
-    "command.feedback.player.not_found": "Impossible de trouver un joueur portant le nom '%s'!",
-    "command.feedback.shared_data": "L'EMC privée n'est pas activée!"
-}
+    "command.feedback.update.set": "R�UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU
