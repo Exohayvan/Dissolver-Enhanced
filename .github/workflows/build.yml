@@ -37,7 +37,7 @@ jobs:
           distribution: temurin
 
       - name: Build Common
-        working-directory: ${{ env.COMMON_DIR }}
+        working-directory: ${{ env.COMMON_DIR }}/minecraft
         run: |
           chmod +x ./gradlew
           ./gradlew build -x test --no-daemon
@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: common-${{ github.sha }}
-          path: ${{ env.COMMON_DIR }}/build/libs/
+          path: ${{ env.COMMON_DIR }}/minecraft/build/libs/
 
   discover-version-branches:
     name: Discover Version Branches

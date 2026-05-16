@@ -12,9 +12,9 @@ pluginManagement {
 rootProject.name = 'dissolver-enhanced-fabric-26.1.2'
 
 def commonBuildDir = [
-	"../Common",
-	"../Dissolver Enhanced (Common)",
-	"Common"
+	"../Common/minecraft",
+	"../Dissolver Enhanced (Common)/minecraft",
+	"Common/minecraft"
 ].collect { file(it) }.find { it.exists() }
 
 if (commonBuildDir == null) {
