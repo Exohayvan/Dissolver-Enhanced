@@ -1,0 +1,10 @@
+{
+  "Name": "Dissolver Enhanced",
+  "Author": "Exohayvan",
+  "Version": "0.1.0",
+  "Description": "Dissolver Enhanced for Stardew Valley.",
+  "UniqueID": "Exohayvan.DissolverEnhanced",
+  "EntryDll": "DissolverEnhanced.StardewValley.Smapi.dll",
+  "MinimumApiVersion": "4.5.2",
+  "UpdateKeys": []
+}
