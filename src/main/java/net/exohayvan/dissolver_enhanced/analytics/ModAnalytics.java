@@ -260,6 +260,7 @@ public final class ModAnalytics {
         properties.put("event_side", "server");
         properties.put("world_state", "server");
         properties.put("world_info", "server");
+        properties.put("game_mode", "server");
         properties.put("session_location", "server");
         properties.put("player_count", server.getPlayerCount());
         properties.put("emc_storage_mode", ModConfig.PRIVATE_EMC ? "private_total" : "shared");
@@ -297,12 +298,15 @@ public final class ModAnalytics {
         Map<String, Object> properties = new LinkedHashMap<>();
         String modVersion = modVersion(DissolverEnhanced.MOD_ID);
         String minecraftVersion = modVersion("minecraft");
+        String game = "minecraft";
         String loader = "neoforge";
         properties.put("mod_id", DissolverEnhanced.MOD_ID);
         properties.put("mod_version", modVersion);
+        properties.put("game", game);
         properties.put("minecraft_version", minecraftVersion);
         properties.put("loader", loader);
         properties.put("loader_minecraft", loader + "-" + minecraftVersion);
+        properties.put("game_loadername_gameversion", game + "-" + loader + "-" + minecraftVersion);
         properties.put("loader_version", modVersion("neoforge"));
         properties.put("runtime_side", environmentSide());
         properties.put("analytics_enabled", ModConfig.ANALYTICS_ENABLED);
