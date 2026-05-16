@@ -7,9 +7,9 @@ version = project.mod_version
 group = project.maven_group
 
 def commonDir = [
-	"../Common",
-	"../Dissolver Enhanced (Common)",
-	"Common"
+	"../Common/minecraft",
+	"../Dissolver Enhanced (Common)/minecraft",
+	"Common/minecraft"
 ].collect { file(it) }.find { it.exists() }
 if (commonDir == null) {
 	throw new GradleException("Common worktree not found. Expected one of ../Common, ../Dissolver Enhanced (Common), or ./Common.")
