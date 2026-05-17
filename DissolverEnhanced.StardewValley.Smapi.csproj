@@ -10,23 +10,39 @@
     <OutputPath>build/</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <GameVersion>1.6.15</GameVersion>
     <LoaderVersion>4.5.2</LoaderVersion>
     <CommonProjectPath Condition="'$(CommonProjectPath)' == ''">../Common/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj</CommonProjectPath>
+    <CommonAssetsPath Condition="'$(CommonAssetsPath)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Common/stardewvalley/assets'))</CommonAssetsPath>
+    <StardewValleyGamePath Condition="'$(StardewValleyGamePath)' == ''">/Volumes/Steam Drive/SteamLibrary/steamapps/common/Stardew Valley/Contents/MacOS</StardewValleyGamePath>
+    <UseInstalledStardewReferences Condition="'$(UseInstalledStardewReferences)' == '' and Exists('$(StardewValleyGamePath)/StardewModdingAPI.dll')">true</UseInstalledStardewReferences>
     <SmapiReferenceProjectPath Condition="'$(SmapiReferenceProjectPath)' == ''">references/StardewModdingAPI.Stubs/StardewModdingAPI.Stubs.csproj</SmapiReferenceProjectPath>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="$(CommonProjectPath)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseInstalledStardewReferences)' == 'true'">
+    <Reference Include="StardewModdingAPI" HintPath="$(StardewValleyGamePath)/StardewModdingAPI.dll" Private="false" />
+    <Reference Include="Stardew Valley" HintPath="$(StardewValleyGamePath)/Stardew Valley.dll" Private="false" Aliases="StardewGame" />
+    <Reference Include="MonoGame.Framework" HintPath="$(StardewValleyGamePath)/MonoGame.Framework.dll" Private="false" />
+    <Reference Include="xTile" HintPath="$(StardewValleyGamePath)/xTile.dll" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseInstalledStardewReferences)' != 'true'">
     <ProjectReference Include="$(SmapiReferenceProjectPath)" Private="false" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="manifest.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(CommonAssetsPath)/**/*" Link="assets/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Compile Remove="references/**/*.cs" />
   </ItemGroup>
 
   <Target Name="RemoveCompileOnlyReferences" AfterTargets="Build">
-    <Delete Files="$(OutputPath)StardewModdingAPI.dll;$(OutputPath)StardewModdingAPI.pdb" />
+    <Delete Files="$(OutputPath)StardewModdingAPI.dll;$(OutputPath)StardewModdingAPI.pdb;$(OutputPath)Stardew Valley.dll;$(OutputPath)Stardew Valley.pdb;$(OutputPath)StardewValley.GameData.dll;$(OutputPath)StardewValley.GameData.pdb;$(OutputPath)MonoGame.Framework.dll;$(OutputPath)xTile.dll" />
   </Target>
 </Project>

@@ -1,6 +1,9 @@
+using System.Collections;
+using System.Reflection;
 using DissolverEnhanced.StardewValley.Common;
 using DissolverEnhanced.StardewValley.Common.Analytics;
 using DissolverEnhanced.StardewValley.Common.Configuration;
+using DissolverEnhanced.StardewValley.Common.Content;
 using StardewModdingAPI;
 
 namespace DissolverEnhanced.StardewValley.Smapi;
@@ -8,10 +11,13 @@ namespace DissolverEnhanced.StardewValley.Smapi;
 public sealed class ModEntry : Mod
 {
     private StardewModAnalytics? analytics;
+    private StardewModConfig? config;
+    private object? inputHelper;
+    private bool loggedContentRegistration;
 
     public override void Entry(IModHelper helper)
     {
-        StardewModConfig config = StardewModConfig.Load(helper.DirectoryPath);
+        config = StardewModConfig.Load(helper.DirectoryPath);
         analytics = new StardewModAnalytics(
             config,
             ModVersion(),
@@ -25,6 +31,10 @@ public sealed class ModEntry : Mod
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
         AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+
+        RegisterConsoleCommand(helper);
+        RegisterContentEvents(helper);
+        RegisterInputEvents(helper);
 
         Monitor.Log(
             $"Loaded Dissolver Enhanced for Stardew Valley {GameCompatibility.TargetGameVersion} with SMAPI {GameCompatibility.TargetSmapiVersion}.",
@@ -54,6 +64,563 @@ public sealed class ModEntry : Mod
     {
         string logMessage = exception == null ? message : message + " " + exception;
         Monitor.Log(logMessage, LogLevel.Warn);
+    }
+
+    private void RegisterConsoleCommand(IModHelper helper)
+    {
+        object? consoleCommands = helper.GetType().GetProperty("ConsoleCommands")?.GetValue(helper);
+        if (consoleCommands == null)
+        {
+            Monitor.Log("SMAPI console command helper was not available; de_give_dissolver was not registered.", LogLevel.Warn);
+            return;
+        }
+
+        MethodInfo? add = consoleCommands.GetType().GetMethod("Add");
+        Action<string, string[]> giveCallback = GiveDissolverCommand;
+        add?.Invoke(
+            consoleCommands,
+            new object[]
+            {
+                "de_give_dissolver",
+                "Adds a Dissolver big craftable to your inventory for sprite/UI testing.",
+                giveCallback
+            }
+        );
+
+        Action<string, string[]> uiCallback = OpenDissolverUiCommand;
+        add?.Invoke(
+            consoleCommands,
+            new object[]
+            {
+                "de_open_dissolver_ui",
+                "Opens the temporary Dissolver chest-style UI for testing.",
+                uiCallback
+            }
+        );
+    }
+
+    private void RegisterInputEvents(IModHelper helper)
+    {
+        inputHelper = helper.GetType().GetProperty("Input")?.GetValue(helper);
+        object? events = helper.GetType().GetProperty("Events")?.GetValue(helper);
+        object? inputEvents = events?.GetType().GetProperty("Input")?.GetValue(events);
+        EventInfo? buttonPressed = inputEvents?.GetType().GetEvent("ButtonPressed");
+        if (inputEvents == null || buttonPressed?.EventHandlerType == null)
+        {
+            Monitor.Log("SMAPI input event helper was not available; placed Dissolver clicks will not open the UI.", LogLevel.Warn);
+            return;
+        }
+
+        MethodInfo? handler = GetType().GetMethod(nameof(OnButtonPressed), BindingFlags.Instance | BindingFlags.NonPublic);
+        Delegate callback = Delegate.CreateDelegate(buttonPressed.EventHandlerType, this, handler!);
+        buttonPressed.AddEventHandler(inputEvents, callback);
+    }
+
+    private void RegisterContentEvents(IModHelper helper)
+    {
+        object? events = helper.GetType().GetProperty("Events")?.GetValue(helper);
+        object? contentEvents = events?.GetType().GetProperty("Content")?.GetValue(events);
+        EventInfo? assetRequested = contentEvents?.GetType().GetEvent("AssetRequested");
+        if (contentEvents == null || assetRequested?.EventHandlerType == null)
+        {
+            Monitor.Log("SMAPI content event helper was not available; Dissolver content was not registered.", LogLevel.Warn);
+            return;
+        }
+
+        MethodInfo? handler = GetType().GetMethod(nameof(OnAssetRequested), BindingFlags.Instance | BindingFlags.NonPublic);
+        Delegate callback = Delegate.CreateDelegate(assetRequested.EventHandlerType, this, handler!);
+        assetRequested.AddEventHandler(contentEvents, callback);
+        Monitor.Log($"Registered content handler on {contentEvents.GetType().FullName}.", LogLevel.Trace);
+        InvalidateContentCache(helper, "Data/BigCraftables");
+        InvalidateContentCache(helper, "Data/CraftingRecipes");
+    }
+
+    private void OnAssetRequested(object? sender, object args)
+    {
+        object? name = args.GetType().GetProperty("NameWithoutLocale")?.GetValue(args);
+        string displayName = name?.ToString() ?? "";
+        if (!loggedContentRegistration && (displayName.Contains("BigCraftables", StringComparison.OrdinalIgnoreCase) || displayName.Contains("CraftingRecipes", StringComparison.OrdinalIgnoreCase)))
+        {
+            loggedContentRegistration = true;
+            Monitor.Log($"Dissolver content handler saw asset '{displayName}' ({name?.GetType().FullName}).", LogLevel.Trace);
+        }
+
+        if (AssetNameMatches(name, DissolverContent.BigCraftablesAssetName))
+        {
+            Monitor.Log("Registering Dissolver sprite asset.", LogLevel.Trace);
+            LoadBigCraftablesTexture(args);
+            return;
+        }
+
+        if (AssetNameMatches(name, "Data/BigCraftables"))
+        {
+            Monitor.Log("Registering Dissolver big craftable data.", LogLevel.Trace);
+            EditAsset(args, nameof(EditBigCraftablesAsset));
+            return;
+        }
+
+        if (AssetNameMatches(name, "Data/CraftingRecipes"))
+        {
+            Monitor.Log("Registering Dissolver crafting recipe.", LogLevel.Trace);
+            EditAsset(args, nameof(EditCraftingRecipesAsset));
+        }
+    }
+
+    private static void InvalidateContentCache(IModHelper helper, string assetName)
+    {
+        object? gameContent = helper.GetType().GetProperty("GameContent")?.GetValue(helper);
+        gameContent?.GetType().GetMethod("InvalidateCache", new[] { typeof(string) })
+            ?.Invoke(gameContent, new object[] { assetName });
+    }
+
+    private static bool AssetNameMatches(object? assetName, string expectedName)
+    {
+        if (assetName == null)
+        {
+            return false;
+        }
+
+        bool equivalent = assetName.GetType().GetMethod("IsEquivalentTo", new[] { typeof(string) })
+            ?.Invoke(assetName, new object[] { expectedName }) as bool? ?? false;
+        return equivalent || string.Equals(assetName.ToString(), expectedName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void LoadBigCraftablesTexture(object args)
+    {
+        Type? textureType = Type.GetType("Microsoft.Xna.Framework.Graphics.Texture2D, MonoGame.Framework")
+            ?? Type.GetType("Microsoft.Xna.Framework.Graphics.Texture2D, StardewModdingAPI");
+        MethodInfo? load = args.GetType().GetMethods()
+            .FirstOrDefault(method => method.Name == "LoadFromModFile" && method.IsGenericMethodDefinition);
+        if (textureType == null || load == null)
+        {
+            Monitor.Log("Could not register the Dissolver sprite asset.", LogLevel.Warn);
+            return;
+        }
+
+        Type priorityType = load.GetParameters()[1].ParameterType;
+        object priority = Enum.Parse(priorityType, "Exclusive");
+        load.MakeGenericMethod(textureType).Invoke(args, new[] { "assets/big-craftables.png", priority });
+    }
+
+    private void EditAsset(object args, string editorMethodName)
+    {
+        MethodInfo? edit = args.GetType().GetMethods().FirstOrDefault(method => method.Name == "Edit");
+        if (edit == null)
+        {
+            Monitor.Log($"Could not register Dissolver content edit {editorMethodName}.", LogLevel.Warn);
+            return;
+        }
+
+        ParameterInfo[] parameters = edit.GetParameters();
+        MethodInfo? editor = GetType().GetMethod(editorMethodName, BindingFlags.Instance | BindingFlags.NonPublic);
+        Delegate callback = Delegate.CreateDelegate(parameters[0].ParameterType, this, editor!);
+        object priority = Enum.Parse(parameters[1].ParameterType, "Default");
+        edit.Invoke(args, new[] { callback, priority, null });
+    }
+
+    private void EditBigCraftablesAsset(object asset)
+    {
+        Type? dataType = Type.GetType("StardewValley.GameData.BigCraftables.BigCraftableData, StardewValley.GameData")
+            ?? Type.GetType("StardewValley.GameData.BigCraftables.BigCraftableData, StardewModdingAPI");
+        if (dataType == null)
+        {
+            Monitor.Log("Could not find Stardew's big craftable data type.", LogLevel.Warn);
+            return;
+        }
+
+        IDictionary? data = GetAssetDictionary(asset, typeof(string), dataType);
+        object? craftable = Activator.CreateInstance(dataType);
+        if (data == null || craftable == null)
+        {
+            Monitor.Log("Could not edit Data/BigCraftables for the Dissolver.", LogLevel.Warn);
+            return;
+        }
+
+        SetField(dataType, craftable, "Name", DissolverContent.DissolverDisplayName);
+        SetField(dataType, craftable, "DisplayName", DissolverContent.DissolverDisplayName);
+        SetField(dataType, craftable, "Description", DissolverContent.DissolverDescription);
+        SetField(dataType, craftable, "Price", 2500);
+        SetField(dataType, craftable, "Fragility", 0);
+        SetField(dataType, craftable, "CanBePlacedOutdoors", true);
+        SetField(dataType, craftable, "CanBePlacedIndoors", true);
+        SetField(dataType, craftable, "Texture", DissolverContent.BigCraftablesAssetName);
+        SetField(dataType, craftable, "SpriteIndex", 0);
+        data[DissolverContent.DissolverBigCraftableId] = craftable;
+    }
+
+    private void EditCraftingRecipesAsset(object asset)
+    {
+        IDictionary? data = GetAssetDictionary(asset, typeof(string), typeof(string));
+        if (data == null)
+        {
+            Monitor.Log("Could not edit Data/CraftingRecipes for the Dissolver.", LogLevel.Warn);
+            return;
+        }
+
+        data[DissolverContent.DissolverRecipeName] =
+            DissolverContent.DissolverRecipeForDifficulty(config?.Difficulty ?? "hard");
+    }
+
+    private static IDictionary? GetAssetDictionary(object asset, Type keyType, Type valueType)
+    {
+        MethodInfo? asDictionary = asset.GetType().GetMethods()
+            .FirstOrDefault(method => method.Name == "AsDictionary" && method.IsGenericMethodDefinition);
+        object? dictionaryAsset = asDictionary?.MakeGenericMethod(keyType, valueType).Invoke(asset, Array.Empty<object>());
+        return dictionaryAsset?.GetType().GetProperty("Data")?.GetValue(dictionaryAsset) as IDictionary;
+    }
+
+    private static void SetField(Type type, object instance, string name, object? value)
+    {
+        type.GetField(name)?.SetValue(instance, value);
+    }
+
+    private static bool IsWorldReady()
+    {
+        Type? contextType = Type.GetType("StardewModdingAPI.Context, StardewModdingAPI");
+        return contextType?.GetProperty("IsWorldReady")?.GetValue(null) as bool? ?? false;
+    }
+
+    private static bool ParametersMatch(MethodInfo method, params Type[] parameterTypes)
+    {
+        ParameterInfo[] parameters = method.GetParameters();
+        return parameters.Length == parameterTypes.Length
+            && parameters.Select(parameter => parameter.ParameterType).SequenceEqual(parameterTypes);
+    }
+
+    private void OnButtonPressed(object? sender, object args)
+    {
+        try
+        {
+            if (!IsWorldReady())
+            {
+                return;
+            }
+
+            bool shouldPickUp = IsDissolverPickupButton(args);
+            bool shouldOpen = IsDissolverActionButton(args);
+            if (!shouldPickUp && !shouldOpen)
+            {
+                return;
+            }
+
+            object? cursor = args.GetType().GetProperty("Cursor")?.GetValue(args);
+            object? tile = cursor?.GetType().GetProperty("GrabTile")?.GetValue(cursor);
+            object? location = Type.GetType("StardewValley.Game1, Stardew Valley")
+                ?.GetProperty("currentLocation")
+                ?.GetValue(null);
+            object? placedObject = GetPlacedObjectAt(location, tile);
+            if (!IsDissolverObject(placedObject))
+            {
+                return;
+            }
+
+            SuppressInput(args);
+            if (shouldPickUp)
+            {
+                PickUpDissolver(location, tile);
+                return;
+            }
+
+            OpenDissolverMenu(placedObject);
+        }
+        catch (Exception exception)
+        {
+            Monitor.Log("Failed to open the Dissolver UI from a click. " + exception, LogLevel.Warn);
+        }
+    }
+
+    private static bool IsDissolverActionButton(object args)
+    {
+        string button = args.GetType().GetProperty("Button")?.GetValue(args)?.ToString() ?? "";
+        return button is "MouseRight" or "ControllerA" or "ControllerX" or "E";
+    }
+
+    private static bool IsDissolverPickupButton(object args)
+    {
+        string button = args.GetType().GetProperty("Button")?.GetValue(args)?.ToString() ?? "";
+        return button == "MouseLeft";
+    }
+
+    private object? GetPlacedObjectAt(object? location, object? tile)
+    {
+        if (location == null || tile == null)
+        {
+            return null;
+        }
+
+        object? objects = location.GetType().GetField("objects")?.GetValue(location)
+            ?? location.GetType().GetProperty("objects")?.GetValue(location)
+            ?? location.GetType().GetProperty("Objects")?.GetValue(location);
+        if (objects == null)
+        {
+            return null;
+        }
+
+        MethodInfo? tryGetValue = objects.GetType().GetMethods()
+            .FirstOrDefault(method =>
+            {
+                ParameterInfo[] parameters = method.GetParameters();
+                return method.Name == "TryGetValue"
+                    && parameters.Length == 2
+                    && parameters[0].ParameterType.IsInstanceOfType(tile)
+                    && parameters[1].IsOut;
+            });
+        if (tryGetValue != null)
+        {
+            object?[] parameters = { tile, null };
+            bool found = tryGetValue.Invoke(objects, parameters) as bool? ?? false;
+            return found ? parameters[1] : null;
+        }
+
+        return objects is IDictionary dictionary && dictionary.Contains(tile)
+            ? dictionary[tile]
+            : null;
+    }
+
+    private void PickUpDissolver(object? location, object? tile)
+    {
+        object? objects = GetLocationObjects(location);
+        if (objects == null || tile == null)
+        {
+            Monitor.Log("Could not pick up the Dissolver because the current location object map was unavailable.", LogLevel.Warn);
+            return;
+        }
+
+        Type? itemRegistryType = Type.GetType("StardewValley.ItemRegistry, Stardew Valley");
+        itemRegistryType?.GetMethod("ResetCache", Type.EmptyTypes)?.Invoke(null, Array.Empty<object>());
+        MethodInfo? createItem = itemRegistryType?.GetMethods()
+            .FirstOrDefault(method =>
+                method.Name == "Create"
+                && !method.IsGenericMethod
+                && ParametersMatch(method, typeof(string), typeof(int), typeof(int), typeof(bool))
+            );
+        object? dissolverItem = createItem
+            ?.Invoke(null, new object[] { DissolverContent.DissolverQualifiedItemId, 1, 0, false });
+        if (dissolverItem == null)
+        {
+            Monitor.Log("Could not create the Dissolver item while picking it up.", LogLevel.Warn);
+            return;
+        }
+
+        Type? gameType = Type.GetType("StardewValley.Game1, Stardew Valley");
+        object? player = gameType?.GetProperty("player")?.GetValue(null);
+        MethodInfo? addItem = player?.GetType().GetMethods()
+            .FirstOrDefault(method =>
+                method.Name == "addItemToInventoryBool"
+                && ParametersMatch(method, dissolverItem.GetType().BaseType ?? dissolverItem.GetType(), typeof(bool))
+            )
+            ?? player?.GetType().GetMethods()
+                .FirstOrDefault(method => method.Name == "addItemToInventoryBool" && method.GetParameters().Length == 2);
+        bool added = addItem?.Invoke(player, new[] { dissolverItem, true }) as bool? ?? false;
+        if (!added)
+        {
+            Monitor.Log("Your inventory is full, so the Dissolver was not picked up.", LogLevel.Info);
+            return;
+        }
+
+        RemovePlacedObject(objects, tile);
+        Monitor.Log("Picked up the Dissolver.", LogLevel.Trace);
+    }
+
+    private static object? GetLocationObjects(object? location)
+    {
+        return location?.GetType().GetField("objects")?.GetValue(location)
+            ?? location?.GetType().GetProperty("objects")?.GetValue(location)
+            ?? location?.GetType().GetProperty("Objects")?.GetValue(location);
+    }
+
+    private static void RemovePlacedObject(object objects, object tile)
+    {
+        MethodInfo? remove = objects.GetType().GetMethods()
+            .FirstOrDefault(method =>
+            {
+                ParameterInfo[] parameters = method.GetParameters();
+                return method.Name == "Remove"
+                    && parameters.Length == 1
+                    && parameters[0].ParameterType.IsInstanceOfType(tile);
+            });
+        if (remove != null)
+        {
+            remove.Invoke(objects, new[] { tile });
+            return;
+        }
+
+        if (objects is IDictionary dictionary)
+        {
+            dictionary.Remove(tile);
+        }
+    }
+
+    private static bool IsDissolverObject(object? placedObject)
+    {
+        if (placedObject == null)
+        {
+            return false;
+        }
+
+        foreach (string propertyName in new[] { "QualifiedItemId", "ItemId", "Name" })
+        {
+            string value = placedObject.GetType().GetProperty(propertyName)?.GetValue(placedObject)?.ToString()
+                ?? placedObject.GetType().GetField(propertyName)?.GetValue(placedObject)?.ToString()
+                ?? "";
+            if (string.Equals(value, DissolverContent.DissolverQualifiedItemId, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, DissolverContent.DissolverBigCraftableId, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, DissolverContent.DissolverDisplayName, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void SuppressInput(object args)
+    {
+        object? button = args.GetType().GetProperty("Button")?.GetValue(args);
+        if (button == null)
+        {
+            return;
+        }
+
+        inputHelper?.GetType().GetMethod("Suppress")?.Invoke(inputHelper, new[] { button });
+    }
+
+    private void OpenDissolverUiCommand(string command, string[] args)
+    {
+        if (!IsWorldReady())
+        {
+            Monitor.Log("Load a save before using de_open_dissolver_ui.", LogLevel.Warn);
+            return;
+        }
+
+        OpenDissolverMenu(null);
+    }
+
+    private void OpenDissolverMenu(object? sourceObject)
+    {
+        Type? gameType = Type.GetType("StardewValley.Game1, Stardew Valley");
+        FieldInfo? activeMenuField = gameType?.GetField("activeClickableMenu", BindingFlags.Static | BindingFlags.Public);
+        PropertyInfo? activeMenuProperty = gameType?.GetProperty("activeClickableMenu", BindingFlags.Static | BindingFlags.Public);
+        if (activeMenuField != null)
+        {
+            activeMenuField.SetValue(null, new DissolverMenu());
+        }
+        else
+        {
+            activeMenuProperty?.SetValue(null, new DissolverMenu());
+        }
+
+        Monitor.Log("Opened the Dissolver UI.", LogLevel.Trace);
+    }
+
+    private object? CreateItemGrabMenu(Type menuType, Type itemType, object inventory, object? sourceObject)
+    {
+        Type listContract = typeof(IList<>).MakeGenericType(itemType);
+        ConstructorInfo? simpleConstructor = menuType.GetConstructor(new[] { listContract, typeof(object) });
+        if (simpleConstructor != null)
+        {
+            return simpleConstructor.Invoke(new[] { inventory, sourceObject });
+        }
+
+        foreach (ConstructorInfo constructor in menuType.GetConstructors())
+        {
+            ParameterInfo[] parameters = constructor.GetParameters();
+            if (parameters.Length == 0 || !parameters[0].ParameterType.IsInstanceOfType(inventory))
+            {
+                continue;
+            }
+
+            object?[] values = parameters.Select(parameter => DefaultMenuArgument(parameter, inventory, sourceObject)).ToArray();
+            try
+            {
+                return constructor.Invoke(values);
+            }
+            catch (TargetInvocationException)
+            {
+            }
+            catch (ArgumentException)
+            {
+            }
+        }
+
+        return null;
+    }
+
+    private static object? DefaultMenuArgument(ParameterInfo parameter, object inventory, object? sourceObject)
+    {
+        if (parameter.Position == 0)
+        {
+            return inventory;
+        }
+
+        Type type = parameter.ParameterType;
+        if (type == typeof(string))
+        {
+            return DissolverContent.DissolverDisplayName;
+        }
+
+        if (type == typeof(bool))
+        {
+            return parameter.Name is "showReceivingMenu" or "canBeExitedWithKey" or "playRightClickSound" or "allowRightClick";
+        }
+
+        if (type == typeof(int))
+        {
+            return parameter.HasDefaultValue ? parameter.DefaultValue : 0;
+        }
+
+        if (type == typeof(object))
+        {
+            return sourceObject;
+        }
+
+        return parameter.HasDefaultValue ? parameter.DefaultValue : null;
+    }
+
+    private void GiveDissolverCommand(string command, string[] args)
+    {
+        try
+        {
+            Type? contextType = Type.GetType("StardewModdingAPI.Context, StardewModdingAPI");
+            bool isWorldReady = contextType?.GetProperty("IsWorldReady")?.GetValue(null) as bool? ?? false;
+            if (!isWorldReady)
+            {
+                Monitor.Log("Load a save before using de_give_dissolver.", LogLevel.Warn);
+                return;
+            }
+
+            Type? itemRegistryType = Type.GetType("StardewValley.ItemRegistry, Stardew Valley");
+            itemRegistryType?.GetMethod("ResetCache", Type.EmptyTypes)?.Invoke(null, Array.Empty<object>());
+            MethodInfo? createItem = itemRegistryType?.GetMethods()
+                .FirstOrDefault(method =>
+                    method.Name == "Create"
+                    && !method.IsGenericMethod
+                    && ParametersMatch(method, typeof(string), typeof(int), typeof(int), typeof(bool))
+                );
+            object? dissolver = createItem
+                ?.Invoke(null, new object[] { DissolverContent.DissolverQualifiedItemId, 1, 0, false });
+            if (dissolver == null)
+            {
+                Monitor.Log($"Could not create item {DissolverContent.DissolverQualifiedItemId}. The big craftable content is not registered yet.", LogLevel.Warn);
+                return;
+            }
+
+            Type? gameType = Type.GetType("StardewValley.Game1, Stardew Valley");
+            object? player = gameType?.GetProperty("player")?.GetValue(null);
+            MethodInfo? addItem = player?.GetType().GetMethods()
+                .FirstOrDefault(method =>
+                    method.Name == "addItemToInventoryBool"
+                    && ParametersMatch(method, dissolver.GetType().BaseType ?? dissolver.GetType(), typeof(bool))
+                )
+                ?? player?.GetType().GetMethods()
+                    .FirstOrDefault(method => method.Name == "addItemToInventoryBool" && method.GetParameters().Length == 2);
+            bool added = addItem?.Invoke(player, new[] { dissolver, true }) as bool? ?? false;
+            Monitor.Log(added ? "Added a Dissolver to your inventory." : "Created a Dissolver, but it could not be added to your inventory.", LogLevel.Info);
+        }
+        catch (Exception exception)
+        {
+            Monitor.Log("Failed to add the Dissolver test item. " + exception, LogLevel.Warn);
+        }
     }
 
     private static string ModVersion()
