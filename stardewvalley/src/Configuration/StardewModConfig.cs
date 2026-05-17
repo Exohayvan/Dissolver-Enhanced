@@ -54,7 +54,7 @@ public sealed class StardewModConfig
 
         string configFile = Path.Combine(configDirectory, ConfigFileName);
         EnsureConfigFile(configFile);
-        EnsureDefaultEmcFile(Path.Combine(configDirectory, DefaultEmcFileName));
+        EnsureEmcTemplate(Path.Combine(configDirectory, DefaultEmcFileName));
         EnsureOverrideTemplate(Path.Combine(configDirectory, EmcOverridesFileName));
 
         return new StardewModConfig(configDirectory, ReadProperties(configFile));
@@ -114,8 +114,13 @@ public sealed class StardewModConfig
             || trimmed.StartsWith("analytics_project_token=", StringComparison.Ordinal);
     }
 
-    private static void EnsureDefaultEmcFile(string file)
+    private static void EnsureEmcTemplate(string file)
     {
+        if (File.Exists(file))
+        {
+            return;
+        }
+
         File.WriteAllText(file, "schema: 1\nitems: {}\ntags: {}\n");
     }
 
