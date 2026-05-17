@@ -267,7 +267,9 @@ public final class ModAnalytics {
         properties.put("world_info", "server");
         properties.put("game_mode", "server");
         properties.put("session_location", "server");
-        properties.put("player_count", server.getCurrentPlayerCount());
+        int connectedPlayers = server.getCurrentPlayerCount();
+        properties.put("player_count", connectedPlayers);
+        properties.put("connected_players", connectedPlayers);
         properties.put("emc_storage_mode", ModConfig.PRIVATE_EMC ? "private_total" : "shared");
 
         ServerTotals totals = serverTotals(server);
