@@ -160,15 +160,23 @@ jobs:
         working-directory: ${{ env.TARGET_DIR }}
         run: |
           dotnet build --configuration Release -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj"
-          cd build
-          zip -r "../${{ matrix.branch }}.zip" . -x '*.pdb' '*.deps.json' 'ref/*'
+          common_version="$(grep -m1 '<Version>' "../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
+          mod_version="$(grep -m1 '<Version>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
+          game_version="$(grep -m1 '<GameVersion>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<GameVersion>([^<]+)</GameVersion>.*#\1#')"
+          loader_name="$(echo "${{ matrix.branch }}" | cut -d- -f2)"
+          archive_name="dissolver-enhanced-${mod_version}-${loader_name}-sv${game_version}-c${common_version}"
+          rm -rf package
+          mkdir -p "package/DissolverEnhanced"
+          cp build/*.dll build/manifest.json "package/DissolverEnhanced/"
+          cd package
+          zip -r "../${archive_name}.zip" DissolverEnhanced -x '*.pdb' '*.deps.json' 'ref/*'
 
       - name: Upload Stardew Valley ${{ matrix.branch }} artifacts
         if: ${{ startsWith(matrix.branch, 'stardewvalley-') }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.branch }}-${{ github.sha }}
-          path: ${{ env.TARGET_DIR }}/${{ matrix.branch }}.zip
+          path: ${{ env.TARGET_DIR }}/dissolver-enhanced-*-sv*-c*.zip
 
   package-all-builds:
     name: Package All Builds
@@ -271,12 +279,20 @@ jobs:
         working-directory: ${{ env.TARGET_DIR }}
         run: |
           dotnet build --configuration Release -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj"
-          cd build
-          zip -r "../${{ github.ref_name }}.zip" . -x '*.pdb' '*.deps.json' 'ref/*'
+          common_version="$(grep -m1 '<Version>' "../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
+          mod_version="$(grep -m1 '<Version>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
+          game_version="$(grep -m1 '<GameVersion>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<GameVersion>([^<]+)</GameVersion>.*#\1#')"
+          loader_name="$(echo "${{ github.ref_name }}" | cut -d- -f2)"
+          archive_name="dissolver-enhanced-${mod_version}-${loader_name}-sv${game_version}-c${common_version}"
+          rm -rf package
+          mkdir -p "package/DissolverEnhanced"
+          cp build/*.dll build/manifest.json "package/DissolverEnhanced/"
+          cd package
+          zip -r "../${archive_name}.zip" DissolverEnhanced -x '*.pdb' '*.deps.json' 'ref/*'
 
       - name: Upload current Stardew Valley branch artifacts
         if: ${{ startsWith(github.ref_name, 'stardewvalley-') }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ github.ref_name }}-${{ github.sha }}
-          path: ${{ env.TARGET_DIR }}/${{ github.ref_name }}.zip
+          path: ${{ env.TARGET_DIR }}/dissolver-enhanced-*-sv*-c*.zip

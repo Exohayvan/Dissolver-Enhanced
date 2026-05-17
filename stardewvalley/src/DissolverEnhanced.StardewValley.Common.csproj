@@ -6,5 +6,6 @@
     <LangVersion>10.0</LangVersion>
     <AssemblyName>DissolverEnhanced.StardewValley.Common</AssemblyName>
     <RootNamespace>DissolverEnhanced.StardewValley.Common</RootNamespace>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 </Project>
