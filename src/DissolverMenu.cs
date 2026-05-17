@@ -31,6 +31,7 @@ internal sealed class DissolverMenu : IClickableMenu
     private Item? dissolveItem;
     private Item? learnItem;
     private Item? unlearnItem;
+    private Item? hoveredItem;
     private string hoverText = "";
 
     public DissolverMenu()
@@ -136,18 +137,44 @@ internal sealed class DissolverMenu : IClickableMenu
     public override void performHoverAction(int x, int y)
     {
         hoverText = "";
+        hoveredItem = null;
 
         if (dissolveSlot.containsPoint(x, y))
         {
-            hoverText = "Drop an item here to convert it into stored EMC.";
+            hoveredItem = dissolveItem;
+            hoverText = ItemTooltip(dissolveItem, "Drop an item here to convert it into stored EMC.");
         }
         else if (learnSlot.containsPoint(x, y))
         {
-            hoverText = "Drop an item here to teach the Dissolver.";
+            hoveredItem = learnItem;
+            hoverText = ItemTooltip(learnItem, "Drop an item here to teach the Dissolver.");
         }
         else if (unlearnSlot.containsPoint(x, y))
         {
-            hoverText = "Drop an item here to unlearn it.";
+            hoveredItem = unlearnItem;
+            hoverText = ItemTooltip(unlearnItem, "Drop an item here to unlearn it.");
+        }
+        else
+        {
+            for (int index = 0; index < inventorySlots.Count; index++)
+            {
+                if (!inventorySlots[index].containsPoint(x, y))
+                {
+                    continue;
+                }
+
+                if (IsInventorySlotUnlocked(index))
+                {
+                    hoveredItem = Game1.player.Items[index];
+                    hoverText = ItemTooltip(hoveredItem, "Inventory item.");
+                }
+                else
+                {
+                    hoverText = "Locked backpack slot.";
+                }
+
+                return;
+            }
         }
     }
 
@@ -254,9 +281,12 @@ internal sealed class DissolverMenu : IClickableMenu
     {
         Rectangle panel = new(xPositionOnScreen + width - 504, yPositionOnScreen + 404, 430, 150);
         DrawPanel(b, panel, new Color(255, 244, 214), new Color(143, 99, 56));
+        Item? selected = hoveredItem ?? dissolveItem ?? learnItem ?? unlearnItem;
+        string selectedValue = selected == null ? "-" : EmcValue(selected).ToString();
+        string stackTotal = selected == null ? "-" : StackEmcValue(selected).ToString();
         b.DrawString(Game1.smallFont, "Stored EMC: 0", new Vector2(panel.X + 24, panel.Y + 18), Game1.textColor);
-        b.DrawString(Game1.smallFont, "Selected EMC: -", new Vector2(panel.X + 24, panel.Y + 50), Game1.textColor);
-        b.DrawString(Game1.smallFont, "Stack Total: -", new Vector2(panel.X + 24, panel.Y + 82), Game1.textColor);
+        b.DrawString(Game1.smallFont, $"Selected EMC: {selectedValue}", new Vector2(panel.X + 24, panel.Y + 50), Game1.textColor);
+        b.DrawString(Game1.smallFont, $"Stack Total: {stackTotal}", new Vector2(panel.X + 24, panel.Y + 82), Game1.textColor);
         b.DrawString(Game1.smallFont, "Learned: 0", new Vector2(panel.X + 24, panel.Y + 114), Game1.textColor);
     }
 
@@ -309,6 +339,34 @@ internal sealed class DissolverMenu : IClickableMenu
         }
 
         held.drawInMenu(b, new Vector2(Game1.getOldMouseX() + 8, Game1.getOldMouseY() + 8), 1f);
+    }
+
+    private static string ItemTooltip(Item? item, string emptyText)
+    {
+        if (item == null)
+        {
+            return emptyText;
+        }
+
+        int sellPrice = SellPrice(item);
+        int emcValue = EmcValue(item);
+        int stackTotal = StackEmcValue(item);
+        return $"{item.DisplayName}\nSell Price: {sellPrice}g\nEMC Value: {emcValue}\nStack EMC: {stackTotal}";
+    }
+
+    private static int SellPrice(Item item)
+    {
+        return Math.Max(0, item.sellToStorePrice(-1));
+    }
+
+    private static int EmcValue(Item item)
+    {
+        return Math.Max(1, SellPrice(item));
+    }
+
+    private static int StackEmcValue(Item item)
+    {
+        return EmcValue(item) * Math.Max(1, item.Stack);
     }
 
     private static bool IsInventorySlotUnlocked(int slotIndex)
