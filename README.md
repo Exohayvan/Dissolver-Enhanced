@@ -1,6 +1,7 @@
 # Dissolver Enhanced
 
-![CurseForge Downloads](https://img.shields.io/curseforge/dt/1533227?style=for-the-badge)
+![Modrinth Downloads](https://img.shields.io/modrinth/dt/yEX3Y3na?style=for-the-badge&label=Modrinth%20Downloads)
+![CurseForge Downloads](https://img.shields.io/curseforge/dt/1533227?style=for-the-badge&label=CurseForge%20Downloads)
 
 Dissolver Enhanced is a standalone EMC-style transmutation mod inspired by ProjectE and Equivalent Exchange. Learn items, dissolve extras into EMC, then spend that stored value to recreate items you have already unlocked.
 
