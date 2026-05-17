@@ -9,6 +9,7 @@ public abstract class Mod
 
 public interface IModHelper
 {
+    string DirectoryPath { get; }
 }
 
 public interface IMonitor

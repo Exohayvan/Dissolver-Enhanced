@@ -6,6 +6,7 @@
     <LangVersion>10.0</LangVersion>
     <AssemblyName>DissolverEnhanced.StardewValley.Smapi</AssemblyName>
     <RootNamespace>DissolverEnhanced.StardewValley.Smapi</RootNamespace>
+    <Version>0.1.0</Version>
     <OutputPath>build/</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
