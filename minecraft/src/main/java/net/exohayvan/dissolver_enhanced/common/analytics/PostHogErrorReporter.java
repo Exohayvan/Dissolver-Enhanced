@@ -1,5 +1,7 @@
 package net.exohayvan.dissolver_enhanced.common.analytics;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -71,6 +73,11 @@ public final class PostHogErrorReporter implements AutoCloseable {
         properties.put("distinct_id", distinctId);
         properties.put("$exception_list", List.of(exceptionObject(throwable, handled, inAppPackagePrefix)));
         properties.put("$exception_fingerprint", fingerprint(throwable));
+        properties.put("$exception_message", exceptionMessage(throwable));
+        properties.put("$exception_type", throwable.getClass().getName());
+        properties.put("$exception_stack_trace_raw", rawStackTrace(throwable));
+        properties.put("exception_handled", handled);
+        properties.put("exception_causes", exceptionCauses(throwable));
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("token", token);
@@ -119,7 +126,7 @@ public final class PostHogErrorReporter implements AutoCloseable {
     private static Map<String, Object> exceptionObject(Throwable throwable, boolean handled, String inAppPackagePrefix) {
         Map<String, Object> exception = new LinkedHashMap<>();
         exception.put("type", throwable.getClass().getName());
-        exception.put("value", throwable.getMessage() == null ? throwable.toString() : throwable.getMessage());
+        exception.put("value", exceptionMessage(throwable));
         exception.put("mechanism", mechanism(handled));
         exception.put("stacktrace", stacktrace(throwable, inAppPackagePrefix));
         return exception;
@@ -154,6 +161,29 @@ public final class PostHogErrorReporter implements AutoCloseable {
             frames.add(frame);
         }
         return frames;
+    }
+
+    private static String exceptionMessage(Throwable throwable) {
+        return throwable.getMessage() == null ? throwable.toString() : throwable.getMessage();
+    }
+
+    private static String rawStackTrace(Throwable throwable) {
+        StringWriter writer = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(writer));
+        return writer.toString();
+    }
+
+    private static List<Map<String, Object>> exceptionCauses(Throwable throwable) {
+        List<Map<String, Object>> causes = new ArrayList<>();
+        Throwable current = throwable.getCause();
+        while (current != null) {
+            Map<String, Object> cause = new LinkedHashMap<>();
+            cause.put("type", current.getClass().getName());
+            cause.put("message", exceptionMessage(current));
+            causes.add(cause);
+            current = current.getCause();
+        }
+        return causes;
     }
 
     private static boolean isInAppFrame(StackTraceElement element, String inAppPackagePrefix) {
