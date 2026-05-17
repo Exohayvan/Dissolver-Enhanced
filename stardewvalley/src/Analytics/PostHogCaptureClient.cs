@@ -6,10 +6,12 @@ namespace DissolverEnhanced.StardewValley.Common.Analytics;
 public sealed class PostHogCaptureClient : IDisposable
 {
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan FailureLogCooldown = TimeSpan.FromMinutes(5);
     private readonly HttpClient httpClient;
     private readonly string endpoint;
     private readonly string apiKey;
     private readonly Action<string, Exception?> warningLogger;
+    private DateTimeOffset nextFailureLogAt = DateTimeOffset.MinValue;
 
     public PostHogCaptureClient(string endpoint, string apiKey, Action<string, Exception?> warningLogger)
     {
@@ -68,8 +70,20 @@ public sealed class PostHogCaptureClient : IDisposable
         }
         catch (Exception exception)
         {
-            warningLogger("PostHog capture failed.", exception);
+            LogFailure("PostHog capture failed", exception);
         }
+    }
+
+    private void LogFailure(string message, Exception exception)
+    {
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        if (now < nextFailureLogAt)
+        {
+            return;
+        }
+
+        nextFailureLogAt = now.Add(FailureLogCooldown);
+        warningLogger($"{message}: {exception.GetType().Name}: {exception.Message}", null);
     }
 
     public void Dispose()

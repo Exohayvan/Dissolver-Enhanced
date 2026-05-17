@@ -8,6 +8,7 @@ public sealed class PostHogErrorReporter : IDisposable
 {
     private const string ExceptionEvent = "$exception";
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan FailureLogCooldown = TimeSpan.FromMinutes(5);
     private readonly HttpClient httpClient;
     private readonly string endpoint;
     private readonly string token;
@@ -15,6 +16,7 @@ public sealed class PostHogErrorReporter : IDisposable
     private readonly string inAppPackagePrefix;
     private readonly Func<IReadOnlyDictionary<string, object?>> baseProperties;
     private readonly Action<string, Exception?> warningLogger;
+    private DateTimeOffset nextFailureLogAt = DateTimeOffset.MinValue;
 
     public PostHogErrorReporter(
         string endpoint,
@@ -81,8 +83,20 @@ public sealed class PostHogErrorReporter : IDisposable
         }
         catch (Exception exception)
         {
-            warningLogger("PostHog exception capture failed.", exception);
+            LogFailure("PostHog exception capture failed", exception);
         }
+    }
+
+    private void LogFailure(string message, Exception exception)
+    {
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        if (now < nextFailureLogAt)
+        {
+            return;
+        }
+
+        nextFailureLogAt = now.Add(FailureLogCooldown);
+        warningLogger($"{message}: {exception.GetType().Name}: {exception.Message}", null);
     }
 
     private bool HasInAppFrame(Exception exception)
