@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseInstalledStardewReferences)' != 'true'">
-    <ProjectReference Include="$(SmapiReferenceProjectPath)" Private="false" />
+    <ProjectReference Include="$(SmapiReferenceProjectPath)" Private="false" Aliases="global,StardewGame" />
   </ItemGroup>
 
   <ItemGroup>
