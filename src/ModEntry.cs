@@ -1,4 +1,5 @@
 using System.Collections;
+using System.IO;
 using System.Reflection;
 using DissolverEnhanced.StardewValley.Common;
 using DissolverEnhanced.StardewValley.Common.Analytics;
@@ -12,12 +13,16 @@ public sealed class ModEntry : Mod
 {
     private StardewModAnalytics? analytics;
     private StardewModConfig? config;
+    private object? gameContentHelper;
     private object? inputHelper;
     private bool loggedContentRegistration;
+    private bool dumpedEmcOverridesThisSession;
 
     public override void Entry(IModHelper helper)
     {
         config = StardewModConfig.Load(helper.DirectoryPath);
+        EmcValueRegistry.Reload(config.DefaultEmcValuesFile, config.EmcOverridesFile);
+        gameContentHelper = helper.GetType().GetProperty("GameContent")?.GetValue(helper);
         analytics = new StardewModAnalytics(
             config,
             ModVersion(),
@@ -35,6 +40,7 @@ public sealed class ModEntry : Mod
         RegisterConsoleCommand(helper);
         RegisterContentEvents(helper);
         RegisterInputEvents(helper);
+        RegisterGameLoopEvents(helper);
 
         Monitor.Log(
             $"Loaded Dissolver Enhanced for Stardew Valley {GameCompatibility.TargetGameVersion} with SMAPI {GameCompatibility.TargetSmapiVersion}.",
@@ -114,6 +120,40 @@ public sealed class ModEntry : Mod
         MethodInfo? handler = GetType().GetMethod(nameof(OnButtonPressed), BindingFlags.Instance | BindingFlags.NonPublic);
         Delegate callback = Delegate.CreateDelegate(buttonPressed.EventHandlerType, this, handler!);
         buttonPressed.AddEventHandler(inputEvents, callback);
+    }
+
+    private void RegisterGameLoopEvents(IModHelper helper)
+    {
+        object? events = helper.GetType().GetProperty("Events")?.GetValue(helper);
+        object? gameLoopEvents = events?.GetType().GetProperty("GameLoop")?.GetValue(events);
+        EventInfo? saveLoaded = gameLoopEvents?.GetType().GetEvent("SaveLoaded");
+        EventInfo? saving = gameLoopEvents?.GetType().GetEvent("Saving");
+        EventInfo? saved = gameLoopEvents?.GetType().GetEvent("Saved");
+        if (gameLoopEvents == null || saveLoaded?.EventHandlerType == null)
+        {
+            Monitor.Log("SMAPI game loop events were not available; default EMC value generation will not run.", LogLevel.Warn);
+            return;
+        }
+
+        MethodInfo? saveLoadedHandler = GetType().GetMethod(nameof(OnSaveLoaded), BindingFlags.Instance | BindingFlags.NonPublic);
+        Delegate saveLoadedCallback = Delegate.CreateDelegate(saveLoaded.EventHandlerType, this, saveLoadedHandler!);
+        saveLoaded.AddEventHandler(gameLoopEvents, saveLoadedCallback);
+
+        MethodInfo? savedHandler = GetType().GetMethod(nameof(OnSaved), BindingFlags.Instance | BindingFlags.NonPublic);
+        if (saved?.EventHandlerType != null && savedHandler != null)
+        {
+            Delegate savedCallback = Delegate.CreateDelegate(saved.EventHandlerType, this, savedHandler);
+            saved.AddEventHandler(gameLoopEvents, savedCallback);
+        }
+        else
+        {
+            MethodInfo? savingHandler = GetType().GetMethod(nameof(OnSaving), BindingFlags.Instance | BindingFlags.NonPublic);
+            if (saving?.EventHandlerType != null && savingHandler != null)
+            {
+                Delegate savingCallback = Delegate.CreateDelegate(saving.EventHandlerType, this, savingHandler);
+                saving.AddEventHandler(gameLoopEvents, savingCallback);
+            }
+        }
     }
 
     private void RegisterContentEvents(IModHelper helper)
@@ -261,6 +301,383 @@ public sealed class ModEntry : Mod
             DissolverContent.DissolverRecipeForDifficulty(config?.Difficulty ?? "hard");
     }
 
+    private void OnSaveLoaded(object? sender, object args)
+    {
+        UnlockDissolverRecipeForTesting();
+
+        if (config != null)
+        {
+            string saveKey = CurrentSaveKey();
+            string playerKey = CurrentPlayerKey();
+            DissolverState.Load(config.ConfigDirectory, saveKey, playerKey, config.PrivateEmc);
+            Monitor.Log(
+                $"Loaded Dissolver state for save '{saveKey}' and player '{playerKey}' from {DissolverState.StateFile}. Learned {DissolverState.LearnedCount} items.",
+                LogLevel.Trace
+            );
+        }
+
+        if (dumpedEmcOverridesThisSession)
+        {
+            return;
+        }
+
+        dumpedEmcOverridesThisSession = true;
+        GenerateDefaultEmcValues();
+        if (config != null)
+        {
+            EmcValueRegistry.Reload(config.DefaultEmcValuesFile, config.EmcOverridesFile);
+            Monitor.Log($"Loaded {EmcValueRegistry.ItemCount} Stardew EMC item values from defaults and overrides.", LogLevel.Info);
+        }
+    }
+
+    private void UnlockDissolverRecipeForTesting()
+    {
+        try
+        {
+            Type? gameType = Type.GetType("StardewValley.Game1, Stardew Valley");
+            object? player = gameType?.GetProperty("player")?.GetValue(null);
+            object? recipes = player?.GetType().GetProperty("craftingRecipes")?.GetValue(player)
+                ?? player?.GetType().GetField("craftingRecipes")?.GetValue(player);
+            if (recipes == null)
+            {
+                Monitor.Log("Could not auto-unlock the Dissolver recipe because player crafting recipes were unavailable.", LogLevel.Trace);
+                return;
+            }
+
+            MethodInfo? containsKey = recipes.GetType().GetMethod("ContainsKey", new[] { typeof(string) });
+            bool known = containsKey?.Invoke(recipes, new object[] { DissolverContent.DissolverRecipeName }) as bool? ?? false;
+            if (known)
+            {
+                return;
+            }
+
+            MethodInfo? add = recipes.GetType().GetMethod("Add", new[] { typeof(string), typeof(int) });
+            if (add != null)
+            {
+                add.Invoke(recipes, new object[] { DissolverContent.DissolverRecipeName, 0 });
+                Monitor.Log("Auto-unlocked the Dissolver crafting recipe for testing.", LogLevel.Info);
+            }
+        }
+        catch (Exception exception)
+        {
+            Monitor.Log("Could not auto-unlock the Dissolver crafting recipe. " + exception, LogLevel.Warn);
+        }
+    }
+
+    private void OnSaving(object? sender, object args)
+    {
+        DissolverState.Save();
+    }
+
+    private void OnSaved(object? sender, object args)
+    {
+        DissolverState.Save();
+    }
+
+    private static string CurrentSaveKey()
+    {
+        Type? gameType = Type.GetType("StardewValley.Game1, Stardew Valley");
+        object? saveId = gameType?.GetProperty("uniqueIDForThisGame", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)?.GetValue(null)
+            ?? gameType?.GetField("uniqueIDForThisGame", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)?.GetValue(null);
+        if (saveId != null)
+        {
+            return saveId.ToString() ?? "unknown-save";
+        }
+
+        return CurrentPlayerKey();
+    }
+
+    private static string CurrentPlayerKey()
+    {
+        Type? gameType = Type.GetType("StardewValley.Game1, Stardew Valley");
+        object? player = gameType?.GetProperty("player")?.GetValue(null);
+        object? uniqueId = player?.GetType().GetProperty("UniqueMultiplayerID")?.GetValue(player)
+            ?? player?.GetType().GetField("UniqueMultiplayerID")?.GetValue(player);
+        if (uniqueId != null)
+        {
+            return uniqueId.ToString() ?? "unknown-player";
+        }
+
+        object? name = player?.GetType().GetProperty("Name")?.GetValue(player)
+            ?? player?.GetType().GetField("Name")?.GetValue(player);
+        return name?.ToString() ?? "unknown-player";
+    }
+
+    private void GenerateDefaultEmcValues()
+    {
+        if (config == null)
+        {
+            return;
+        }
+
+        try
+        {
+            SortedDictionary<string, EmcDumpValue> itemValues = new(StringComparer.Ordinal);
+            SortedDictionary<string, SortedSet<string>> tagItems = new(StringComparer.Ordinal);
+
+            foreach (ItemDumpSource source in ItemDumpSources())
+            {
+                DumpItemsFromAsset(source, itemValues, tagItems);
+            }
+
+            using StreamWriter writer = new(config.DefaultEmcValuesFile, append: false);
+            writer.WriteLine("# GENERATED ON SAVE LOAD. Edit emc-overrides.yaml for custom values.");
+            writer.WriteLine("# EMC is currently sell price with a 1 EMC floor for 0g items.");
+            writer.WriteLine("schema: 1");
+            writer.WriteLine("items:");
+            foreach ((string itemId, EmcDumpValue value) in itemValues)
+            {
+                writer.WriteLine($"  {YamlQuote(itemId)}:");
+                writer.WriteLine($"    emc: {value.Emc}");
+                writer.WriteLine($"    source: {YamlQuote(value.Source)}");
+                writer.WriteLine($"    raw_price: {value.RawPrice}");
+            }
+
+            writer.WriteLine("tags:");
+            foreach ((string tag, SortedSet<string> items) in tagItems)
+            {
+                writer.WriteLine($"  {YamlQuote(tag)}:");
+                writer.WriteLine("    emc: 1");
+                writer.WriteLine("    items:");
+                foreach (string itemId in items)
+                {
+                    writer.WriteLine($"      - {YamlQuote(itemId)}");
+                }
+            }
+
+            Monitor.Log($"Wrote default EMC values for {itemValues.Count} Stardew items and {tagItems.Count} tags to {config.DefaultEmcValuesFile}.", LogLevel.Info);
+        }
+        catch (Exception exception)
+        {
+            Monitor.Log("Failed to generate default Stardew EMC values. " + exception, LogLevel.Warn);
+        }
+    }
+
+    private void DumpItemsFromAsset(
+        ItemDumpSource source,
+        IDictionary<string, EmcDumpValue> itemValues,
+        IDictionary<string, SortedSet<string>> tagItems)
+    {
+        IDictionary? data = LoadGameDataDictionary(source.AssetName, source.DataTypeName)
+            ?? LoadGameDataDictionary(source.AssetName, typeof(string));
+        if (data == null)
+        {
+            Monitor.Log($"Could not load {source.AssetName}; skipping temporary EMC values for that source.", LogLevel.Warn);
+            return;
+        }
+
+        Monitor.Log($"Loaded {data.Count} entries from {source.AssetName} for default EMC values.", LogLevel.Trace);
+        foreach (DictionaryEntry entry in data)
+        {
+            string rawId = entry.Key?.ToString() ?? "";
+            if (string.IsNullOrWhiteSpace(rawId))
+            {
+                continue;
+            }
+
+            string qualifiedId = source.QualifiedPrefix + rawId;
+            itemValues[qualifiedId] = TemporaryEmcValue(qualifiedId, entry.Value, source.PreferDataPrice);
+
+            foreach (string tag in ReadContextTags(entry.Value))
+            {
+                if (!tagItems.TryGetValue(tag, out SortedSet<string>? taggedItems))
+                {
+                    taggedItems = new SortedSet<string>(StringComparer.Ordinal);
+                    tagItems[tag] = taggedItems;
+                }
+
+                taggedItems.Add(qualifiedId);
+            }
+        }
+    }
+
+    private IDictionary? LoadGameDataDictionary(string assetName, string dataTypeName)
+    {
+        Type? dataType = ResolveDataType(dataTypeName);
+        return dataType == null ? null : LoadGameDataDictionary(assetName, dataType);
+    }
+
+    private IDictionary? LoadGameDataDictionary(string assetName, Type dataType)
+    {
+        MethodInfo? load = gameContentHelper?.GetType().GetMethods()
+            .FirstOrDefault(method => method.Name == "Load" && method.IsGenericMethodDefinition && method.GetParameters().Length == 1);
+        if (gameContentHelper == null || load == null)
+        {
+            return null;
+        }
+
+        Type dictionaryType = typeof(Dictionary<,>).MakeGenericType(typeof(string), dataType);
+        try
+        {
+            return load.MakeGenericMethod(dictionaryType).Invoke(gameContentHelper, new object[] { assetName }) as IDictionary;
+        }
+        catch (Exception exception)
+        {
+            string reason = ShortLoadFailureReason(exception);
+            Monitor.Log($"Could not load {assetName} as {dictionaryType.Name}; {reason}.", LogLevel.Trace);
+            return null;
+        }
+    }
+
+    private static string ShortLoadFailureReason(Exception exception)
+    {
+        Exception current = exception;
+        while (current.InnerException != null)
+        {
+            current = current.InnerException;
+        }
+
+        return current is FileNotFoundException ? "asset file was not found" : current.Message;
+    }
+
+    private static Type? ResolveDataType(string dataTypeName)
+    {
+        Type? type = Type.GetType(dataTypeName + ", StardewValley.GameData")
+            ?? Type.GetType(dataTypeName + ", Stardew Valley");
+        if (type != null)
+        {
+            return type;
+        }
+
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            type = assembly.GetType(dataTypeName);
+            if (type != null)
+            {
+                return type;
+            }
+        }
+
+        return null;
+    }
+
+    private static EmcDumpValue TemporaryEmcValue(string qualifiedItemId, object? data, bool preferDataPrice)
+    {
+        int dataPrice = ReadPriceFromData(data);
+        if (preferDataPrice && dataPrice > 0)
+        {
+            return new EmcDumpValue(dataPrice, DataSourceName(data), dataPrice);
+        }
+
+        int price = SellPriceFromItemRegistry(qualifiedItemId);
+        if (price > 0)
+        {
+            return new EmcDumpValue(price, "item_registry_sell_price", price);
+        }
+
+        if (dataPrice > 0)
+        {
+            return new EmcDumpValue(dataPrice, DataSourceName(data), dataPrice);
+        }
+
+        return new EmcDumpValue(1, price == 0 ? "zero_sell_price_floor" : "missing_price_floor", price);
+    }
+
+    private static int SellPriceFromItemRegistry(string qualifiedItemId)
+    {
+        try
+        {
+            Type? itemRegistryType = Type.GetType("StardewValley.ItemRegistry, Stardew Valley");
+            MethodInfo? createItem = itemRegistryType?.GetMethods()
+                .FirstOrDefault(method =>
+                    method.Name == "Create"
+                    && !method.IsGenericMethod
+                    && ParametersMatch(method, typeof(string), typeof(int), typeof(int), typeof(bool)));
+            object? item = createItem?.Invoke(null, new object[] { qualifiedItemId, 1, 0, false });
+            MethodInfo? sellPrice = item?.GetType().GetMethod("sellToStorePrice", new[] { typeof(long) });
+            return sellPrice?.Invoke(item, new object[] { -1L }) as int? ?? -1;
+        }
+        catch
+        {
+            return -1;
+        }
+    }
+
+    private static int ReadPriceFromData(object? data)
+    {
+        int memberPrice = ReadIntMember(data, "Price");
+        if (memberPrice > 0)
+        {
+            return memberPrice;
+        }
+
+        return data is string rawData ? ReadPriceFromLegacyData(rawData) : memberPrice;
+    }
+
+    private static int ReadIntMember(object? instance, string name)
+    {
+        if (instance == null)
+        {
+            return 0;
+        }
+
+        object? value = instance.GetType().GetProperty(name)?.GetValue(instance)
+            ?? instance.GetType().GetField(name)?.GetValue(instance);
+        return value is int intValue ? intValue : 0;
+    }
+
+    private static int ReadPriceFromLegacyData(string rawData)
+    {
+        string[] fields = rawData.Split('/');
+        foreach (int index in new[] { 1, 2, 4, 5 })
+        {
+            if (index < fields.Length && int.TryParse(fields[index], out int price) && price > 0)
+            {
+                return price;
+            }
+        }
+
+        return 0;
+    }
+
+    private static string DataSourceName(object? data)
+    {
+        return data is string ? "legacy_string_price" : "data_price";
+    }
+
+    private static IEnumerable<string> ReadContextTags(object? instance)
+    {
+        if (instance == null)
+        {
+            yield break;
+        }
+
+        object? tags = instance.GetType().GetProperty("ContextTags")?.GetValue(instance)
+            ?? instance.GetType().GetField("ContextTags")?.GetValue(instance);
+        if (tags is not IEnumerable enumerable || tags is string)
+        {
+            yield break;
+        }
+
+        foreach (object? tag in enumerable)
+        {
+            string value = tag?.ToString() ?? "";
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                yield return value;
+            }
+        }
+    }
+
+    private static IReadOnlyList<ItemDumpSource> ItemDumpSources()
+    {
+        return new[]
+        {
+            new ItemDumpSource("Data/Objects", "StardewValley.GameData.Objects.ObjectData", "(O)"),
+            new ItemDumpSource("Data/BigCraftables", "StardewValley.GameData.BigCraftables.BigCraftableData", "(BC)"),
+            new ItemDumpSource("Data/Boots", "StardewValley.GameData.Boots.BootsData", "(B)"),
+            new ItemDumpSource("Data/Hats", "StardewValley.GameData.Hats.HatData", "(H)"),
+            new ItemDumpSource("Data/Weapons", "StardewValley.GameData.Weapons.WeaponData", "(W)"),
+            new ItemDumpSource("Data/Furniture", "StardewValley.GameData.Furniture.FurnitureData", "(F)", PreferDataPrice: true),
+            new ItemDumpSource("Data/ClothingInformation", "StardewValley.GameData.ClothingData", "(S)")
+        };
+    }
+
+    private static string YamlQuote(string value)
+    {
+        return "'" + value.Replace("'", "''") + "'";
+    }
+
     private static IDictionary? GetAssetDictionary(object asset, Type keyType, Type valueType)
     {
         MethodInfo? asDictionary = asset.GetType().GetMethods()
@@ -296,9 +713,8 @@ public sealed class ModEntry : Mod
                 return;
             }
 
-            bool shouldPickUp = IsDissolverPickupButton(args);
             bool shouldOpen = IsDissolverActionButton(args);
-            if (!shouldPickUp && !shouldOpen)
+            if (!shouldOpen)
             {
                 return;
             }
@@ -315,12 +731,6 @@ public sealed class ModEntry : Mod
             }
 
             SuppressInput(args);
-            if (shouldPickUp)
-            {
-                PickUpDissolver(location, tile);
-                return;
-            }
-
             OpenDissolverMenu(placedObject);
         }
         catch (Exception exception)
@@ -333,12 +743,6 @@ public sealed class ModEntry : Mod
     {
         string button = args.GetType().GetProperty("Button")?.GetValue(args)?.ToString() ?? "";
         return button is "MouseRight" or "ControllerA" or "ControllerX" or "E";
-    }
-
-    private static bool IsDissolverPickupButton(object args)
-    {
-        string button = args.GetType().GetProperty("Button")?.GetValue(args)?.ToString() ?? "";
-        return button == "MouseLeft";
     }
 
     private object? GetPlacedObjectAt(object? location, object? tile)
@@ -503,11 +907,16 @@ public sealed class ModEntry : Mod
         PropertyInfo? activeMenuProperty = gameType?.GetProperty("activeClickableMenu", BindingFlags.Static | BindingFlags.Public);
         if (activeMenuField != null)
         {
-            activeMenuField.SetValue(null, new DissolverMenu());
+            activeMenuField.SetValue(null, new DissolverMenu(analytics));
         }
         else
         {
-            activeMenuProperty?.SetValue(null, new DissolverMenu());
+            activeMenuProperty?.SetValue(null, new DissolverMenu(analytics));
+        }
+
+        if (sourceObject != null)
+        {
+            analytics?.CaptureBlockUse("dissolver_block");
         }
 
         Monitor.Log("Opened the Dissolver UI.", LogLevel.Trace);
@@ -627,4 +1036,7 @@ public sealed class ModEntry : Mod
     {
         return typeof(ModEntry).Assembly.GetName().Version?.ToString() ?? "unknown";
     }
+
+    private sealed record ItemDumpSource(string AssetName, string DataTypeName, string QualifiedPrefix, bool PreferDataPrice = false);
+    private sealed record EmcDumpValue(int Emc, string Source, int RawPrice);
 }

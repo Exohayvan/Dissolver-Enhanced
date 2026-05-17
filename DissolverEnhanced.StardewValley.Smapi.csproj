@@ -28,12 +28,12 @@
   <ItemGroup Condition="'$(UseInstalledStardewReferences)' == 'true'">
     <Reference Include="StardewModdingAPI" HintPath="$(StardewValleyGamePath)/StardewModdingAPI.dll" Private="false" />
     <Reference Include="Stardew Valley" HintPath="$(StardewValleyGamePath)/Stardew Valley.dll" Private="false" Aliases="StardewGame" />
-    <Reference Include="MonoGame.Framework" HintPath="$(StardewValleyGamePath)/MonoGame.Framework.dll" Private="false" />
+    <Reference Include="MonoGame.Framework" HintPath="$(StardewValleyGamePath)/MonoGame.Framework.dll" Private="false" Aliases="MonoGame" />
     <Reference Include="xTile" HintPath="$(StardewValleyGamePath)/xTile.dll" Private="false" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseInstalledStardewReferences)' != 'true'">
-    <ProjectReference Include="$(SmapiReferenceProjectPath)" Private="false" Aliases="global,StardewGame" />
+    <ProjectReference Include="$(SmapiReferenceProjectPath)" Private="false" Aliases="global,StardewGame,MonoGame" />
   </ItemGroup>
 
   <ItemGroup>

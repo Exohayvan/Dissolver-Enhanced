@@ -216,6 +216,10 @@ namespace StardewValley.Menus
         {
         }
 
+        public virtual void leftClickHeld(int x, int y)
+        {
+        }
+
         public virtual void receiveRightClick(int x, int y, bool playSound = true)
         {
         }
