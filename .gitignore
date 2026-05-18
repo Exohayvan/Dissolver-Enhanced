@@ -43,3 +43,5 @@ replay_*.log
 # dotnet
 
 obj/
+
+scripts/__pycache__/*
