@@ -176,10 +176,14 @@ def curseforge_versions(meta, token):
 def curseforge_version_ids(meta, token):
     ids = list(meta.get("curseforge_game_version_ids", []))
     ids.extend(meta.get("curseforge_dependency_ids", []))
+    ids.extend(meta.get("curseforge_java_version_ids", []))
+    ids.extend(meta.get("curseforge_environment_version_ids", []))
 
     game_version_names = list(meta.get("curseforge_game_versions", []))
     dependency_names = list(meta.get("curseforge_dependency_slugs", []))
-    if not game_version_names and not dependency_names:
+    java_version_names = list(meta.get("curseforge_java_versions", []))
+    environment_names = list(meta.get("curseforge_environment_versions", []))
+    if not game_version_names and not dependency_names and not java_version_names and not environment_names:
         return sorted(set(int(item) for item in ids))
 
     versions = curseforge_versions(meta, token)
@@ -199,6 +203,8 @@ def curseforge_version_ids(meta, token):
 
     game_type_ids = {int(item) for item in meta.get("curseforge_game_version_type_ids", [])}
     dependency_type_ids = {int(item) for item in meta.get("curseforge_dependency_type_ids", [])}
+    java_type_ids = {int(item) for item in meta.get("curseforge_java_version_type_ids", [])}
+    environment_type_ids = {int(item) for item in meta.get("curseforge_environment_version_type_ids", [])}
     missing = []
     for version_name in game_version_names:
         version_id = matching_id(version_name, game_type_ids)
@@ -212,6 +218,18 @@ def curseforge_version_ids(meta, token):
             missing.append(str(version_name))
         else:
             ids.append(version_id)
+    for version_name in java_version_names:
+        version_id = matching_id(version_name, java_type_ids)
+        if version_id is None:
+            missing.append(str(version_name))
+        else:
+            ids.append(version_id)
+    for version_name in environment_names:
+        version_id = matching_id(version_name, environment_type_ids)
+        if version_id is None:
+            missing.append(str(version_name))
+        else:
+            ids.append(version_id)
     if missing:
         raise RuntimeError(f"CurseForge game versions/loaders were not found for {meta['target_id']}: {', '.join(missing)}")
 
@@ -219,7 +237,12 @@ def curseforge_version_ids(meta, token):
 
 
 def curseforge_preview_ids(meta, token):
-    explicit_ids = meta.get("curseforge_game_version_ids", []) + meta.get("curseforge_dependency_ids", [])
+    explicit_ids = (
+        meta.get("curseforge_game_version_ids", [])
+        + meta.get("curseforge_dependency_ids", [])
+        + meta.get("curseforge_java_version_ids", [])
+        + meta.get("curseforge_environment_version_ids", [])
+    )
     if token == "dry-run-token":
         return explicit_ids, False
     return curseforge_version_ids(meta, token), True
@@ -258,6 +281,8 @@ def publish_curseforge(meta, token, release_type, manual_release, dry_run):
         if not resolved:
             preview["unresolvedGameVersionNames"] = meta.get("curseforge_game_versions", [])
             preview["loaderDependencySlugs"] = meta.get("curseforge_dependency_slugs", [])
+            preview["javaVersionNames"] = meta.get("curseforge_java_versions", [])
+            preview["environmentNames"] = meta.get("curseforge_environment_versions", [])
         print(json.dumps(preview, indent=2))
         return
     request_json("POST", url, headers=headers, body=body)
