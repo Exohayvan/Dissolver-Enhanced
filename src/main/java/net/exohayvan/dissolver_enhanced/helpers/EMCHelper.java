@@ -270,8 +270,12 @@ public class EMCHelper {
 
         DissolverEnhanced.LOGGER.warn("Missing EMC value for item '{}' ({}) from namespace '{}'. Report link: {}", itemName, itemId, namespace, reportUrl);
 
-        Component message = Component.literal("Dissolver could not determine an EMC value for " + itemName + " (" + itemId + "). ")
-            .append(Component.literal("Open report")
+        String messageText = ModConfig.ANALYTICS_ENABLED
+            ? "No EMC value found, " + itemId + " logged and reported as missing. You can also open a GitHub issue to speed up adding an item value. "
+            : "No EMC value found, analytics is currently off, so this missing item was not reported automatically. Please turn analytics on to help us find and correct issues, or open a GitHub issue to report the missing item. ";
+
+        Component message = Component.literal(messageText)
+            .append(Component.literal("Open GitHub issue")
                 .withStyle(style -> style
                     .withColor(ChatFormatting.AQUA)
                     .withUnderlined(true)
