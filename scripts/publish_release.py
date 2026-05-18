@@ -251,6 +251,16 @@ def load_metadata(root):
             sibling = path.parent / item["file_name"]
             if sibling.exists():
                 item["file_path"] = str(sibling)
+        modrinth_file_path = Path(item.get("modrinth_file_path") or item["file_path"])
+        if not modrinth_file_path.exists():
+            sibling = path.parent / item.get("modrinth_file_name", "")
+            if sibling.exists():
+                item["modrinth_file_path"] = str(sibling)
+        curseforge_file_path = Path(item.get("curseforge_file_path") or item["file_path"])
+        if not curseforge_file_path.exists():
+            sibling = path.parent / item.get("curseforge_file_name", "")
+            if sibling.exists():
+                item["curseforge_file_path"] = str(sibling)
         metadata.append(item)
     if not metadata:
         raise FileNotFoundError(f"No release-metadata.json files found under {root}")
