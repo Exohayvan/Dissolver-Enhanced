@@ -684,6 +684,17 @@ public class EMCValues {
         String resultId = parts[0];
         int resultCount = Integer.parseInt(parts[1]);
         BigInteger extraEMC = EmcNumber.parse(parts[2]); // cooking
+        if (resultCount <= 0) {
+            recipesNotUnderstood++;
+            COMPLETED.add(id);
+            DissolverEnhanced.LOGGER.debug(
+                "Skipping EMC recipe {} because it outputs {}x {}.",
+                getRecipeSource(id),
+                resultCount,
+                resultId
+            );
+            return;
+        }
 
         List<String> ingredients = recipe.getValue();
         BigInteger totalInputEMC = combineEMC(ingredients);
