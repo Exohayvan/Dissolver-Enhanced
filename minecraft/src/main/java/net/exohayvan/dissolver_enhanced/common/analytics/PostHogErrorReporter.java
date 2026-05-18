@@ -73,10 +73,16 @@ public final class PostHogErrorReporter implements AutoCloseable {
         properties.put("distinct_id", distinctId);
         properties.put("$exception_list", List.of(exceptionObject(throwable, handled, inAppPackagePrefix)));
         properties.put("$exception_fingerprint", fingerprint(throwable));
+        properties.put("$exception_level", "error");
         properties.put("$exception_message", exceptionMessage(throwable));
         properties.put("$exception_type", throwable.getClass().getName());
         properties.put("$exception_stack_trace_raw", rawStackTrace(throwable));
         properties.put("exception_handled", handled);
+        properties.put("exception_message", exceptionMessage(throwable));
+        properties.put("exception_type", throwable.getClass().getName());
+        properties.put("exception_top_frame", topFrame(throwable));
+        properties.put("exception_in_app_top_frame", inAppTopFrame(throwable, inAppPackagePrefix));
+        properties.put("exception_stack_trace", rawStackTrace(throwable));
         properties.put("exception_causes", exceptionCauses(throwable));
 
         Map<String, Object> body = new LinkedHashMap<>();
@@ -135,6 +141,7 @@ public final class PostHogErrorReporter implements AutoCloseable {
     private static Map<String, Object> mechanism(boolean handled) {
         Map<String, Object> mechanism = new LinkedHashMap<>();
         mechanism.put("handled", handled);
+        mechanism.put("type", handled ? "generic" : "on_error");
         mechanism.put("synthetic", false);
         return mechanism;
     }
@@ -173,6 +180,25 @@ public final class PostHogErrorReporter implements AutoCloseable {
         return writer.toString();
     }
 
+    private static String topFrame(Throwable throwable) {
+        StackTraceElement[] stackTrace = throwable.getStackTrace();
+        return stackTrace.length == 0 ? "unknown" : stackTrace[0].toString();
+    }
+
+    private static String inAppTopFrame(Throwable throwable, String inAppPackagePrefix) {
+        Throwable current = throwable;
+        while (current != null) {
+            for (StackTraceElement element : current.getStackTrace()) {
+                if (isInAppFrame(element, inAppPackagePrefix)) {
+                    return element.toString();
+                }
+            }
+            current = current.getCause();
+        }
+
+        return "unknown";
+    }
+
     private static List<Map<String, Object>> exceptionCauses(Throwable throwable) {
         List<Map<String, Object>> causes = new ArrayList<>();
         Throwable current = throwable.getCause();
@@ -191,9 +217,7 @@ public final class PostHogErrorReporter implements AutoCloseable {
     }
 
     private static String fingerprint(Throwable throwable) {
-        StackTraceElement[] stackTrace = throwable.getStackTrace();
-        String topFrame = stackTrace.length == 0 ? "unknown" : stackTrace[0].toString();
-        String rawFingerprint = throwable.getClass().getName() + ":" + topFrame;
+        String rawFingerprint = throwable.getClass().getName() + ":" + topFrame(throwable);
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return HexFormat.of().formatHex(digest.digest(rawFingerprint.getBytes(StandardCharsets.UTF_8)));

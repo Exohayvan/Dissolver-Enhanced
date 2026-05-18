@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace DissolverEnhanced.StardewValley.Common.Analytics;
 
@@ -51,10 +53,16 @@ public sealed class PostHogErrorReporter : IDisposable
             ["distinct_id"] = distinctId,
             ["$exception_list"] = new[] { ExceptionObject(exception, handled) },
             ["$exception_fingerprint"] = Fingerprint(exception),
+            ["$exception_level"] = "error",
             ["$exception_message"] = ExceptionMessage(exception),
             ["$exception_type"] = exception.GetType().FullName,
             ["$exception_stack_trace_raw"] = exception.ToString(),
             ["exception_handled"] = handled,
+            ["exception_message"] = ExceptionMessage(exception),
+            ["exception_type"] = exception.GetType().FullName,
+            ["exception_top_frame"] = TopFrame(exception),
+            ["exception_in_app_top_frame"] = InAppTopFrame(exception),
+            ["exception_stack_trace"] = exception.ToString(),
             ["exception_causes"] = ExceptionCauses(exception)
         };
 
@@ -124,12 +132,12 @@ public sealed class PostHogErrorReporter : IDisposable
             ["mechanism"] = new Dictionary<string, object?>
             {
                 ["handled"] = handled,
+                ["type"] = handled ? "generic" : "on_error",
                 ["synthetic"] = false
             },
             ["stacktrace"] = new Dictionary<string, object?>
             {
-                ["type"] = "raw",
-                ["frames"] = Array.Empty<object>()
+                ["frames"] = Frames(exception)
             }
         };
     }
@@ -154,6 +162,66 @@ public sealed class PostHogErrorReporter : IDisposable
         }
 
         return causes;
+    }
+
+    private List<Dictionary<string, object?>> Frames(Exception exception)
+    {
+        List<Dictionary<string, object?>> frames = new();
+        foreach (StackFrame frame in new StackTrace(exception, true).GetFrames() ?? Array.Empty<StackFrame>())
+        {
+            MethodBase? method = frame.GetMethod();
+            Type? declaringType = method?.DeclaringType;
+            string module = declaringType?.FullName ?? "unknown";
+
+            frames.Add(new Dictionary<string, object?>
+            {
+                ["platform"] = "custom",
+                ["lang"] = "csharp",
+                ["function"] = method?.Name ?? "unknown",
+                ["filename"] = frame.GetFileName(),
+                ["lineno"] = frame.GetFileLineNumber(),
+                ["module"] = module,
+                ["resolved"] = true,
+                ["in_app"] = module.StartsWith(inAppPackagePrefix, StringComparison.Ordinal)
+            });
+        }
+
+        return frames;
+    }
+
+    private static string TopFrame(Exception exception)
+    {
+        StackFrame? frame = (new StackTrace(exception, true).GetFrames() ?? Array.Empty<StackFrame>()).FirstOrDefault();
+        return FrameName(frame);
+    }
+
+    private string InAppTopFrame(Exception exception)
+    {
+        foreach (StackFrame frame in new StackTrace(exception, true).GetFrames() ?? Array.Empty<StackFrame>())
+        {
+            MethodBase? method = frame.GetMethod();
+            string module = method?.DeclaringType?.FullName ?? "";
+            if (module.StartsWith(inAppPackagePrefix, StringComparison.Ordinal))
+            {
+                return FrameName(frame);
+            }
+        }
+
+        return "unknown";
+    }
+
+    private static string FrameName(StackFrame? frame)
+    {
+        if (frame == null)
+        {
+            return "unknown";
+        }
+
+        MethodBase? method = frame.GetMethod();
+        string module = method?.DeclaringType?.FullName ?? "unknown";
+        string function = method?.Name ?? "unknown";
+        int line = frame.GetFileLineNumber();
+        return line > 0 ? $"{module}.{function}:{line}" : $"{module}.{function}";
     }
 
     private static string Fingerprint(Exception exception)
