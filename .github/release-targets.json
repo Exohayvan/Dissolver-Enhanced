@@ -115,10 +115,7 @@
         "1.6.15"
       ],
       "curseforge_project_id": 1545566,
-      "curseforge_base_url": "https://stardewvalley.curseforge.com",
-      "curseforge_dependency_slugs": [
-        "smapi"
-      ]
+      "curseforge_base_url": "https://stardewvalley.curseforge.com"
     }
   ]
 }
