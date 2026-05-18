@@ -3,10 +3,6 @@ name: release
 on:
   workflow_dispatch:
     inputs:
-      release_version:
-        description: Release tag/version to create, without the leading v.
-        required: true
-        type: string
       release_type:
         description: Release channel for CurseForge and Modrinth.
         required: true
@@ -177,6 +173,5 @@ jobs:
           python3 "${{ env.COMMON_DIR }}/scripts/publish_release.py" \
             --artifacts-dir release-packages \
             --repo "${GITHUB_REPOSITORY}" \
-            --release-version "${{ inputs.release_version }}" \
             --release-type "${{ inputs.release_type }}" \
             "${args[@]}"

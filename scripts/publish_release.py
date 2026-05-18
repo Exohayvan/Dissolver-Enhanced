@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import hashlib
 import json
 import mimetypes
 import os
@@ -283,11 +284,36 @@ def release_body(metadata):
     return "\n".join(lines).strip() + "\n"
 
 
+def release_identity(metadata):
+    publishable = [item for item in metadata if not item.get("skip_publish")]
+    if not publishable:
+        return "noop", "Dissolver Enhanced noop"
+
+    tag_items = [
+        {
+            "file_name": item["file_name"],
+            "game": item["game"],
+            "game_version": item["game_version"],
+            "loader": item["loader"],
+            "loader_version": item["loader_version"],
+            "mod_version": item["mod_version"],
+            "common_version": item["common_version"],
+        }
+        for item in sorted(publishable, key=lambda entry: entry["file_name"])
+    ]
+    release_hash = hashlib.sha256(
+        json.dumps(tag_items, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()[:12]
+
+    mod_versions = ", ".join(sorted({item["mod_version"] for item in publishable}))
+    common_versions = ", ".join(sorted({item["common_version"] for item in publishable}))
+    return f"release-{release_hash}", f"Dissolver Enhanced {release_hash} (mods {mod_versions}, common {common_versions})"
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifacts-dir", required=True)
     parser.add_argument("--repo", required=True)
-    parser.add_argument("--release-version", required=True)
     parser.add_argument("--release-type", choices=["release", "beta", "alpha"], required=True)
     parser.add_argument("--manual-curseforge-release", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -306,12 +332,12 @@ def main():
     if not github_token and not args.dry_run:
         raise RuntimeError("GITHUB_TOKEN is required.")
 
-    tag = f"v{args.release_version}"
+    tag, release_name = release_identity(metadata)
     release = get_or_create_github_release(
         args.repo,
         github_token or "dry-run-token",
         tag,
-        f"Dissolver Enhanced {args.release_version}",
+        release_name,
         release_body(metadata),
         args.release_type != "release",
         args.dry_run,
