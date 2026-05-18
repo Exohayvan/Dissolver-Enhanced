@@ -223,6 +223,8 @@ def package_minecraft(target, common_dir, target_dir, output_dir, release_assets
     run(["./gradlew", "build", "-x", "test", "--no-daemon"], target_dir)
     output_zip.parent.mkdir(parents=True, exist_ok=True)
     primary_jar = find_primary_jar(target_dir / "build" / "libs", mod_version)
+    packaged_jar = output_dir / primary_jar.name
+    shutil.copy2(primary_jar, packaged_jar)
     zip_file(output_zip, primary_jar)
     return metadata(
         target,
@@ -233,8 +235,8 @@ def package_minecraft(target, common_dir, target_dir, output_dir, release_assets
         common_version,
         branch_changelog,
         False,
-        primary_jar,
-        primary_jar,
+        packaged_jar,
+        packaged_jar,
     )
 
 
