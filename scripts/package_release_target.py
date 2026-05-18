@@ -200,6 +200,8 @@ def metadata(
         "curseforge_game_version_ids": target.get("curseforge_game_version_ids", []),
         "curseforge_dependency_ids": target.get("curseforge_dependency_ids", []),
         "curseforge_dependency_slugs": target.get("curseforge_dependency_slugs", []),
+        "curseforge_dependency_type_ids": target.get("curseforge_dependency_type_ids", []),
+        "curseforge_game_version_type_ids": target.get("curseforge_game_version_type_ids", []),
         "curseforge_game_versions": target.get("curseforge_game_versions", target.get("game_versions", [game_version])),
     }
 

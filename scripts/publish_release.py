@@ -177,16 +177,37 @@ def curseforge_version_ids(meta, token):
     ids = list(meta.get("curseforge_game_version_ids", []))
     ids.extend(meta.get("curseforge_dependency_ids", []))
 
-    names = list(meta.get("curseforge_game_versions", []))
-    names.extend(meta.get("curseforge_dependency_slugs", []))
-    if not names:
+    game_version_names = list(meta.get("curseforge_game_versions", []))
+    dependency_names = list(meta.get("curseforge_dependency_slugs", []))
+    if not game_version_names and not dependency_names:
         return sorted(set(int(item) for item in ids))
 
     versions = curseforge_versions(meta, token)
-    by_name = {normalize_key(version.get("name")): version.get("id") for version in versions}
+
+    def matching_id(version_name, type_ids):
+        matches = [
+            version for version in versions
+            if normalize_key(version.get("name")) == normalize_key(version_name)
+            and (not type_ids or int(version.get("gameVersionTypeID", 0)) in type_ids)
+        ]
+        if len(matches) == 1:
+            return matches[0].get("id")
+        if len(matches) > 1:
+            match_ids = ", ".join(str(match.get("id")) for match in matches)
+            raise RuntimeError(f"CurseForge version {version_name} matched multiple IDs for {meta['target_id']}: {match_ids}")
+        return None
+
+    game_type_ids = {int(item) for item in meta.get("curseforge_game_version_type_ids", [])}
+    dependency_type_ids = {int(item) for item in meta.get("curseforge_dependency_type_ids", [])}
     missing = []
-    for version_name in names:
-        version_id = by_name.get(normalize_key(version_name))
+    for version_name in game_version_names:
+        version_id = matching_id(version_name, game_type_ids)
+        if version_id is None:
+            missing.append(str(version_name))
+        else:
+            ids.append(version_id)
+    for version_name in dependency_names:
+        version_id = matching_id(version_name, dependency_type_ids)
         if version_id is None:
             missing.append(str(version_name))
         else:

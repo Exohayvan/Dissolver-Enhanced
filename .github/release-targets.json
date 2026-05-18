@@ -27,6 +27,12 @@
       "curseforge_base_url": "https://minecraft.curseforge.com",
       "curseforge_dependency_slugs": [
         "fabric"
+      ],
+      "curseforge_dependency_type_ids": [
+        68441
+      ],
+      "curseforge_game_version_type_ids": [
+        77784
       ]
     },
     {
@@ -45,6 +51,9 @@
       "curseforge_base_url": "https://minecraft.curseforge.com",
       "curseforge_dependency_slugs": [
         "fabric"
+      ],
+      "curseforge_dependency_type_ids": [
+        68441
       ]
     },
     {
@@ -64,6 +73,12 @@
       "curseforge_base_url": "https://minecraft.curseforge.com",
       "curseforge_dependency_slugs": [
         "neoforge"
+      ],
+      "curseforge_dependency_type_ids": [
+        68441
+      ],
+      "curseforge_game_version_type_ids": [
+        77784
       ]
     },
     {
@@ -83,6 +98,9 @@
       "curseforge_base_url": "https://minecraft.curseforge.com",
       "curseforge_dependency_slugs": [
         "forge"
+      ],
+      "curseforge_dependency_type_ids": [
+        68441
       ]
     },
     {
@@ -101,6 +119,12 @@
       "curseforge_base_url": "https://minecraft.curseforge.com",
       "curseforge_dependency_slugs": [
         "quilt"
+      ],
+      "curseforge_dependency_type_ids": [
+        68441
+      ],
+      "curseforge_game_version_type_ids": [
+        77784
       ]
     },
     {
