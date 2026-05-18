@@ -54,7 +54,11 @@
       ],
       "curseforge_dependency_type_ids": [
         68441
-      ]
+      ],
+      "curseforge_game_version_ids": [
+        16130
+      ],
+      "curseforge_game_versions": []
     },
     {
       "id": "minecraft-neoforge-1.21.x",
