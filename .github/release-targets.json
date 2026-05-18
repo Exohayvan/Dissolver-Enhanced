@@ -46,7 +46,19 @@
       "game_versions": [
         "26.1.2"
       ],
-      "modrinth_project_id": "yEX3Y3na"
+      "modrinth_project_id": "yEX3Y3na",
+      "curseforge_project_id": 1533227,
+      "curseforge_base_url": "https://minecraft.curseforge.com",
+      "curseforge_dependency_slugs": [
+        "fabric"
+      ],
+      "curseforge_dependency_type_ids": [
+        68441
+      ],
+      "curseforge_game_version_ids": [
+        16082
+      ],
+      "curseforge_game_versions": []
     },
     {
       "id": "minecraft-neoforge-1.21.x",
