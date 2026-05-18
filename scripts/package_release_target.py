@@ -155,7 +155,17 @@ def package_name(target, game_version, loader_version, mod_version, common_versi
     )
 
 
-def metadata(target, output_zip, game_version, loader_version, mod_version, common_version, changelog_text, skip_publish):
+def metadata(
+    target,
+    output_zip,
+    game_version,
+    loader_version,
+    mod_version,
+    common_version,
+    changelog_text,
+    skip_publish,
+    modrinth_file=None,
+):
     release_name = (
         f"{target['game']} {game_version} {target['loader']} {loader_version} "
         f"Dissolver Enhanced {mod_version}"
@@ -177,6 +187,8 @@ def metadata(target, output_zip, game_version, loader_version, mod_version, comm
         "display_name": output_zip.stem,
         "file_name": output_zip.name,
         "file_path": str(output_zip),
+        "modrinth_file_name": modrinth_file.name if modrinth_file else output_zip.name,
+        "modrinth_file_path": str(modrinth_file or output_zip),
         "skip_publish": skip_publish,
         "changelog": changelog_text,
         "modrinth_project_id": target.get("modrinth_project_id"),
@@ -207,8 +219,19 @@ def package_minecraft(target, common_dir, target_dir, output_dir, release_assets
     run(["chmod", "+x", "./gradlew"], target_dir)
     run(["./gradlew", "build", "-x", "test", "--no-daemon"], target_dir)
     output_zip.parent.mkdir(parents=True, exist_ok=True)
-    zip_file(output_zip, find_primary_jar(target_dir / "build" / "libs", mod_version))
-    return metadata(target, output_zip, game_version, loader_version, mod_version, common_version, branch_changelog, False)
+    primary_jar = find_primary_jar(target_dir / "build" / "libs", mod_version)
+    zip_file(output_zip, primary_jar)
+    return metadata(
+        target,
+        output_zip,
+        game_version,
+        loader_version,
+        mod_version,
+        common_version,
+        branch_changelog,
+        False,
+        primary_jar,
+    )
 
 
 def package_stardew(target, common_dir, target_dir, output_dir, release_assets, branch_changelog):

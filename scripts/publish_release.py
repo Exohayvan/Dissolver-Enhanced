@@ -134,7 +134,7 @@ def publish_modrinth(meta, token, release_type, dry_run):
     if not project_id:
         return
 
-    path = Path(meta["file_path"])
+    path = Path(meta.get("modrinth_file_path") or meta["file_path"])
     data = {
         "name": meta["release_name"],
         "version_number": f"{meta['mod_version']}-{meta['loader_slug']}-{meta['game_version']}",
