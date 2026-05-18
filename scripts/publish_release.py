@@ -209,7 +209,7 @@ def publish_curseforge(meta, token, release_type, manual_release, dry_run):
     if not project_id:
         return
 
-    path = Path(meta["file_path"])
+    path = Path(meta.get("curseforge_file_path") or meta["file_path"])
     if dry_run:
         game_versions, resolved = curseforge_preview_ids(meta, token)
     else:

@@ -165,6 +165,7 @@ def metadata(
     changelog_text,
     skip_publish,
     modrinth_file=None,
+    curseforge_file=None,
 ):
     release_name = (
         f"{target['game']} {game_version} {target['loader']} {loader_version} "
@@ -189,6 +190,8 @@ def metadata(
         "file_path": str(output_zip),
         "modrinth_file_name": modrinth_file.name if modrinth_file else output_zip.name,
         "modrinth_file_path": str(modrinth_file or output_zip),
+        "curseforge_file_name": curseforge_file.name if curseforge_file else output_zip.name,
+        "curseforge_file_path": str(curseforge_file or output_zip),
         "skip_publish": skip_publish,
         "changelog": changelog_text,
         "modrinth_project_id": target.get("modrinth_project_id"),
@@ -230,6 +233,7 @@ def package_minecraft(target, common_dir, target_dir, output_dir, release_assets
         common_version,
         branch_changelog,
         False,
+        primary_jar,
         primary_jar,
     )
 
