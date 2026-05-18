@@ -33,6 +33,8 @@ public class EMCValues {
     public static final HashMap<String, BigInteger> EMC_TAG_VALUES = new HashMap<String, BigInteger>();
     private static final HashMap<String, List<String>> TAG_ITEMS = new HashMap<String, List<String>>();
     private static boolean query_started = false;
+    private static boolean recipes_loaded = false;
+    private static boolean query_running = false;
     private static final List<String> DYE_COLORS = Arrays.asList(
         "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
         "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"
@@ -434,7 +436,7 @@ public class EMCValues {
         inferTagEMCValues();
         tags_loaded = true;
 
-        if (tags_loaded && !RECIPES.isEmpty()) {startQuery();}
+        tryStartQuery();
     }
 
     public static void tagsLoaded(
@@ -567,12 +569,13 @@ public class EMCValues {
         HashMap<String, List<String>> recipes,
         List<String> stonecutter
     ) {
-        RECIPES = recipes;
-        STONE_CUTTER_LIST = stonecutter;
+        RECIPES = new HashMap<>(recipes);
+        STONE_CUTTER_LIST = new ArrayList<>(stonecutter);
+        recipes_loaded = true;
 
         applyRegistryTagValues();
         tags_loaded = true;
-        if (!RECIPES.isEmpty()) {startQuery();}
+        tryStartQuery();
     }
 
     public static void recipesLoaded(
@@ -581,8 +584,8 @@ public class EMCValues {
         HashMap<String, String> recipeJson,
         List<String> stonecutter
     ) {
-        RECIPE_SOURCES = recipeSources;
-        RECIPE_JSON = recipeJson;
+        RECIPE_SOURCES = new HashMap<>(recipeSources);
+        RECIPE_JSON = new HashMap<>(recipeJson);
         recipesLoaded(recipes, stonecutter);
     }
 
@@ -595,6 +598,7 @@ public class EMCValues {
         itemsWithMultipleRecipes = 0;
         itemsWithoutRecipeOrEMC = 0;
         itemsWithoutEMC = 0;
+        recipes_loaded = false;
         query_started = false;
         resetRecipeState();
 
@@ -609,10 +613,22 @@ public class EMCValues {
         recipesNotUnderstood++;
     }
 
-    private static void startQuery() {
-        if (query_started) return;
+    private static synchronized void tryStartQuery() {
+        if (!tags_loaded || !recipes_loaded || RECIPES.isEmpty() || query_started || query_running) {
+            return;
+        }
+
         query_started = true;
-        queryRecipes(RECIPES);
+        startQuery();
+    }
+
+    private static void startQuery() {
+        query_running = true;
+        try {
+            queryRecipes(new HashMap<>(RECIPES));
+        } finally {
+            query_running = false;
+        }
     }
 
     private static List<String> unused = Arrays.asList(
