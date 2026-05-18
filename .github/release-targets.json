@@ -30,6 +30,24 @@
       ]
     },
     {
+      "id": "minecraft-fabric-26.1.x",
+      "branch": "minecraft-fabric-26.1.x",
+      "platform": "minecraft",
+      "game": "Minecraft",
+      "loader": "Fabric",
+      "loader_slug": "fabric",
+      "game_version_label": "26.1.x",
+      "game_versions": [
+        "26.1.2"
+      ],
+      "modrinth_project_id": "yEX3Y3na",
+      "curseforge_project_id": 1533227,
+      "curseforge_base_url": "https://minecraft.curseforge.com",
+      "curseforge_dependency_slugs": [
+        "fabric"
+      ]
+    },
+    {
       "id": "minecraft-neoforge-1.21.x",
       "branch": "minecraft-neoforge-1.21.x",
       "platform": "minecraft",
@@ -39,18 +57,7 @@
       "loader_version_property": "neo_version",
       "game_version_label": "1.21.x",
       "game_versions": [
-        "1.21",
-        "1.21.1",
-        "1.21.2",
-        "1.21.3",
-        "1.21.4",
-        "1.21.5",
-        "1.21.6",
-        "1.21.7",
-        "1.21.8",
-        "1.21.9",
-        "1.21.10",
-        "1.21.11"
+        "1.21.1"
       ],
       "modrinth_project_id": "yEX3Y3na",
       "curseforge_project_id": 1533227,
