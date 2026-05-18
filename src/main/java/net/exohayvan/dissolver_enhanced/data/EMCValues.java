@@ -420,13 +420,16 @@ public class EMCValues {
     }
 
     private static boolean tags_loaded = false;
+    private static boolean recipes_loaded = false;
+    private static boolean query_started = false;
+    private static boolean query_running = false;
 
     public static void tagsLoaded(HashMap<String, BigInteger> NEW_EMC_VALUES) {
         setEMC(NEW_EMC_VALUES);
         inferTagEMCValues();
         tags_loaded = true;
 
-        if (tags_loaded && !RECIPES.isEmpty()) {startQuery();}
+        tryStartQuery();
     }
 
     public static void tagsLoaded(
@@ -489,10 +492,11 @@ public class EMCValues {
         HashMap<String, List<String>> recipes,
         List<String> stonecutter
     ) {
-        RECIPES = recipes;
-        STONE_CUTTER_LIST = stonecutter;
+        RECIPES = new HashMap<>(recipes);
+        STONE_CUTTER_LIST = new ArrayList<>(stonecutter);
+        recipes_loaded = true;
 
-        if (tags_loaded && !RECIPES.isEmpty()) {startQuery();}
+        tryStartQuery();
     }
 
     public static void recipesLoaded(
@@ -501,8 +505,8 @@ public class EMCValues {
         HashMap<String, String> recipeJson,
         List<String> stonecutter
     ) {
-        RECIPE_SOURCES = recipeSources;
-        RECIPE_JSON = recipeJson;
+        RECIPE_SOURCES = new HashMap<>(recipeSources);
+        RECIPE_JSON = new HashMap<>(recipeJson);
         recipesLoaded(recipes, stonecutter);
     }
 
@@ -515,6 +519,8 @@ public class EMCValues {
         itemsWithMultipleRecipes = 0;
         itemsWithoutRecipeOrEMC = 0;
         itemsWithoutEMC = 0;
+        recipes_loaded = false;
+        query_started = false;
         resetRecipeState();
 
         DissolverEnhanced.LOGGER.info("----- DissolverEnhanced initialized Startup - {} recipes -----", recipeCount);
@@ -528,8 +534,22 @@ public class EMCValues {
         recipesNotUnderstood++;
     }
 
+    private static synchronized void tryStartQuery() {
+        if (!tags_loaded || !recipes_loaded || RECIPES.isEmpty() || query_started || query_running) {
+            return;
+        }
+
+        query_started = true;
+        startQuery();
+    }
+
     private static void startQuery() {
-        queryRecipes(RECIPES);
+        query_running = true;
+        try {
+            queryRecipes(new HashMap<>(RECIPES));
+        } finally {
+            query_running = false;
+        }
     }
 
     private static List<String> unused = Arrays.asList(
