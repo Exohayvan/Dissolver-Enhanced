@@ -1,0 +1,182 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Release tag/version to create, without the leading v.
+        required: true
+        type: string
+      release_type:
+        description: Release channel for CurseForge and Modrinth.
+        required: true
+        default: beta
+        type: choice
+        options:
+          - release
+          - beta
+          - alpha
+      manual_curseforge_release:
+        description: Upload to CurseForge as marked for manual release.
+        required: true
+        default: false
+        type: boolean
+      dry_run:
+        description: Build packages and print upload payloads without publishing.
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  COMMON_BRANCH: main
+  COMMON_DIR: Dissolver Enhanced (Common)
+  TARGET_DIR: Dissolver Enhanced (Target)
+
+jobs:
+  prepare:
+    name: Prepare Release
+    runs-on: ubuntu-22.04
+    outputs:
+      targets: ${{ steps.targets.outputs.targets }}
+    steps:
+      - name: Checkout Common
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.COMMON_BRANCH }}
+          fetch-depth: 0
+          path: ${{ env.COMMON_DIR }}
+
+      - name: Read release targets
+        id: targets
+        shell: bash
+        working-directory: ${{ env.COMMON_DIR }}
+        run: |
+          set -euo pipefail
+          targets="$(jq -c '.targets' .github/release-targets.json)"
+          echo "targets=${targets}" >> "$GITHUB_OUTPUT"
+          echo "${targets}" | jq .
+
+  build:
+    name: Build ${{ matrix.target.id }}
+    needs: prepare
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.prepare.outputs.targets) }}
+    steps:
+      - name: Checkout Common
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.COMMON_BRANCH }}
+          path: ${{ env.COMMON_DIR }}
+
+      - name: Checkout ${{ matrix.target.branch }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.target.branch }}
+          fetch-depth: 0
+          path: ${{ env.TARGET_DIR }}
+
+      - name: Validate Gradle wrappers
+        if: ${{ matrix.target.platform == 'minecraft' }}
+        uses: gradle/actions/wrapper-validation@v4
+        with:
+          min-wrapper-count: 2
+
+      - name: Select Java
+        if: ${{ matrix.target.platform == 'minecraft' }}
+        id: java
+        shell: bash
+        run: |
+          case "${{ matrix.target.branch }}" in
+            minecraft-forge-1.20.x)
+              echo "version=17" >> "$GITHUB_OUTPUT"
+              echo "distribution=temurin" >> "$GITHUB_OUTPUT"
+              ;;
+            minecraft-fabric-26.1.x)
+              echo "version=25" >> "$GITHUB_OUTPUT"
+              echo "distribution=temurin" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "version=21" >> "$GITHUB_OUTPUT"
+              echo "distribution=microsoft" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Setup Java ${{ steps.java.outputs.version }}
+        if: ${{ matrix.target.platform == 'minecraft' }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ steps.java.outputs.version }}
+          distribution: ${{ steps.java.outputs.distribution }}
+
+      - name: Setup .NET 6
+        if: ${{ matrix.target.platform == 'stardewvalley' }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Package release target
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 "${{ env.COMMON_DIR }}/scripts/package_release_target.py" \
+            --target '${{ toJson(matrix.target) }}' \
+            --common-dir "${{ env.COMMON_DIR }}" \
+            --target-dir "${{ env.TARGET_DIR }}" \
+            --output-dir "release-package/${{ matrix.target.id }}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --github-token "${GITHUB_TOKEN}"
+
+      - name: Upload release package
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: release-package-${{ matrix.target.id }}
+          path: release-package/${{ matrix.target.id }}
+
+  publish:
+    name: Publish Release
+    needs:
+      - prepare
+      - build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Common
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.COMMON_BRANCH }}
+          path: ${{ env.COMMON_DIR }}
+
+      - name: Download release packages
+        uses: actions/download-artifact@v8.0.1
+        with:
+          pattern: release-package-*
+          path: release-packages
+
+      - name: Publish GitHub, CurseForge, and Modrinth releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ "${{ inputs.manual_curseforge_release }}" == "true" ]]; then
+            args+=(--manual-curseforge-release)
+          fi
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            args+=(--dry-run)
+          fi
+
+          python3 "${{ env.COMMON_DIR }}/scripts/publish_release.py" \
+            --artifacts-dir release-packages \
+            --repo "${GITHUB_REPOSITORY}" \
+            --release-version "${{ inputs.release_version }}" \
+            --release-type "${{ inputs.release_type }}" \
+            "${args[@]}"
