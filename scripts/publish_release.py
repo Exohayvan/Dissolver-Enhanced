@@ -164,17 +164,13 @@ def publish_modrinth(meta, token, release_type, dry_run):
     request_json("POST", f"{MODRINTH_API}/version", headers=headers, body=body)
 
 
-def curseforge_json(base_url, path, token):
-    return request_json("GET", base_url.rstrip("/") + path, headers={"X-Api-Token": token})
-
-
-def curseforge_ids(meta, token):
+def curseforge_game_version_ids(meta, token):
     ids = list(meta.get("curseforge_game_version_ids", []))
     ids.extend(meta.get("curseforge_dependency_ids", []))
     base_url = meta["curseforge_base_url"].rstrip("/")
 
     if meta.get("curseforge_game_versions"):
-        versions = curseforge_json(base_url, "/api/game/versions", token)
+        versions = request_json("GET", base_url + "/api/game/versions", headers={"X-Api-Token": token})
         by_name = {str(version.get("name")): version.get("id") for version in versions}
         missing = []
         for version_name in meta["curseforge_game_versions"]:
@@ -186,19 +182,6 @@ def curseforge_ids(meta, token):
         if missing:
             raise RuntimeError(f"CurseForge game versions were not found for {meta['target_id']}: {', '.join(missing)}")
 
-    if meta.get("curseforge_dependency_slugs"):
-        dependencies = curseforge_json(base_url, "/api/game/dependencies", token)
-        by_slug = {str(dependency.get("slug")): dependency.get("id") for dependency in dependencies}
-        missing = []
-        for slug in meta["curseforge_dependency_slugs"]:
-            dependency_id = by_slug.get(str(slug))
-            if dependency_id is None:
-                missing.append(str(slug))
-            else:
-                ids.append(dependency_id)
-        if missing:
-            raise RuntimeError(f"CurseForge dependencies were not found for {meta['target_id']}: {', '.join(missing)}")
-
     return sorted(set(int(item) for item in ids))
 
 
@@ -208,14 +191,10 @@ def publish_curseforge(meta, token, release_type, manual_release, dry_run):
         return
 
     path = Path(meta["file_path"])
-    if dry_run and token == "dry-run-token":
-        game_versions = {
-            "game_versions": meta.get("curseforge_game_versions", []),
-            "dependency_slugs": meta.get("curseforge_dependency_slugs", []),
-            "resolved_ids": meta.get("curseforge_game_version_ids", []) + meta.get("curseforge_dependency_ids", []),
-        }
+    if dry_run:
+        game_versions = meta.get("curseforge_game_version_ids", []) + meta.get("curseforge_dependency_ids", [])
     else:
-        game_versions = curseforge_ids(meta, token)
+        game_versions = curseforge_game_version_ids(meta, token)
     metadata = {
         "changelog": meta["changelog"],
         "changelogType": "markdown",
@@ -233,7 +212,10 @@ def publish_curseforge(meta, token, release_type, manual_release, dry_run):
     print(f"Publishing {path.name} to CurseForge project {project_id}.")
     if dry_run:
         print("[dry-run] Would publish CurseForge file:")
-        print(json.dumps(metadata, indent=2))
+        preview = dict(metadata)
+        preview["unresolvedGameVersionNames"] = meta.get("curseforge_game_versions", [])
+        preview["loaderDependencySlugs"] = meta.get("curseforge_dependency_slugs", [])
+        print(json.dumps(preview, indent=2))
         return
     request_json("POST", url, headers=headers, body=body)
 
