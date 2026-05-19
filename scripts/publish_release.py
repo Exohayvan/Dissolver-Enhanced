@@ -281,6 +281,8 @@ def publish_curseforge(meta, token, release_type, manual_release, dry_run):
         if not resolved:
             preview["unresolvedGameVersionNames"] = meta.get("curseforge_game_versions", [])
             preview["loaderDependencySlugs"] = meta.get("curseforge_dependency_slugs", [])
+            preview["javaVersionIds"] = meta.get("curseforge_java_version_ids", [])
+            preview["environmentIds"] = meta.get("curseforge_environment_version_ids", [])
             preview["javaVersionNames"] = meta.get("curseforge_java_versions", [])
             preview["environmentNames"] = meta.get("curseforge_environment_versions", [])
         print(json.dumps(preview, indent=2))

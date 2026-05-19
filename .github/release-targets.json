@@ -33,6 +33,13 @@
       ],
       "curseforge_game_version_type_ids": [
         77784
+      ],
+      "curseforge_environment_version_ids": [
+        9638,
+        9639
+      ],
+      "curseforge_java_version_ids": [
+        11135
       ]
     },
     {
@@ -58,7 +65,14 @@
       "curseforge_game_version_ids": [
         16082
       ],
-      "curseforge_game_versions": []
+      "curseforge_game_versions": [],
+      "curseforge_environment_version_ids": [
+        9638,
+        9639
+      ],
+      "curseforge_java_version_ids": [
+        11135
+      ]
     },
     {
       "id": "minecraft-neoforge-1.21.x",
@@ -84,6 +98,13 @@
       ],
       "curseforge_game_version_type_ids": [
         77784
+      ],
+      "curseforge_environment_version_ids": [
+        9638,
+        9639
+      ],
+      "curseforge_java_version_ids": [
+        11135
       ]
     },
     {
@@ -110,7 +131,14 @@
       "curseforge_game_version_ids": [
         9990
       ],
-      "curseforge_game_versions": []
+      "curseforge_game_versions": [],
+      "curseforge_environment_version_ids": [
+        9638,
+        9639
+      ],
+      "curseforge_java_version_ids": [
+        8326
+      ]
     },
     {
       "id": "minecraft-quilt-1.21.x",
@@ -134,6 +162,13 @@
       ],
       "curseforge_game_version_type_ids": [
         77784
+      ],
+      "curseforge_environment_version_ids": [
+        9638,
+        9639
+      ],
+      "curseforge_java_version_ids": [
+        11135
       ]
     },
     {
