@@ -466,6 +466,51 @@ tags:
   simplehats:all_hats: 254
   minecraft:copper_ores: 216
 
+# This section is not live yet and is for future tests.
+enchantments:
+  minecraft:protection: 1200
+  minecraft:fire_protection: 900
+  minecraft:feather_falling: 900
+  minecraft:blast_protection: 900
+  minecraft:projectile_protection: 900
+  minecraft:respiration: 1000
+  minecraft:aqua_affinity: 800
+  minecraft:thorns: 1600
+  minecraft:depth_strider: 1000
+  minecraft:frost_walker: 1400
+  minecraft:binding_curse: 300
+  minecraft:soul_speed: 1400
+  minecraft:swift_sneak: 1800
+  minecraft:sharpness: 1200
+  minecraft:smite: 900
+  minecraft:bane_of_arthropods: 800
+  minecraft:knockback: 1000
+  minecraft:fire_aspect: 1400
+  minecraft:looting: 1800
+  minecraft:sweeping_edge: 1000
+  minecraft:efficiency: 1200
+  minecraft:silk_touch: 2400
+  minecraft:unbreaking: 1500
+  minecraft:fortune: 2200
+  minecraft:power: 1000
+  minecraft:punch: 900
+  minecraft:flame: 1300
+  minecraft:infinity: 2400
+  minecraft:luck_of_the_sea: 1200
+  minecraft:lure: 900
+  minecraft:loyalty: 1200
+  minecraft:impaling: 1000
+  minecraft:riptide: 1800
+  minecraft:channeling: 2200
+  minecraft:multishot: 1600
+  minecraft:quick_charge: 1200
+  minecraft:piercing: 1000
+  minecraft:density: 1200
+  minecraft:breach: 1600
+  minecraft:wind_burst: 2400
+  minecraft:mending: 3200
+  minecraft:vanishing_curse: 300
+
 overrides:
   skyblock:
     items:
