@@ -46,6 +46,14 @@ def github_json(url, token):
         raise
 
 
+def github_asset_bytes(asset, token):
+    headers = github_headers(token)
+    headers["Accept"] = "application/octet-stream"
+    request = urllib.request.Request(asset["url"], headers=headers)
+    with urllib.request.urlopen(request) as response:
+        return response.read()
+
+
 def latest_release(repo, token):
     if not repo:
         return None
@@ -59,38 +67,66 @@ def latest_release_assets(repo, token):
     return {asset.get("name") for asset in release.get("assets", []) if asset.get("name")}
 
 
-def changelog(target_dir, latest, target_id):
+def latest_release_manifest(latest, token):
     if not latest:
-        return (
-            f"First auto changelog for {target_id}, no release data.\n\n"
-            "No previous GitHub release was found."
-        )
+        return None
 
-    tag = latest.get("tag_name")
-    if not tag:
-        return (
-            f"First auto changelog for {target_id}, no release data.\n\n"
-            "The latest GitHub release did not have a tag."
-        )
+    for asset in latest.get("assets", []):
+        if asset.get("name") == "release-manifest.json" and asset.get("url"):
+            return json.loads(github_asset_bytes(asset, token).decode("utf-8"))
+    return None
 
-    run(["git", "fetch", "--tags", "--force"], target_dir)
-    try:
-        capture(["git", "merge-base", "--is-ancestor", tag, "HEAD"], target_dir)
-        log_range = f"{tag}..HEAD"
-        heading = f"Changes for {target_id} since {tag}"
-    except subprocess.CalledProcessError:
-        log_range = "HEAD"
-        heading = (
+
+def previous_target_metadata(manifest, target_id):
+    if not manifest:
+        return None
+    for item in manifest.get("targets", []):
+        if item.get("target_id") == target_id:
+            return item
+    return None
+
+
+def target_commit(target_dir):
+    return capture(["git", "rev-parse", "HEAD"], target_dir)
+
+
+def changelog(target_dir, latest, previous_target, target_id):
+    current_commit = target_commit(target_dir)
+    previous_commit = previous_target.get("target_commit") if previous_target else None
+
+    if previous_commit:
+        try:
+            capture(["git", "merge-base", "--is-ancestor", previous_commit, "HEAD"], target_dir)
+            log_range = f"{previous_commit}..HEAD"
+            heading = f"Changes for {target_id} since {previous_commit[:7]}"
+        except subprocess.CalledProcessError:
+            return (
+                f"Changes for {target_id}\n\n"
+                f"Previous release commit {previous_commit[:7]} was not found for auto release changelogs; "
+                "unable to display changes."
+            )
+    elif latest:
+        tag = latest.get("tag_name") or "latest release"
+        return (
             f"Changes for {target_id}\n\n"
-            f"No previous release commit was found in this branch for {tag}; showing recent branch commits."
+            f"No previous target metadata was found for {tag}; unable to display changes."
+        )
+    else:
+        return (
+            f"First auto changelog for {target_id}, no release data.\n\n"
+            "No previous GitHub release was found; unable to display changes."
         )
 
     try:
-        lines = capture(["git", "log", "--pretty=format:- %s (%h)", log_range], target_dir)
+        command = ["git", "log", "--pretty=format:- %s (%h)"]
+        command.extend(log_range.split())
+        lines = capture(command, target_dir)
     except subprocess.CalledProcessError:
         lines = ""
 
-    if not lines:
+    if not lines and previous_commit == current_commit:
+        lines = "- No branch commits changed since the previous release."
+    elif not lines:
         lines = "- No branch commits found."
     return f"{heading}\n\n{lines}"
 
@@ -305,7 +341,9 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     release = latest_release(args.repo, args.github_token)
     release_assets = latest_release_assets(args.repo, args.github_token)
-    branch_changelog = changelog(target_dir, release, target["id"])
+    manifest = latest_release_manifest(release, args.github_token)
+    previous_target = previous_target_metadata(manifest, target["id"])
+    branch_changelog = changelog(target_dir, release, previous_target, target["id"])
 
     if target["platform"] == "minecraft":
         release_metadata = package_minecraft(target, common_dir, target_dir, output_dir, release_assets, branch_changelog)
@@ -315,6 +353,11 @@ def main():
         raise ValueError(f"Unsupported release platform: {target['platform']}")
 
     metadata_path = output_dir / "release-metadata.json"
+    release_metadata["target_commit"] = target_commit(target_dir)
+    release_metadata["common_commit"] = target_commit(common_dir)
+    if previous_target:
+        release_metadata["previous_target_commit"] = previous_target.get("target_commit")
+        release_metadata["previous_common_commit"] = previous_target.get("common_commit")
     metadata_path.write_text(json.dumps(release_metadata, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(release_metadata, indent=2), flush=True)
 

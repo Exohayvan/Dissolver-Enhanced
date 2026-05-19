@@ -346,6 +346,36 @@ def release_body(metadata):
     return "\n".join(lines).strip() + "\n"
 
 
+def release_manifest(metadata):
+    targets = []
+    for item in sorted(metadata, key=lambda entry: entry["target_id"]):
+        target_commit = item.get("target_commit")
+        common_commit = item.get("common_commit")
+        if item.get("skip_publish"):
+            target_commit = item.get("previous_target_commit") or target_commit
+            common_commit = item.get("previous_common_commit") or common_commit
+
+        targets.append({
+            "target_id": item["target_id"],
+            "branch": item["branch"],
+            "target_commit": target_commit,
+            "common_commit": common_commit,
+            "file_name": item["file_name"],
+            "mod_version": item["mod_version"],
+            "common_version": item["common_version"],
+            "game": item["game"],
+            "game_version": item["game_version"],
+            "loader": item["loader"],
+            "loader_version": item["loader_version"],
+            "skip_publish": item.get("skip_publish", False),
+        })
+
+    return {
+        "schema": 1,
+        "targets": targets,
+    }
+
+
 def release_identity(metadata):
     publishable = [item for item in metadata if not item.get("skip_publish")]
     if not publishable:
@@ -406,6 +436,10 @@ def main():
     )
     for item in publishable:
         upload_github_asset(args.repo, github_token, release, item["file_path"], args.dry_run)
+
+    manifest_path = Path(args.artifacts_dir) / "release-manifest.json"
+    manifest_path.write_text(json.dumps(release_manifest(metadata), indent=2) + "\n", encoding="utf-8")
+    upload_github_asset(args.repo, github_token, release, manifest_path, args.dry_run)
 
     for item in publishable:
         if item.get("modrinth_project_id"):
