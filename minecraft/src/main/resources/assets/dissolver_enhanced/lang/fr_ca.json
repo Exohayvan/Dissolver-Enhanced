@@ -84,4 +84,13 @@
     "command.feedback.list.user": "Vous disposez actuellement de §6%s§r EMC!",
     "command.feedback.update.give": "%s EMC a été fourni. Nouvelle valeur: §6",
     "command.feedback.update.take": "A pris %s EMC. Nouvelle valeur: §6",
-    "command.feedback.update.set": "R�UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU
+    "command.feedback.update.set": "EMC réglé sur §6%s",
+    "command.feedback.memory.fill": "Tous les objets ont été stockés!",
+    "command.feedback.memory.forget": "Tous les objets stockés ont été oubliés!",
+    "command.feedback.memory.add": "%s stocké!",
+    "command.feedback.memory.add.fail": "C'est déjà stocké!",
+    "command.feedback.memory.remove": "%s oublié!",
+    "command.feedback.memory.remove.fail": "Déjà oublié!",
+    "command.feedback.player.not_found": "Impossible de trouver un joueur portant le nom '%s'!",
+    "command.feedback.shared_data": "L'EMC privé n'est pas activé!"
+}
