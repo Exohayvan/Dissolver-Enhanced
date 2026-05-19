@@ -117,8 +117,21 @@ public final class RegistryKeyCompat {
             return false;
         }
 
+        if (!isRegistryKeyMethodName(method.getName())) {
+            return false;
+        }
+
         Class<?> returnType = method.getReturnType();
         return returnType == Void.TYPE || returnType.isAssignableFrom(settings.getClass()) || settings.getClass().isAssignableFrom(returnType);
+    }
+
+    private static boolean isRegistryKeyMethodName(String name) {
+        String lowerName = name.toLowerCase(java.util.Locale.ROOT);
+        return lowerName.equals("setid")
+            || lowerName.equals("id")
+            || lowerName.equals("registrykey")
+            || lowerName.equals("setregistrykey")
+            || lowerName.contains("registrykey");
     }
 
     @SuppressWarnings("unchecked")

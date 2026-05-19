@@ -40,15 +40,25 @@ public class RecipeManagerMixin {
     private HolderLookup.Provider registries;
 
     // CUSTOM RECIPE
-    @Inject(method = "apply", at = @At("HEAD"))
-    public void interceptApply(Map<ResourceLocation, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
+    @Inject(method = "apply(Ljava/lang/Object;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD"))
+    public void interceptApply(Object preparedRecipes, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
+        Map<ResourceLocation, JsonElement> map = jsonRecipeMap(preparedRecipes);
+        if (map == null) {
+            return;
+        }
+
         if (RecipeGenerator.DISSOLVER_RECIPE != null) {
             map.put(ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
         }
     }
 
-    @Inject(method = "apply", at = @At("HEAD"))
-    private void applyMixin(Map<ResourceLocation, JsonElement> map, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
+    @Inject(method = "apply(Ljava/lang/Object;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD"))
+    private void applyMixin(Object preparedRecipes, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo info) {
+        Map<ResourceLocation, JsonElement> map = jsonRecipeMap(preparedRecipes);
+        if (map == null) {
+            return;
+        }
+
         EMCValues.beginStartup(map.size());
         RECIPES.clear();
         RECIPE_SOURCES.clear();
@@ -72,6 +82,15 @@ public class RecipeManagerMixin {
 
             EMCValues.recipesLoaded(RECIPES, RECIPE_SOURCES, RECIPE_JSON, STONE_CUTTER_LIST);
         }).start();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<ResourceLocation, JsonElement> jsonRecipeMap(Object preparedRecipes) {
+        if (!(preparedRecipes instanceof Map<?, ?> map)) {
+            return null;
+        }
+
+        return (Map<ResourceLocation, JsonElement>)map;
     }
 
     private static final HashMap<String, List<String>> RECIPES = new HashMap<String, List<String>>();

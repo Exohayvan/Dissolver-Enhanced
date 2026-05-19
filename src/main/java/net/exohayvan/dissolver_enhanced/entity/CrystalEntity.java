@@ -1,5 +1,6 @@
 package net.exohayvan.dissolver_enhanced.entity;
 
+import java.lang.reflect.Method;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -43,8 +44,27 @@ public class CrystalEntity extends Entity {
 	@Override
 	public void tick() {
 		this.crystalAge++;
-		this.checkInsideBlocks();
+		this.applyInsideBlockEffects();
 		// this.isPowered();
+	}
+
+	private void applyInsideBlockEffects() {
+		if (invokeEntityMethod("checkInsideBlocks")) {
+			return;
+		}
+
+		invokeEntityMethod("applyEffectsFromBlocks");
+	}
+
+	private boolean invokeEntityMethod(String methodName) {
+		try {
+			Method method = Entity.class.getDeclaredMethod(methodName);
+			method.setAccessible(true);
+			method.invoke(this);
+			return true;
+		} catch (ReflectiveOperationException | RuntimeException ignored) {
+			return false;
+		}
 	}
 
 	@Override

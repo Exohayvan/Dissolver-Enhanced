@@ -1,6 +1,7 @@
 package net.exohayvan.dissolver_enhanced.block.entity;
 
 import java.util.Iterator;
+import java.lang.reflect.Method;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -38,7 +39,7 @@ public abstract class CustomBlockEntity extends BlockEntity implements WorldlyCo
 
     protected void loadAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
         super.loadAdditional(nbt, registries);
-        this.lock = LockCode.fromTag(nbt);
+        this.lock = lockFromTag(nbt, registries);
         if (nbt.contains("CustomName", 8)) {
             this.customName = Serializer.fromJson(NbtCompat.getString(nbt, "CustomName"), registries);
         }
@@ -47,7 +48,7 @@ public abstract class CustomBlockEntity extends BlockEntity implements WorldlyCo
 
     protected void saveAdditional(CompoundTag nbt, HolderLookup.Provider registries) {
         super.saveAdditional(nbt, registries);
-        this.lock.addToTag(nbt);
+        addLockToTag(this.lock, nbt, registries);
         if (this.customName != null) {
             nbt.putString("CustomName", Serializer.toJson(this.customName, registries));
         }
@@ -146,6 +147,37 @@ public abstract class CustomBlockEntity extends BlockEntity implements WorldlyCo
         nbt.remove("CustomName");
         nbt.remove("Lock");
         nbt.remove("Items");
+    }
+
+    private static LockCode lockFromTag(CompoundTag nbt, HolderLookup.Provider registries) {
+        try {
+            Method fromTag = LockCode.class.getMethod("fromTag", CompoundTag.class);
+            return (LockCode) fromTag.invoke(null, nbt);
+        } catch (ReflectiveOperationException ignored) {
+        }
+
+        try {
+            Method fromTag = LockCode.class.getMethod("fromTag", CompoundTag.class, HolderLookup.Provider.class);
+            return (LockCode) fromTag.invoke(null, nbt, registries);
+        } catch (ReflectiveOperationException ignored) {
+        }
+
+        return LockCode.NO_LOCK;
+    }
+
+    private static void addLockToTag(LockCode lock, CompoundTag nbt, HolderLookup.Provider registries) {
+        try {
+            Method addToTag = LockCode.class.getMethod("addToTag", CompoundTag.class);
+            addToTag.invoke(lock, nbt);
+            return;
+        } catch (ReflectiveOperationException ignored) {
+        }
+
+        try {
+            Method addToTag = LockCode.class.getMethod("addToTag", CompoundTag.class, HolderLookup.Provider.class);
+            addToTag.invoke(lock, nbt, registries);
+        } catch (ReflectiveOperationException ignored) {
+        }
     }
 
     // HOPPER/DROPPER INSERT

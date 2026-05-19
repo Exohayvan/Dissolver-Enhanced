@@ -1,15 +1,18 @@
 package net.exohayvan.dissolver_enhanced.event;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.minecraft.core.Holder;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
@@ -48,7 +51,7 @@ public class ForgeEmcValueLoader {
                 addRecipe(server, recipe);
             } catch (RuntimeException exception) {
                 EMCValues.incrementRecipesNotUnderstood();
-                DissolverEnhanced.LOGGER.debug("Could not read recipe {} for EMC calculation.", recipe.id(), exception);
+                DissolverEnhanced.LOGGER.debug("Could not read recipe {} for EMC calculation.", recipeId(recipe), exception);
             }
         }
 
@@ -56,11 +59,11 @@ public class ForgeEmcValueLoader {
     }
 
     private static void addRecipe(MinecraftServer server, RecipeHolder<?> recipeHolder) {
-        ResourceLocation recipeId = recipeHolder.id();
+        ResourceLocation recipeId = recipeId(recipeHolder);
         Recipe<?> recipe = recipeHolder.value();
         RecipeType<?> recipeType = recipe.getType();
 
-        ItemStack resultItem = recipe.getResultItem(server.registryAccess());
+        ItemStack resultItem = resultItem(server, recipe);
         String resultId = ItemHelper.getId(resultItem.getItem());
         int resultCount = resultItem.getCount();
 
@@ -73,15 +76,16 @@ public class ForgeEmcValueLoader {
         HashMap<String, List<String>> replaceIngredients = new HashMap<>();
         boolean hasUnresolvedIngredient = false;
 
-        for (Ingredient ingredient : recipe.getIngredients()) {
-            if (ingredient.isEmpty()) {
+        for (Ingredient ingredient : ingredients(recipe)) {
+            List<ItemStack> ingredientItems = ingredientItems(ingredient);
+            if (ingredientItems.isEmpty()) {
                 continue;
             }
 
             int index = -1;
             String rootItemId = null;
 
-            for (ItemStack stack : ingredient.getItems()) {
+            for (ItemStack stack : ingredientItems) {
                 if (stack.isEmpty()) {
                     continue;
                 }
@@ -176,6 +180,143 @@ public class ForgeEmcValueLoader {
         RECIPES.put(recipeKey, ingredients);
         RECIPE_SOURCES.put(recipeKey, recipeId);
         RECIPE_JSON.put(recipeKey, "Unavailable on Forge parsed recipe path.");
+    }
+
+    private static ResourceLocation recipeId(RecipeHolder<?> recipeHolder) {
+        try {
+            Method method = RecipeHolder.class.getMethod("id");
+            Object id = method.invoke(recipeHolder);
+            if (id instanceof ResourceLocation location) {
+                return location;
+            }
+            if (id instanceof net.minecraft.resources.ResourceKey<?> key) {
+                return key.location();
+            }
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            DissolverEnhanced.LOGGER.debug("Could not reflect recipe id.", exception);
+        }
+
+        return ResourceLocation.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "unknown_recipe");
+    }
+
+    private static ItemStack resultItem(MinecraftServer server, Recipe<?> recipe) {
+        ItemStack oldResult = invokeItemStack(recipe, "getResultItem", new Class<?>[] { net.minecraft.core.HolderLookup.Provider.class }, server.registryAccess());
+        if (oldResult != null) {
+            return oldResult;
+        }
+
+        try {
+            Method displayMethod = Recipe.class.getMethod("display");
+            Object displays = displayMethod.invoke(recipe);
+            if (displays instanceof Iterable<?> iterable) {
+                for (Object display : iterable) {
+                    Method resultMethod = display.getClass().getMethod("result");
+                    ItemStack stack = slotDisplayItemStack(resultMethod.invoke(display));
+                    if (stack != null && !stack.isEmpty()) {
+                        return stack;
+                    }
+                }
+            }
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            DissolverEnhanced.LOGGER.debug("Could not reflect recipe display result.", exception);
+        }
+
+        return ItemStack.EMPTY;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Ingredient> ingredients(Recipe<?> recipe) {
+        try {
+            Method method = Recipe.class.getMethod("getIngredients");
+            Object ingredients = method.invoke(recipe);
+            if (ingredients instanceof List<?> list) {
+                return (List<Ingredient>)list;
+            }
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            // Minecraft 1.21.2 moved recipe ingredients to PlacementInfo.
+        }
+
+        try {
+            Method placementInfoMethod = Recipe.class.getMethod("placementInfo");
+            Object placementInfo = placementInfoMethod.invoke(recipe);
+            Method ingredientsMethod = placementInfo.getClass().getMethod("ingredients");
+            Object ingredients = ingredientsMethod.invoke(placementInfo);
+            if (ingredients instanceof List<?> list) {
+                return (List<Ingredient>)list;
+            }
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            DissolverEnhanced.LOGGER.debug("Could not reflect recipe ingredients.", exception);
+        }
+
+        return List.of();
+    }
+
+    private static List<ItemStack> ingredientItems(Ingredient ingredient) {
+        try {
+            Method method = Ingredient.class.getMethod("getItems");
+            Object items = method.invoke(ingredient);
+            if (items instanceof ItemStack[] stacks) {
+                return List.of(stacks);
+            }
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            // Minecraft 1.21.2 exposes holders through Ingredient#items().
+        }
+
+        try {
+            Method method = Ingredient.class.getMethod("items");
+            Object items = method.invoke(ingredient);
+            if (items instanceof Iterable<?> iterable) {
+                List<ItemStack> stacks = new ArrayList<>();
+                for (Object item : iterable) {
+                    if (item instanceof Holder<?> holder && holder.value() instanceof Item heldItem) {
+                        stacks.add(new ItemStack(heldItem));
+                    }
+                }
+                return stacks;
+            }
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            DissolverEnhanced.LOGGER.debug("Could not reflect ingredient items.", exception);
+        }
+
+        return List.of();
+    }
+
+    private static ItemStack slotDisplayItemStack(Object slotDisplay) {
+        try {
+            Method itemMethod = slotDisplay.getClass().getMethod("item");
+            Object item = itemMethod.invoke(slotDisplay);
+            if (item instanceof Holder<?> holder && holder.value() instanceof Item heldItem) {
+                return new ItemStack(heldItem);
+            }
+            if (item instanceof Item heldItem) {
+                return new ItemStack(heldItem);
+            }
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            // Not every SlotDisplay is a simple item display.
+        }
+
+        return invokeItemStack(slotDisplay, "resolveForFirstStack", new Class<?>[] { contextMapClass() }, new Object[] { null });
+    }
+
+    private static ItemStack invokeItemStack(Object target, String methodName, Class<?>[] parameterTypes, Object... arguments) {
+        try {
+            Method method = target.getClass().getMethod(methodName, parameterTypes);
+            Object result = method.invoke(target, arguments);
+            if (result instanceof ItemStack stack) {
+                return stack;
+            }
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+        }
+
+        return null;
+    }
+
+    private static Class<?> contextMapClass() {
+        try {
+            return Class.forName("net.minecraft.util.context.ContextMap");
+        } catch (ClassNotFoundException exception) {
+            return Object.class;
+        }
     }
 
     private static boolean listSearch(List<String> ingredients, String keyId) {

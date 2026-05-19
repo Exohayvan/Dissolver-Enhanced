@@ -8,6 +8,7 @@ import com.mojang.serialization.MapCodec;
 import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.entity.CondenserBlockEntity;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
+import net.exohayvan.dissolver_enhanced.helpers.InteractionResultCompat;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -42,7 +43,7 @@ public class CondenserBlock extends BaseEntityBlock {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
-        if (world.isClientSide()) return InteractionResult.SUCCESS;
+        if (world.isClientSide()) return InteractionResultCompat.success();
 
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (blockEntity instanceof CondenserBlockEntity condenserBlockEntity) {
@@ -50,7 +51,7 @@ public class CondenserBlock extends BaseEntityBlock {
             player.openMenu(condenserBlockEntity);
         }
 
-        return InteractionResult.CONSUME;
+        return InteractionResultCompat.consume();
     }
 
     @Nullable

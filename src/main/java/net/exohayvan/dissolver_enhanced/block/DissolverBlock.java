@@ -10,6 +10,7 @@ import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.entity.DissolverBlockEntity;
 import net.exohayvan.dissolver_enhanced.entity.CrystalEntity;
 import net.exohayvan.dissolver_enhanced.entity.ModEntities;
+import net.exohayvan.dissolver_enhanced.helpers.InteractionResultCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -65,9 +66,9 @@ public class DissolverBlock extends BaseEntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
         if (world.isClientSide) {
-            return InteractionResult.SUCCESS;
+            return InteractionResultCompat.success();
         } else if (!player.getAbilities().mayBuild) {
-            return InteractionResult.PASS;
+            return InteractionResultCompat.pass();
         } else {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof DissolverBlockEntity) {
@@ -79,7 +80,7 @@ public class DissolverBlock extends BaseEntityBlock {
             List<Entity> list = blockEntityList(world, pos);
             if (list.isEmpty()) spawnEntity(world, pos);
 
-            return InteractionResult.CONSUME;
+            return InteractionResultCompat.consume();
         }
     }
 

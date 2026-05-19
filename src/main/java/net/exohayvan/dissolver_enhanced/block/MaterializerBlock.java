@@ -10,6 +10,7 @@ import com.mojang.serialization.MapCodec;
 import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.block.entity.MaterializerBlockEntity;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
+import net.exohayvan.dissolver_enhanced.helpers.InteractionResultCompat;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
@@ -46,7 +47,7 @@ public class MaterializerBlock extends BaseEntityBlock {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
-        if (world.isClientSide()) return InteractionResult.SUCCESS;
+        if (world.isClientSide()) return InteractionResultCompat.success();
 
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (blockEntity instanceof MaterializerBlockEntity materializerBlockEntity) {
@@ -54,7 +55,7 @@ public class MaterializerBlock extends BaseEntityBlock {
             player.openMenu(materializerBlockEntity);
         }
 
-        return InteractionResult.CONSUME;
+        return InteractionResultCompat.consume();
     }
 
     @Override

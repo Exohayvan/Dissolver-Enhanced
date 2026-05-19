@@ -3,6 +3,7 @@ package net.exohayvan.dissolver_enhanced;
 import net.exohayvan.dissolver_enhanced.block.ModBlocks;
 import net.exohayvan.dissolver_enhanced.entity.ModEntities;
 import net.exohayvan.dissolver_enhanced.analytics.ClientAnalytics;
+import net.exohayvan.dissolver_enhanced.helpers.MinecraftVersionCompat;
 import net.exohayvan.dissolver_enhanced.overlay.EMCOverlay;
 import net.exohayvan.dissolver_enhanced.particle.ModParticles;
 import net.exohayvan.dissolver_enhanced.render.CrystalEntityRenderer;
@@ -10,6 +11,7 @@ import net.exohayvan.dissolver_enhanced.screen.ClientScreenHandlers;
 import net.minecraft.client.particle.EndRodParticle;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
@@ -36,6 +38,11 @@ public class DissolverEnhancedClient {
 
 	@SubscribeEvent
 	public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+		if (!MinecraftVersionCompat.isLegacyRendererVersion()) {
+			event.registerEntityRenderer(ModEntities.CRYSTAL_ENTITY.get(), context -> new NoopRenderer<>(context));
+			return;
+		}
+
 		event.registerEntityRenderer(ModEntities.CRYSTAL_ENTITY.get(), CrystalEntityRenderer::new);
 	}
 
