@@ -2,9 +2,12 @@ package net.exohayvan.dissolver_enhanced.helpers;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.minecraft.block.AbstractBlock;
+import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
@@ -19,14 +22,16 @@ public final class RegistryKeyCompat {
     public static Item.Settings itemSettings(String id) {
         return withRegistryKey(
             new Item.Settings(),
-            RegistryKey.of(RegistryKeys.ITEM, Identifier.of(DissolverEnhanced.MOD_ID, id))
+            RegistryKey.of(RegistryKeys.ITEM, Identifier.of(DissolverEnhanced.MOD_ID, id)),
+            Item.class
         );
     }
 
     public static AbstractBlock.Settings blockSettings(String id, AbstractBlock.Settings settings) {
         return withRegistryKey(
             settings,
-            RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(DissolverEnhanced.MOD_ID, id))
+            RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(DissolverEnhanced.MOD_ID, id)),
+            Block.class
         );
     }
 
@@ -50,30 +55,30 @@ public final class RegistryKeyCompat {
         throw new IllegalStateException("Could not find compatible EntityType builder method for " + key.getValue() + ".");
     }
 
-    private static <T> T withRegistryKey(T settings, RegistryKey<?> key) {
-        if (assignRegistryKeyField(settings, key)) {
-            return settings;
+    private static <T> T withRegistryKey(T settings, RegistryKey<?> key, Class<?> registryValueType) {
+        Method method = registryKeyMethod(settings, registryValueType);
+        if (method != null) {
+            try {
+                method.setAccessible(true);
+                method.invoke(settings, key);
+                return settings;
+            } catch (ReflectiveOperationException | RuntimeException exception) {
+                throw new IllegalStateException("Could not assign registry key " + key.getValue() + " to settings.", exception);
+            }
         }
 
-        Method method = registryKeyMethod(settings);
-        if (method == null) {
-            return settings;
-        }
-
-        try {
-            method.setAccessible(true);
-            method.invoke(settings, key);
-            return settings;
-        } catch (ReflectiveOperationException | RuntimeException exception) {
-            throw new IllegalStateException("Could not assign registry key " + key.getValue() + " to settings.", exception);
-        }
+        assignRegistryKeyField(settings, key, registryValueType);
+        return settings;
     }
 
-    private static boolean assignRegistryKeyField(Object settings, RegistryKey<?> key) {
+    private static boolean assignRegistryKeyField(Object settings, RegistryKey<?> key, Class<?> registryValueType) {
         Class<?> type = settings.getClass();
         while (type != null) {
             for (Field field : type.getDeclaredFields()) {
                 if (!isRegistryKeyParameter(field.getType())) {
+                    continue;
+                }
+                if (!isRegistryKeyFieldName(field.getName()) && !isRegistryKeyTarget(field.getGenericType(), registryValueType)) {
                     continue;
                 }
 
@@ -92,15 +97,15 @@ public final class RegistryKeyCompat {
         return false;
     }
 
-    private static Method registryKeyMethod(Object settings) {
+    private static Method registryKeyMethod(Object settings, Class<?> registryValueType) {
         for (Method method : settings.getClass().getMethods()) {
-            if (isRegistryKeySettingsMethod(settings, method)) {
+            if (isRegistryKeySettingsMethod(settings, method, registryValueType)) {
                 return method;
             }
         }
 
         for (Method method : settings.getClass().getDeclaredMethods()) {
-            if (isRegistryKeySettingsMethod(settings, method)) {
+            if (isRegistryKeySettingsMethod(settings, method, registryValueType)) {
                 return method;
             }
         }
@@ -108,7 +113,7 @@ public final class RegistryKeyCompat {
         return null;
     }
 
-    private static boolean isRegistryKeySettingsMethod(Object settings, Method method) {
+    private static boolean isRegistryKeySettingsMethod(Object settings, Method method, Class<?> registryValueType) {
         if (method.getParameterCount() != 1) {
             return false;
         }
@@ -117,9 +122,65 @@ public final class RegistryKeyCompat {
         if (parameterType != RegistryKey.class && !parameterType.getName().equals("net.minecraft.class_5321")) {
             return false;
         }
+        if (!isRegistryKeyMethodName(method.getName()) && !isRegistryKeyTarget(method.getGenericParameterTypes()[0], registryValueType)) {
+            return false;
+        }
 
         Class<?> returnType = method.getReturnType();
         return returnType == Void.TYPE || returnType.isAssignableFrom(settings.getClass()) || settings.getClass().isAssignableFrom(returnType);
+    }
+
+    private static boolean isRegistryKeyMethodName(String name) {
+        String lowerName = name.toLowerCase(java.util.Locale.ROOT);
+        return lowerName.equals("setid")
+            || lowerName.equals("id")
+            || lowerName.equals("registrykey")
+            || lowerName.equals("setregistrykey")
+            || lowerName.contains("registrykey");
+    }
+
+    private static boolean isRegistryKeyFieldName(String name) {
+        String lowerName = name.toLowerCase(java.util.Locale.ROOT);
+        return lowerName.equals("id")
+            || lowerName.equals("key")
+            || lowerName.equals("registrykey")
+            || lowerName.contains("registrykey");
+    }
+
+    private static boolean isRegistryKeyTarget(Type type, Class<?> registryValueType) {
+        if (!(type instanceof ParameterizedType parameterizedType)) {
+            return false;
+        }
+
+        if (!isRegistryKeyType(parameterizedType.getRawType())) {
+            return false;
+        }
+
+        Type[] typeArguments = parameterizedType.getActualTypeArguments();
+        return typeArguments.length == 1 && isRegistryValueType(typeArguments[0], registryValueType);
+    }
+
+    private static boolean isRegistryKeyType(Type type) {
+        if (type == RegistryKey.class) {
+            return true;
+        }
+        if (type instanceof Class<?> typeClass) {
+            return typeClass.getName().equals("net.minecraft.class_5321");
+        }
+
+        return false;
+    }
+
+    private static boolean isRegistryValueType(Type type, Class<?> registryValueType) {
+        if (type == registryValueType) {
+            return true;
+        }
+        if (type instanceof Class<?> typeClass) {
+            return typeClass.getName().equals(registryValueType.getName())
+                || typeClass.getSimpleName().equals(registryValueType.getSimpleName());
+        }
+
+        return false;
     }
 
     @SuppressWarnings("unchecked")
