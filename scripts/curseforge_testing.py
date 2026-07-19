@@ -7,6 +7,8 @@ import copy
 import concurrent.futures
 import datetime
 import difflib
+import errno
+import hashlib
 import io
 import json
 import os
@@ -34,6 +36,7 @@ warnings.filterwarnings(
 )
 
 CONFIG_FILE = Path(__file__).with_name("config.data")
+CACHE_FILE = Path(__file__).with_name("cache.data")
 RELATIVE_LOCATION_FILE = Path(__file__).with_name("relative_location.data")
 TEST_RESULTS_FILE = Path(__file__).with_name("tests.txt")
 TEST_LOG_DIR = Path(__file__).with_name("logs")
@@ -68,7 +71,7 @@ PRESERVED_DISSOLVER_CONFIG_FILES = {"analytics-instance-id.txt"}
 
 DE_NAME_RE = re.compile(r"^DE\s*[\(\[]\s*([^\)\]]+?)\s*[\)\]]\s*$", re.IGNORECASE)
 BUILD_BRANCH_RE = re.compile(
-    r"^(?:minecraft[-_/])?(fabric|forge|neoforge|quilt)[-_/](\d+(?:\.\d+)*(?:\.x)?)$",
+    r"^(?:minecraft[-_/])?(fabric|forge|neoforge|quilt)[-_/](\d+(?:\.\d+)*(?:\.x)?)(?:[-_/].+)?$",
     re.IGNORECASE,
 )
 USE_EASYOCR = True
@@ -210,6 +213,138 @@ def append_test_result(line):
 
 def safe_log_name(value):
     return re.sub(r"[^A-Za-z0-9_.-]+", "-", str(value)).strip("-") or "instance"
+
+
+def artifact_sha256(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def branch_cache_key(branch):
+    return f"{branch['loader']}-{branch['version']}"
+
+
+def branch_cache_display(branch):
+    return f"{branch_loader_display(branch['loader'])}-{branch['version']}"
+
+
+def load_test_cache(path=CACHE_FILE):
+    path = Path(path)
+    if not path.is_file():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        print(f"Warning: could not read test cache {path}: {error}")
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def save_test_cache(cache, path=CACHE_FILE):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f"{path.name}.tmp")
+    temporary.write_text(json.dumps(cache, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def record_cached_pass(cache, plan, jar_hash, test_count, cache_path=CACHE_FILE):
+    branch = plan["branch"]
+    display = branch_cache_display(branch)
+    cache[branch_cache_key(branch)] = {
+        "jar_sha256": str(jar_hash),
+        "passed_tests": int(test_count),
+        "note": f"{display} = passed {int(test_count)} tests",
+        "updated": utc_now_text(),
+    }
+    save_test_cache(cache, cache_path)
+
+
+def instance_cache_key(instance):
+    return str(
+        instance.get("de_game_version")
+        or instance.get("game_version")
+        or instance.get("version")
+        or instance.get("folder")
+        or "unknown"
+    )
+
+
+def record_cached_instance_pass(
+    cache,
+    plan,
+    instance,
+    jar_hash,
+    test_count,
+    cache_path=CACHE_FILE,
+):
+    branch = plan["branch"]
+    cache_key = branch_cache_key(branch)
+    entry = cache.get(cache_key)
+    if not isinstance(entry, dict) or entry.get("jar_sha256") != str(jar_hash):
+        entry = {"jar_sha256": str(jar_hash), "instances": {}}
+        cache[cache_key] = entry
+    instances = entry.setdefault("instances", {})
+    instances[instance_cache_key(instance)] = {
+        "passed_tests": int(test_count),
+        "updated": utc_now_text(),
+    }
+    passed_tests = sum(
+        int(item.get("passed_tests", 0))
+        for item in instances.values()
+        if isinstance(item, dict)
+    )
+    entry["passed_tests"] = passed_tests
+    entry["note"] = (
+        f"{branch_cache_display(branch)} = passed {passed_tests} tests "
+        f"across {len(instances)} versions"
+    )
+    entry["updated"] = utc_now_text()
+    save_test_cache(cache, cache_path)
+
+
+def cached_instance_pass(cache, plan, instance, jar_hash, test_count):
+    entry = cache.get(branch_cache_key(plan["branch"]))
+    if not isinstance(entry, dict) or entry.get("jar_sha256") != str(jar_hash):
+        return False
+    instances = entry.get("instances")
+    if not isinstance(instances, dict):
+        return False
+    instance_entry = instances.get(instance_cache_key(instance))
+    return (
+        isinstance(instance_entry, dict)
+        and instance_entry.get("passed_tests") == int(test_count)
+    )
+
+
+def cached_pass_result(cache, plan, jar_hash, test_count):
+    entry = cache.get(branch_cache_key(plan["branch"]))
+    if not isinstance(entry, dict):
+        return None
+    if entry.get("jar_sha256") != str(jar_hash):
+        return None
+    if entry.get("passed_tests") != int(test_count):
+        return None
+    return {
+        "branch": plan["branch"],
+        "passed": True,
+        "tested_instances": len(plan.get("instances", [])),
+        "passed_tests": int(test_count),
+        "logs": [],
+        "cached": True,
+        "jar_sha256": str(jar_hash),
+    }
+
+
+def write_test_failure_log(name, content, log_dir=None):
+    log_dir = Path(log_dir or TEST_LOG_DIR)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    path = log_dir / f"{safe_log_name(name)}.log"
+    path.write_text(str(content), encoding="utf-8", errors="replace")
+    return path
 
 
 def instance_test_label(instance):
@@ -820,6 +955,188 @@ def parse_loader_version_from_branch(branch_name):
     return {"name": branch_name, "loader": loader.lower(), "version": version}
 
 
+def is_pull_request_branch(branch):
+    normal_branch = f"minecraft/{branch['loader']}-{branch['version']}"
+    return branch["name"] != normal_branch
+
+
+def pull_request_test_comment(result, max_log_characters=60000):
+    branch_name = result["branch"]["name"]
+    tested_instances = int(result.get("tested_instances", 0))
+    if result["passed"]:
+        if result.get("cached"):
+            passed_tests = int(result.get("passed_tests", 0))
+            return (
+                f"Local CurseForge testing passed for `{branch_name}` using the local test cache.\n\n"
+                f"This exact build jar already passed {passed_tests} local tests. "
+                "Launcher testing was skipped."
+            )
+        noun = "instance" if tested_instances == 1 else "instances"
+        return (
+            f"Local CurseForge testing passed for `{branch_name}`.\n\n"
+            f"All {tested_instances} tested CurseForge {noun} passed."
+        )
+
+    sections = [f"Local CurseForge testing failed for `{branch_name}`."]
+    remaining = max_log_characters
+    for log_path in result.get("logs", []):
+        path = Path(log_path)
+        try:
+            content = path.read_text(encoding="utf-8", errors="replace")
+        except OSError as error:
+            content = f"Could not read local failure log: {error}"
+        if len(content) > remaining:
+            content = content[-remaining:]
+            content = "[log truncated to fit GitHub comment]\n" + content
+        remaining = max(0, remaining - len(content))
+        sections.append(f"### `{path.name}`\n```text\n{content.rstrip()}\n```")
+        if remaining == 0:
+            break
+    return "\n\n".join(sections)
+
+
+def publish_pull_request_test_result(result, repo_root, runner=None):
+    branch = result["branch"]
+    if not is_pull_request_branch(branch):
+        return False
+
+    runner = runner or subprocess.run
+    common_options = {
+        "cwd": repo_root,
+        "text": True,
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+        "check": False,
+    }
+
+    try:
+        lookup = runner(
+            [
+                "gh", "pr", "list", "--state", "open", "--head", branch["name"],
+                "--json", "number,labels",
+            ],
+            **common_options,
+        )
+    except OSError as error:
+        print(f"Warning: could not run GitHub CLI for {branch['name']}: {error}")
+        return False
+    if lookup.returncode != 0:
+        print(f"Warning: could not find the pull request for {branch['name']}: {lookup.stderr.strip()}")
+        return False
+    try:
+        pull_requests = json.loads(lookup.stdout or "[]")
+    except json.JSONDecodeError:
+        print(f"Warning: GitHub CLI returned invalid pull request data for {branch['name']}.")
+        return False
+
+    target_repo = None
+    if not pull_requests:
+        try:
+            global_lookup = runner(
+                [
+                    "gh", "search", "prs", "--state", "open", "--head", branch["name"],
+                    "--limit", "100", "--json", "number,labels,repository",
+                ],
+                **common_options,
+            )
+            if global_lookup.returncode == 0:
+                pull_requests = json.loads(global_lookup.stdout or "[]")
+                if pull_requests:
+                    repository = pull_requests[0].get("repository") or {}
+                    target_repo = repository.get("nameWithOwner")
+        except (OSError, json.JSONDecodeError):
+            pull_requests = []
+
+    if not pull_requests:
+        try:
+            head = runner(["git", "rev-parse", branch["name"]], **common_options)
+            if head.returncode == 0:
+                all_open = runner(
+                    [
+                        "gh", "pr", "list", "--state", "open", "--limit", "100",
+                        "--json", "number,labels,headRefOid",
+                    ],
+                    **common_options,
+                )
+                if all_open.returncode == 0:
+                    candidates = json.loads(all_open.stdout or "[]")
+                    head_sha = head.stdout.strip()
+                    pull_requests = [
+                        candidate for candidate in candidates
+                        if candidate.get("headRefOid") == head_sha
+                    ]
+        except (OSError, json.JSONDecodeError):
+            pull_requests = []
+
+    if not pull_requests:
+        print(f"Warning: no open pull request found for branch {branch['name']}; skipping GitHub test status.")
+        return False
+
+    pull_request = pull_requests[0]
+    pull_request_number = str(pull_request["number"])
+    repo_arguments = ["--repo", target_repo] if target_repo else []
+    current_labels = {label.get("name") for label in pull_request.get("labels", [])}
+    desired_label = "testing:passed" if result["passed"] else "testing:failed"
+    opposite_label = "testing:failed" if result["passed"] else "testing:passed"
+    label_color = "2DA44E" if result["passed"] else "D1242F"
+    label_description = (
+        "Local CurseForge testing passed"
+        if result["passed"]
+        else "Local CurseForge testing failed"
+    )
+
+    if result.get("cached") and desired_label in current_labels and opposite_label not in current_labels:
+        print(
+            f"Verified PR #{pull_request_number} already has {desired_label} "
+            f"for cached result {branch['name']}."
+        )
+        return True
+
+    commands = [
+        [
+            "gh", "label", "create", desired_label, *repo_arguments, "--color", label_color,
+            "--description", label_description, "--force",
+        ]
+    ]
+    edit_command = ["gh", "pr", "edit", pull_request_number, *repo_arguments, "--add-label", desired_label]
+    if opposite_label in current_labels:
+        edit_command.extend(["--remove-label", opposite_label])
+    commands.append(edit_command)
+
+    for command in commands:
+        try:
+            completed = runner(command, **common_options)
+        except OSError as error:
+            print(f"Warning: GitHub update failed for PR #{pull_request_number}: {error}")
+            return False
+        if completed.returncode != 0:
+            print(f"Warning: GitHub update failed for PR #{pull_request_number}: {completed.stderr.strip()}")
+            return False
+
+    if result.get("cached"):
+        print(
+            f"Ensured PR #{pull_request_number} has {desired_label} "
+            f"for cached result {branch['name']}."
+        )
+        return True
+
+    comment = pull_request_test_comment(result)
+    try:
+        completed = runner(
+            ["gh", "pr", "comment", pull_request_number, *repo_arguments, "--body-file", "-"],
+            input=comment,
+            **common_options,
+        )
+    except OSError as error:
+        print(f"Warning: could not comment on PR #{pull_request_number}: {error}")
+        return False
+    if completed.returncode != 0:
+        print(f"Warning: could not comment on PR #{pull_request_number}: {completed.stderr.strip()}")
+        return False
+    print(f"Updated PR #{pull_request_number} with {desired_label} for {branch['name']}.")
+    return True
+
+
 def local_build_branches(repo_root):
     parsed = []
     for branch in read_local_git_branches(repo_root):
@@ -856,13 +1173,23 @@ def read_git_worktrees(repo_root):
 
 
 def attach_worktree_paths(repo_root, build_branches):
+    """Return only active loader worktrees located under workspace/minecraft.
+
+    The test runner must build the checkout a developer can see and switch in the
+    normal minecraft/<loader>-<version> folders.  Ignoring inactive local branch
+    refs prevents stale branches from falling back to non-existent sibling paths.
+    """
     worktrees = read_git_worktrees(repo_root)
-    workspace_root = repo_root.parent
+    minecraft_root = repo_root.parent / "minecraft"
+    attached = []
     for branch in build_branches:
-        branch["worktree_path"] = worktrees.get(branch["name"])
-        if not branch["worktree_path"]:
-            branch["worktree_path"] = workspace_root / f"Minecraft-{branch_loader_display(branch['loader'])}-{branch['version']}"
-    return build_branches
+        expected_path = minecraft_root / f"{branch['loader']}-{branch['version']}"
+        worktree_path = worktrees.get(branch["name"])
+        if worktree_path is None or worktree_path != expected_path or not worktree_path.is_dir():
+            continue
+        branch["worktree_path"] = worktree_path
+        attached.append(branch)
+    return attached
 
 
 def instance_matches_branch(instance, branch):
@@ -1250,26 +1577,132 @@ def estimated_instance_steps(instance):
     )
 
 
+def branch_test_count(plan, instance_counter=estimated_instance_steps):
+    return sum(instance_counter(instance) for instance in plan.get("instances", []))
+
+
+def partition_cached_instances(cache, plan, jar_hash, instance_counter=estimated_instance_steps):
+    cached = []
+    pending = []
+    for instance in plan.get("instances", []):
+        test_count = int(instance_counter(instance))
+        if cached_instance_pass(cache, plan, instance, jar_hash, test_count):
+            cached.append(instance)
+        else:
+            pending.append(instance)
+    return cached, pending
+
+
 def instance_progress_label(plan, instance):
     loader = str(plan["branch"].get("loader", "")).title() or str(plan.get("loader_version", "loader"))
     version = instance.get("de_game_version") or instance.get("game_version") or instance.get("version") or "unknown"
     return f"{loader}-{version}"
 
 
-def launch_all_instances_compact(plans, apply, automate_menus=False, ocr_debug=False):
+def initialize_branch_test_results(plans):
+    return {
+        plan["branch"]["name"]: {
+            "branch": plan["branch"],
+            "passed": True,
+            "tested_instances": len(plan.get("cached_instances", [])),
+            "logs": [],
+        }
+        for plan in plans
+    }
+
+
+def record_branch_instance_result(results, plan, passed, logs):
+    result = results[plan["branch"]["name"]]
+    result["tested_instances"] += 1
+    result["passed"] = result["passed"] and bool(passed)
+    result["logs"].extend(Path(log_path) for log_path in logs)
+
+
+def emit_branch_test_result(results, plan, on_plan_complete=None):
+    result = results[plan["branch"]["name"]]
+    if on_plan_complete:
+        on_plan_complete(result, plan)
+    return result
+
+
+def complete_branch_test_results(setup_plans, launch_results):
+    results_by_branch = {result["branch"]["name"]: result for result in launch_results}
+    completed = []
+    for plan in setup_plans:
+        branch = plan["branch"]
+        result = results_by_branch.get(branch["name"])
+        if result is None:
+            failure_logs = [Path(path) for path in branch.get("test_failure_logs", [])]
+            if not failure_logs:
+                failure_logs = [write_test_failure_log(
+                    f"{branch['name']}-setup-failure",
+                    "Local CurseForge testing could not start because branch setup failed.\n",
+                )]
+            result = {
+                "branch": branch,
+                "passed": False,
+                "tested_instances": 0,
+                "logs": failure_logs,
+            }
+        completed.append(result)
+    return completed
+
+
+def finalize_branch_test_result(
+    result,
+    plan,
+    test_cache,
+    repo_root,
+    cache_path=CACHE_FILE,
+    publisher=publish_pull_request_test_result,
+):
+    test_count = int(plan.get("test_count", 0))
+    result["passed_tests"] = test_count
+    if plan.get("cache_enabled") and result["passed"] and not result.get("cached"):
+        record_cached_pass(
+            test_cache,
+            plan,
+            plan["jar_sha256"],
+            test_count,
+            cache_path=cache_path,
+        )
+    publisher(result, repo_root)
+    return result
+
+
+def launch_all_instances_compact(
+    plans,
+    apply,
+    automate_menus=False,
+    ocr_debug=False,
+    on_plan_complete=None,
+    on_instance_complete=None,
+):
     all_instances = [(plan, instance) for plan in plans for instance in plan["instances"]]
     total_instances = len(all_instances)
+    results = initialize_branch_test_results(plans)
     if not total_instances:
-        return
+        return list(results.values())
 
     try:
         from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
     except ImportError:
         total_progress = SingleProgressDisplay("Total Progress", total_instances)
-        for plan, instance in all_instances:
-            total_progress.step(f"{instance_progress_label(plan, instance)} testing")
-            launch_instance(instance, apply, automate_menus, ocr_debug, verbose=False)
-        return
+        for plan in plans:
+            for instance in plan["instances"]:
+                total_progress.step(f"{instance_progress_label(plan, instance)} testing")
+                passed = launch_instance(instance, apply, automate_menus, ocr_debug, verbose=False)
+                failure_logs = [] if passed else copy_instance_logs_for_failure(instance, instance_test_label(instance))
+                if not passed and not failure_logs:
+                    failure_logs = [write_test_failure_log(
+                        f"{instance_test_label(instance)}-failure",
+                        "Local CurseForge testing failed, but Minecraft did not produce a readable log file.\n",
+                    )]
+                record_branch_instance_result(results, plan, passed, failure_logs)
+                if on_instance_complete:
+                    on_instance_complete(results[plan["branch"]["name"]], plan, instance, passed)
+            emit_branch_test_result(results, plan, on_plan_complete)
+        return list(results.values())
 
     with Progress(
         TextColumn("{task.description}", justify="left"),
@@ -1349,19 +1782,30 @@ def launch_all_instances_compact(plans, apply, automate_menus=False, ocr_debug=F
                         progress.update(instance_task, status=f"error: {error}")
 
                 if passed:
+                    failure_logs = []
                     progress.update(instance_task, completed=total_steps, status="done")
                 else:
                     failed_step = min(total_steps, passed_steps + 1)
-                    copied_logs = copy_instance_logs_for_failure(instance, label)
-                    first_log = f"./logs/{copied_logs[0].name}" if copied_logs else "./logs"
+                    failure_logs = copy_instance_logs_for_failure(instance, label)
+                    if not failure_logs:
+                        failure_logs = [write_test_failure_log(
+                            f"{label}-failure",
+                            f"Local CurseForge testing failed at step {failed_step}, but Minecraft did not produce a readable log file.\n",
+                        )]
+                    first_log = f"./logs/{failure_logs[0].name}" if failure_logs else "./logs"
                     append_test_result(f"step{failed_step}:fail see {first_log}")
                     progress.update(instance_task, completed=passed_steps, status=f"failed step {failed_step}")
+                record_branch_instance_result(results, plan, passed, failure_logs)
+                if on_instance_complete:
+                    on_instance_complete(results[plan["branch"]["name"]], plan, instance, passed)
                 loader_done += 1
                 total_done += 1
                 progress.update(loader_task, completed=loader_done, status=f"{len(plan['instances']) - loader_done} left")
                 progress.update(total_task, completed=total_done, status=f"{total_instances - total_done} left")
                 progress.refresh()
                 progress.remove_task(instance_task)
+            emit_branch_test_result(results, plan, on_plan_complete)
+    return list(results.values())
 
 
 def prompt_for_build_branches(build_branches, selection_text=None, verbose=True):
@@ -1434,6 +1878,64 @@ def print_command_failure_tail(output, max_lines=80):
         print(f"    {line}")
 
 
+def repair_unreadable_tracked_files(worktree_path, verbose=True):
+    """Restore clean tracked files that iCloud has left locally unreadable.
+
+    Gradle 9 fails during input hashing when CloudDocs returns EDEADLK for a
+    placeholder file. Only clean Git-tracked files are repaired, so local edits
+    are never overwritten.
+    """
+    try:
+        tracked = subprocess.check_output(
+            ["git", "ls-files", "-z"], cwd=worktree_path
+        ).split(b"\0")
+        dirty_output = subprocess.check_output(
+            ["git", "status", "--porcelain", "-z"], cwd=worktree_path
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return 0
+
+    dirty_paths = set()
+    for record in dirty_output.split(b"\0"):
+        if len(record) >= 4:
+            dirty_paths.add(record[3:].decode("utf-8", "replace"))
+
+    repaired = 0
+    for raw_path in tracked:
+        if not raw_path:
+            continue
+        relative_path = raw_path.decode("utf-8", "replace")
+        if relative_path in dirty_paths:
+            continue
+        path = worktree_path / relative_path
+        try:
+            with path.open("rb") as file:
+                file.read(1)
+        except OSError as error:
+            if error.errno != errno.EDEADLK:
+                continue
+            try:
+                path.unlink()
+                subprocess.run(
+                    ["git", "checkout", "HEAD", "--", relative_path],
+                    cwd=worktree_path,
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                with path.open("rb") as file:
+                    file.read(1)
+            except (OSError, subprocess.CalledProcessError) as repair_error:
+                if verbose:
+                    print(f"  Could not rehydrate {relative_path}: {repair_error}")
+                continue
+            repaired += 1
+            if verbose:
+                print(f"  Rehydrated iCloud source file: {relative_path}")
+    return repaired
+
+
 def build_branch_artifact(branch, apply, gradle_task, verbose=True):
     worktree_path = Path(branch["worktree_path"])
     command = gradle_clean_command(gradle_command(worktree_path, gradle_task))
@@ -1444,6 +1946,7 @@ def build_branch_artifact(branch, apply, gradle_task, verbose=True):
         print("  Missing worktree; skipping branch.")
         return None
     if apply:
+        repair_unreadable_tracked_files(worktree_path, verbose=True)
         try:
             result = subprocess.run(
                 command,
@@ -1455,9 +1958,11 @@ def build_branch_artifact(branch, apply, gradle_task, verbose=True):
                 errors="replace",
             )
         except subprocess.CalledProcessError as error:
-            if verbose:
-                print(f"  Build failed with exit code {error.returncode}; skipping branch.")
-                print_command_failure_tail(error.stdout)
+            print(f"  Build failed with exit code {error.returncode}; skipping branch.")
+            print_command_failure_tail(error.stdout)
+            failure_output = error.stdout or f"Gradle build failed with exit code {error.returncode}.\n"
+            failure_log = write_test_failure_log(f"{branch['name']}-build", failure_output)
+            branch.setdefault("test_failure_logs", []).append(failure_log)
             return None
         if verbose and result.stdout.strip():
             print_command_failure_tail(result.stdout, max_lines=20)
@@ -3005,6 +3510,8 @@ def launch_instance(instance, apply, automate_menus=False, ocr_debug=False, verb
 def run_testing_phase(instances, build_branches, apply, selection_text=None, gradle_task="assemble", install_loader_api=True, automate_menus=False, ocr_debug=False, debug=False):
     verbose_setup = debug or not apply
     selected_branches = prompt_for_build_branches(build_branches, selection_text, verbose=verbose_setup)
+    repo_root = Path(__file__).resolve().parents[1]
+    test_cache = load_test_cache()
     if verbose_setup:
         print_section("Testing Phase")
     if not selected_branches:
@@ -3034,6 +3541,8 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
                 "instances": branch_instances,
                 "loader_version": loader_version,
                 "setup_steps": setup_step_count(branch_instances, install_loader_api),
+                "test_count": branch_test_count({"instances": branch_instances}),
+                "cache_enabled": bool(apply and automate_menus),
             }
         )
 
@@ -3065,7 +3574,10 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
                     status="building",
             )
             progress_events = queue.Queue()
-            setup_workers = min(4, len(setup_plans))
+            # Every loader includes the same Common composite build. Keep Gradle
+            # builds serialized so the shared source tree is never read or cached
+            # concurrently, especially from iCloud-backed workspaces.
+            setup_workers = 1
             executor = concurrent.futures.ThreadPoolExecutor(max_workers=setup_workers)
             try:
                 future_to_plan = {executor.submit(setup_branch, plan, progress_events): plan for plan in setup_plans}
@@ -3138,6 +3650,48 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
         if apply and not Path(artifact).is_file():
             return None
 
+        if apply:
+            try:
+                plan["jar_sha256"] = artifact_sha256(artifact)
+            except OSError as error:
+                failure_log = write_test_failure_log(
+                    f"{branch['name']}-hash-failure",
+                    f"Could not hash built artifact {artifact}: {error}\n",
+                )
+                branch.setdefault("test_failure_logs", []).append(failure_log)
+                return None
+            if plan["cache_enabled"]:
+                cached_result = cached_pass_result(
+                    test_cache,
+                    plan,
+                    plan["jar_sha256"],
+                    plan["test_count"],
+                )
+                if cached_result:
+                    plan["cached_result"] = cached_result
+                    if progress_events:
+                        progress_events.put((plan["index"], plan["setup_steps"], "cached pass"))
+                    elif verbose:
+                        print(
+                            f"  Cache hit: {branch_cache_display(branch)} jar already passed "
+                            f"{plan['test_count']} tests; skipping launcher setup."
+                        )
+                    return plan
+
+                cached_instances, pending_instances = partition_cached_instances(
+                    test_cache,
+                    plan,
+                    plan["jar_sha256"],
+                )
+                if cached_instances:
+                    plan["all_instances"] = list(plan["instances"])
+                    plan["cached_instances"] = cached_instances
+                    plan["instances"] = pending_instances
+                    branch_instances = pending_instances
+                    if verbose:
+                        versions = ", ".join(instance_cache_key(item) for item in cached_instances)
+                        print(f"  Partial cache hit; skipping passed versions: {versions}")
+
         if progress_events:
             progress_events.put((plan["index"], 1, "preparing"))
         if verbose:
@@ -3163,7 +3717,10 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
         if not run_apply_setups_with_rich():
             progress_events = queue.Queue()
             progress_display = BranchProgressDisplay(setup_plans)
-            setup_workers = min(4, len(setup_plans))
+            # Every loader includes the same Common composite build. Keep Gradle
+            # builds serialized so the shared source tree is never read or cached
+            # concurrently, especially from iCloud-backed workspaces.
+            setup_workers = 1
             executor = concurrent.futures.ThreadPoolExecutor(max_workers=setup_workers)
             try:
                 future_to_plan = {executor.submit(setup_branch, plan, progress_events): plan for plan in setup_plans}
@@ -3219,16 +3776,63 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
                 launch_plans.append(result)
 
     launch_plans.sort(key=lambda item: item["index"])
+    completed_by_branch = {}
+
+    def finish_branch(result, plan):
+        if apply:
+            finalize_branch_test_result(result, plan, test_cache, repo_root)
+        else:
+            result["passed_tests"] = int(plan.get("test_count", 0))
+        completed_by_branch[plan["branch"]["name"]] = result
+
+    def finish_instance(_result, plan, instance, passed):
+        if not (apply and plan.get("cache_enabled") and passed):
+            return
+        record_cached_instance_pass(
+            test_cache,
+            plan,
+            instance,
+            plan["jar_sha256"],
+            estimated_instance_steps(instance),
+        )
+
+    prepared_names = {plan["branch"]["name"] for plan in launch_plans}
+    for plan in setup_plans:
+        if plan["branch"]["name"] not in prepared_names:
+            failure_result = complete_branch_test_results([plan], [])[0]
+            finish_branch(failure_result, plan)
+
+    runnable_plans = []
+    for plan in launch_plans:
+        cached_result = plan.get("cached_result")
+        if cached_result:
+            finish_branch(cached_result, plan)
+        else:
+            runnable_plans.append(plan)
+    launch_plans = runnable_plans
+
     if not launch_plans:
-        print("No prepared branches are available to launch.")
-        return
+        print("No launcher tests need to run; branches were cached or failed during setup.")
+        return [
+            completed_by_branch[plan["branch"]["name"]]
+            for plan in setup_plans
+            if plan["branch"]["name"] in completed_by_branch
+        ]
 
     if apply and not debug:
         clear_terminal_scrollback()
 
     if apply and not debug:
-        launch_all_instances_compact(launch_plans, apply, automate_menus, ocr_debug)
+        launch_all_instances_compact(
+            launch_plans,
+            apply,
+            automate_menus,
+            ocr_debug,
+            on_plan_complete=finish_branch,
+            on_instance_complete=finish_instance,
+        )
     else:
+        launch_results_by_branch = initialize_branch_test_results(launch_plans)
         for plan in launch_plans:
             loader_version = plan["loader_version"]
             branch_instances = plan["instances"]
@@ -3237,7 +3841,22 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
             for instance in branch_instances:
                 print(f"    {instance['de_game_version']}: {instance['folder']}")
             for instance in branch_instances:
-                launch_instance(instance, apply, automate_menus, ocr_debug)
+                passed = launch_instance(instance, apply, automate_menus, ocr_debug)
+                failure_logs = [] if passed else copy_instance_logs_for_failure(instance, instance_test_label(instance))
+                if not passed and not failure_logs:
+                    failure_logs = [write_test_failure_log(
+                        f"{instance_test_label(instance)}-failure",
+                        "Local CurseForge testing failed, but Minecraft did not produce a readable log file.\n",
+                    )]
+                record_branch_instance_result(launch_results_by_branch, plan, passed, failure_logs)
+                finish_instance(launch_results_by_branch[plan["branch"]["name"]], plan, instance, passed)
+            emit_branch_test_result(launch_results_by_branch, plan, finish_branch)
+
+    return [
+        completed_by_branch[plan["branch"]["name"]]
+        for plan in setup_plans
+        if plan["branch"]["name"] in completed_by_branch
+    ]
 
 
 def report_instances(instances, groups):
