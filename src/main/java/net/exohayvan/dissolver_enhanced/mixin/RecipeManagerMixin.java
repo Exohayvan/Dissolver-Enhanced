@@ -58,30 +58,34 @@ public class RecipeManagerMixin {
     }
 
     private static void queueRecipeLoad(Map<Identifier, JsonElement> map) {
-        EMCValues.beginStartup(map.size());
-        RECIPES.clear();
-        RECIPE_SOURCES.clear();
-        RECIPE_JSON.clear();
-        STONE_CUTTER_LIST.clear();
+        Map<Identifier, JsonElement> recipeSnapshot = new HashMap<>(map);
 
-        // let tag items load before looking through recipes
-        new Thread(() -> {
+        // Recipe reloads can overlap on the client. Keep the mutable collector state exclusive
+        // until EMCValues has copied it, so a newer reload cannot mutate the previous load's map.
+        new Thread(() -> RECIPE_LOAD_COORDINATOR.runExclusive(() -> {
+            EMCValues.beginStartup(recipeSnapshot.size());
+            RECIPES.clear();
+            RECIPE_SOURCES.clear();
+            RECIPE_JSON.clear();
+            STONE_CUTTER_LIST.clear();
+
+            // let tag items load before looking through recipes
             wait(800);
 
-            Iterator<Map.Entry<Identifier, JsonElement>> recipeIterator = map.entrySet().iterator();
+            Iterator<Map.Entry<Identifier, JsonElement>> recipeIterator = recipeSnapshot.entrySet().iterator();
             while (recipeIterator.hasNext()) {
                 Map.Entry<Identifier, JsonElement> entry = recipeIterator.next();
                 try {
                     if (!getJsonRecipe(entry)) {
                         EMCValues.incrementRecipesNotUnderstood();
                     }
-                }catch (Exception e) {
+                } catch (Exception e) {
                     EMCValues.incrementRecipesNotUnderstood();
                 }
             }
 
             EMCValues.recipesLoaded(RECIPES, RECIPE_SOURCES, RECIPE_JSON, STONE_CUTTER_LIST);
-        }).start();
+        })).start();
     }
 
     private static Map<Identifier, JsonElement> loadRecipeJson(ResourceManager resourceManager) {
@@ -418,6 +422,7 @@ public class RecipeManagerMixin {
     private static final HashMap<String, String> RECIPE_SOURCES = new HashMap<String, String>();
     private static final HashMap<String, String> RECIPE_JSON = new HashMap<String, String>();
     private static final List<String> STONE_CUTTER_LIST = new ArrayList<>();
+    private static final RecipeLoadCoordinator RECIPE_LOAD_COORDINATOR = new RecipeLoadCoordinator();
 
     private static void addRecipe(String id, int extraEMC, List<String> INGREDIENTS, String recipeId, JsonElement rawJson) {
         // multiple recipes for same output
