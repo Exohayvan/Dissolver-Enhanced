@@ -16,6 +16,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
+import net.exohayvan.dissolver_enhanced.data.RecipeLoadCoordinator;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
@@ -34,18 +35,17 @@ public class RecipeManagerMixin {
         if (RecipeGenerator.DISSOLVER_RECIPE != null) {
             recipes.put(Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
         }
+        Map<Identifier, JsonElement> recipeSnapshot = new HashMap<>(recipes);
 
-        EMCValues.beginStartup(recipes.size());
-        RECIPES.clear();
-        RECIPE_SOURCES.clear();
-        RECIPE_JSON.clear();
-        STONE_CUTTER_LIST.clear();
-
-        // let tag items load before looking through recipes
-        new Thread(() -> {
+        new Thread(() -> RecipeLoadCoordinator.GLOBAL.runExclusive(() -> {
+            EMCValues.beginStartup(recipeSnapshot.size());
+            RECIPES.clear();
+            RECIPE_SOURCES.clear();
+            RECIPE_JSON.clear();
+            STONE_CUTTER_LIST.clear();
             wait(800);
 
-            for (Map.Entry<Identifier, JsonElement> entry : recipes.entrySet()) {
+            for (Map.Entry<Identifier, JsonElement> entry : recipeSnapshot.entrySet()) {
                 try {
                     if (!getJsonRecipe(entry)) {
                         EMCValues.incrementRecipesNotUnderstood();
@@ -56,7 +56,7 @@ public class RecipeManagerMixin {
             }
 
             EMCValues.recipesLoaded(RECIPES, RECIPE_SOURCES, RECIPE_JSON, STONE_CUTTER_LIST);
-        }).start();
+        })).start();
     }
 
     private static final HashMap<String, List<String>> RECIPES = new HashMap<String, List<String>>();
