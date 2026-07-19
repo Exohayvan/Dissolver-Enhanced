@@ -74,7 +74,7 @@ jobs:
           branches="$(git ls-remote --heads origin \
             | awk '{print $2}' \
             | sed 's#refs/heads/##' \
-            | grep -E '^(minecraft|stardewvalley)-' \
+            | grep -E '^(minecraft|stardewvalley)/' \
             | jq -R -s -c 'split("\n") | map(select(length > 0))')"
           echo "branches=${branches}" >> "$GITHUB_OUTPUT"
           echo "Discovered branches: ${branches}"
@@ -103,22 +103,22 @@ jobs:
           path: ${{ env.TARGET_DIR }}
 
       - name: Validate Gradle wrappers
-        if: ${{ startsWith(matrix.branch, 'minecraft-') }}
+        if: ${{ startsWith(matrix.branch, 'minecraft/') }}
         uses: gradle/actions/wrapper-validation@v4
         with:
           min-wrapper-count: 2
 
       - name: Select Java version
-        if: ${{ startsWith(matrix.branch, 'minecraft-') }}
+        if: ${{ startsWith(matrix.branch, 'minecraft/') }}
         id: java
         shell: bash
         run: |
           case "${{ matrix.branch }}" in
-            forge-1.20.1)
+            minecraft/forge-1.20.x)
               echo "version=17" >> "$GITHUB_OUTPUT"
               echo "distribution=temurin" >> "$GITHUB_OUTPUT"
               ;;
-            fabric-26.1.2)
+            minecraft/fabric-26.1.x)
               echo "version=25" >> "$GITHUB_OUTPUT"
               echo "distribution=temurin" >> "$GITHUB_OUTPUT"
               ;;
@@ -129,41 +129,41 @@ jobs:
           esac
 
       - name: Setup Java ${{ steps.java.outputs.version }}
-        if: ${{ startsWith(matrix.branch, 'minecraft-') }}
+        if: ${{ startsWith(matrix.branch, 'minecraft/') }}
         uses: actions/setup-java@v4
         with:
           java-version: ${{ steps.java.outputs.version }}
           distribution: ${{ steps.java.outputs.distribution }}
 
       - name: Build Minecraft ${{ matrix.branch }}
-        if: ${{ startsWith(matrix.branch, 'minecraft-') }}
+        if: ${{ startsWith(matrix.branch, 'minecraft/') }}
         working-directory: ${{ env.TARGET_DIR }}
         run: |
           chmod +x ./gradlew
           ./gradlew build -x test --no-daemon
 
       - name: Upload Minecraft ${{ matrix.branch }} artifacts
-        if: ${{ startsWith(matrix.branch, 'minecraft-') }}
+        if: ${{ startsWith(matrix.branch, 'minecraft/') }}
         uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ matrix.branch }}-${{ github.sha }}
           path: ${{ env.TARGET_DIR }}/build/libs/
 
       - name: Setup .NET 6
-        if: ${{ startsWith(matrix.branch, 'stardewvalley-') }}
+        if: ${{ startsWith(matrix.branch, 'stardewvalley/') }}
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 6.0.x
 
       - name: Build Stardew Valley ${{ matrix.branch }}
-        if: ${{ startsWith(matrix.branch, 'stardewvalley-') }}
+        if: ${{ startsWith(matrix.branch, 'stardewvalley/') }}
         working-directory: ${{ env.TARGET_DIR }}
         run: |
           dotnet build --configuration Release -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj"
           common_version="$(grep -m1 '<Version>' "../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
           mod_version="$(grep -m1 '<Version>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
           game_version="$(grep -m1 '<GameVersion>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<GameVersion>([^<]+)</GameVersion>.*#\1#')"
-          loader_name="$(echo "${{ matrix.branch }}" | cut -d- -f2)"
+          loader_name="$(basename "${{ matrix.branch }}" | cut -d- -f1)"
           archive_name="dissolver-enhanced-${mod_version}-${loader_name}-sv${game_version}-c${common_version}"
           rm -rf package
           mkdir -p "package/DissolverEnhanced"
@@ -172,7 +172,7 @@ jobs:
           zip -r "../${archive_name}.zip" DissolverEnhanced -x '*.pdb' '*.deps.json' 'ref/*'
 
       - name: Upload Stardew Valley ${{ matrix.branch }} artifacts
-        if: ${{ startsWith(matrix.branch, 'stardewvalley-') }}
+        if: ${{ startsWith(matrix.branch, 'stardewvalley/') }}
         uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ matrix.branch }}-${{ github.sha }}
@@ -242,47 +242,67 @@ jobs:
           path: ${{ env.TARGET_DIR }}
 
       - name: Validate Gradle wrappers
-        if: ${{ startsWith(github.ref_name, 'minecraft-') }}
+        if: ${{ startsWith(github.ref_name, 'minecraft/') }}
         uses: gradle/actions/wrapper-validation@v4
         with:
           min-wrapper-count: 2
 
-      - name: Setup Java 21
-        if: ${{ startsWith(github.ref_name, 'minecraft-') }}
+      - name: Select Java version
+        if: ${{ startsWith(github.ref_name, 'minecraft/') }}
+        id: current-java
+        shell: bash
+        run: |
+          case "${{ github.ref_name }}" in
+            minecraft/forge-1.20.x)
+              echo "version=17" >> "$GITHUB_OUTPUT"
+              echo "distribution=temurin" >> "$GITHUB_OUTPUT"
+              ;;
+            minecraft/fabric-26.1.x)
+              echo "version=25" >> "$GITHUB_OUTPUT"
+              echo "distribution=temurin" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "version=21" >> "$GITHUB_OUTPUT"
+              echo "distribution=microsoft" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Setup Java ${{ steps.current-java.outputs.version }}
+        if: ${{ startsWith(github.ref_name, 'minecraft/') }}
         uses: actions/setup-java@v4
         with:
-          java-version: 21
-          distribution: microsoft
+          java-version: ${{ steps.current-java.outputs.version }}
+          distribution: ${{ steps.current-java.outputs.distribution }}
 
       - name: Build current Minecraft branch
-        if: ${{ startsWith(github.ref_name, 'minecraft-') }}
+        if: ${{ startsWith(github.ref_name, 'minecraft/') }}
         working-directory: ${{ env.TARGET_DIR }}
         run: |
           chmod +x ./gradlew
           ./gradlew build -x test --no-daemon
 
       - name: Upload current Minecraft branch artifacts
-        if: ${{ startsWith(github.ref_name, 'minecraft-') }}
+        if: ${{ startsWith(github.ref_name, 'minecraft/') }}
         uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ github.ref_name }}-${{ github.sha }}
           path: ${{ env.TARGET_DIR }}/build/libs/
 
       - name: Setup .NET 6
-        if: ${{ startsWith(github.ref_name, 'stardewvalley-') }}
+        if: ${{ startsWith(github.ref_name, 'stardewvalley/') }}
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 6.0.x
 
       - name: Build current Stardew Valley branch
-        if: ${{ startsWith(github.ref_name, 'stardewvalley-') }}
+        if: ${{ startsWith(github.ref_name, 'stardewvalley/') }}
         working-directory: ${{ env.TARGET_DIR }}
         run: |
           dotnet build --configuration Release -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj"
           common_version="$(grep -m1 '<Version>' "../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
           mod_version="$(grep -m1 '<Version>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
           game_version="$(grep -m1 '<GameVersion>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<GameVersion>([^<]+)</GameVersion>.*#\1#')"
-          loader_name="$(echo "${{ github.ref_name }}" | cut -d- -f2)"
+          loader_name="$(basename "${{ github.ref_name }}" | cut -d- -f1)"
           archive_name="dissolver-enhanced-${mod_version}-${loader_name}-sv${game_version}-c${common_version}"
           rm -rf package
           mkdir -p "package/DissolverEnhanced"
@@ -291,7 +311,7 @@ jobs:
           zip -r "../${archive_name}.zip" DissolverEnhanced -x '*.pdb' '*.deps.json' 'ref/*'
 
       - name: Upload current Stardew Valley branch artifacts
-        if: ${{ startsWith(github.ref_name, 'stardewvalley-') }}
+        if: ${{ startsWith(github.ref_name, 'stardewvalley/') }}
         uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ github.ref_name }}-${{ github.sha }}

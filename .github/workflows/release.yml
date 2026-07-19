@@ -89,11 +89,11 @@ jobs:
         shell: bash
         run: |
           case "${{ matrix.target.branch }}" in
-            minecraft-forge-1.20.x)
+            minecraft/forge-1.20.x)
               echo "version=17" >> "$GITHUB_OUTPUT"
               echo "distribution=temurin" >> "$GITHUB_OUTPUT"
               ;;
-            minecraft-fabric-26.1.x)
+            minecraft/fabric-26.1.x)
               echo "version=25" >> "$GITHUB_OUTPUT"
               echo "distribution=temurin" >> "$GITHUB_OUTPUT"
               ;;

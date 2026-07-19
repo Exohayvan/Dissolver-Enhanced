@@ -2,7 +2,7 @@
   "targets": [
     {
       "id": "minecraft-fabric-1.21.x",
-      "branch": "minecraft-fabric-1.21.x",
+      "branch": "minecraft/fabric-1.21.x",
       "platform": "minecraft",
       "game": "Minecraft",
       "loader": "Fabric",
@@ -44,7 +44,7 @@
     },
     {
       "id": "minecraft-fabric-26.1.x",
-      "branch": "minecraft-fabric-26.1.x",
+      "branch": "minecraft/fabric-26.1.x",
       "platform": "minecraft",
       "game": "Minecraft",
       "loader": "Fabric",
@@ -76,7 +76,7 @@
     },
     {
       "id": "minecraft-neoforge-1.21.x",
-      "branch": "minecraft-neoforge-1.21.x",
+      "branch": "minecraft/neoforge-1.21.x",
       "platform": "minecraft",
       "game": "Minecraft",
       "loader": "NeoForge",
@@ -109,7 +109,7 @@
     },
     {
       "id": "minecraft-forge-1.20.x",
-      "branch": "minecraft-forge-1.20.x",
+      "branch": "minecraft/forge-1.20.x",
       "platform": "minecraft",
       "game": "Minecraft",
       "loader": "Forge",
@@ -142,7 +142,7 @@
     },
     {
       "id": "minecraft-quilt-1.21.x",
-      "branch": "minecraft-quilt-1.21.x",
+      "branch": "minecraft/quilt-1.21.x",
       "platform": "minecraft",
       "game": "Minecraft",
       "loader": "Quilt",
@@ -173,7 +173,7 @@
     },
     {
       "id": "stardewvalley-smapi-1.6.15",
-      "branch": "stardewvalley-smapi-1.6.15",
+      "branch": "stardewvalley/smapi-1.6.15",
       "platform": "stardewvalley",
       "game": "StardewValley",
       "loader": "SMAPI",
