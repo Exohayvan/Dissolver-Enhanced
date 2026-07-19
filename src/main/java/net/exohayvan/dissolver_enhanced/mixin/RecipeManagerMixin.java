@@ -18,6 +18,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
+import net.exohayvan.dissolver_enhanced.data.RecipeLoadCoordinator;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
 import net.minecraft.core.HolderLookup;
@@ -58,22 +59,20 @@ public class RecipeManagerMixin {
         if (map == null) {
             return;
         }
+        Map<ResourceLocation, JsonElement> recipeSnapshot = new HashMap<>(map);
 
-        EMCValues.beginStartup(map.size());
-        RECIPES.clear();
-        RECIPE_SOURCES.clear();
-        RECIPE_JSON.clear();
-        STONE_CUTTER_LIST.clear();
-        // let tag items load before looking through recipes
-        new Thread(() -> {
+        new Thread(() -> RecipeLoadCoordinator.GLOBAL.runExclusive(() -> {
+            EMCValues.beginStartup(recipeSnapshot.size());
+            RECIPES.clear();
+            RECIPE_SOURCES.clear();
+            RECIPE_JSON.clear();
+            STONE_CUTTER_LIST.clear();
             wait(800);
 
-            Iterator<Map.Entry<ResourceLocation, JsonElement>> recipeIterator = map.entrySet().iterator();
-            while (recipeIterator.hasNext()) {
-                Map.Entry<ResourceLocation, JsonElement> entry = recipeIterator.next();
+            for (Map.Entry<ResourceLocation, JsonElement> entry : recipeSnapshot.entrySet()) {
                 try {
                     getRecipe(entry);
-                }catch (Exception e) {
+                } catch (Exception e) {
                     if (!getJsonRecipe(entry)) {
                         EMCValues.incrementRecipesNotUnderstood();
                     }
@@ -81,7 +80,7 @@ public class RecipeManagerMixin {
             }
 
             EMCValues.recipesLoaded(RECIPES, RECIPE_SOURCES, RECIPE_JSON, STONE_CUTTER_LIST);
-        }).start();
+        })).start();
     }
 
     @SuppressWarnings("unchecked")

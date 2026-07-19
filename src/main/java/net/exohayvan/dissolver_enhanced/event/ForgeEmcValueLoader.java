@@ -9,6 +9,7 @@ import java.util.Map;
 import net.minecraft.core.Holder;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
+import net.exohayvan.dissolver_enhanced.data.RecipeLoadCoordinator;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -38,6 +39,10 @@ public class ForgeEmcValueLoader {
     }
 
     private static void loadRecipes(MinecraftServer server) {
+        RecipeLoadCoordinator.GLOBAL.runExclusive(() -> loadRecipesLocked(server));
+    }
+
+    private static void loadRecipesLocked(MinecraftServer server) {
         RECIPES.clear();
         RECIPE_SOURCES.clear();
         RECIPE_JSON.clear();
