@@ -10,14 +10,14 @@ permissions:
   contents: read
 
 env:
-  COMMON_BRANCH: main
+  COMMON_BRANCH: common
   COMMON_DIR: Dissolver Enhanced (Common)
   TARGET_DIR: Dissolver Enhanced (Target)
 
 jobs:
   build-common:
     name: Build Common
-    if: ${{ github.ref_name == 'main' }}
+    if: ${{ github.ref_name == 'common' }}
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Common
@@ -59,7 +59,7 @@ jobs:
 
   discover-version-branches:
     name: Discover Version Branches
-    if: ${{ github.ref_name == 'main' }}
+    if: ${{ github.ref_name == 'common' }}
     runs-on: ubuntu-22.04
     outputs:
       branches: ${{ steps.branches.outputs.branches }}
@@ -81,7 +81,7 @@ jobs:
 
   build-all-version-branches:
     name: Build ${{ matrix.branch }}
-    if: ${{ github.ref_name == 'main' && needs.discover-version-branches.outputs.branches != '[]' }}
+    if: ${{ github.ref_name == 'common' && needs.discover-version-branches.outputs.branches != '[]' }}
     needs: discover-version-branches
     runs-on: ubuntu-22.04
     strategy:
@@ -186,7 +186,7 @@ jobs:
 
   package-all-builds:
     name: Package All Builds
-    if: ${{ github.ref_name == 'main' && needs.build-common.result == 'success' && needs.build-all-version-branches.result == 'success' }}
+    if: ${{ github.ref_name == 'common' && needs.build-common.result == 'success' && needs.build-all-version-branches.result == 'success' }}
     needs:
       - build-common
       - build-all-version-branches
@@ -232,7 +232,7 @@ jobs:
 
   build-current-version-branch:
     name: Build Current Branch
-    if: ${{ github.ref_name != 'main' }}
+    if: ${{ github.ref_name != 'common' }}
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Common
