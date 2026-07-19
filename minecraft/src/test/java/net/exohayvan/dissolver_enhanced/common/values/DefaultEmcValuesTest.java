@@ -16,6 +16,7 @@ class DefaultEmcValuesTest {
         assertTrue(values.items().size() > 300);
         assertTrue(values.tags().size() > 40);
         assertEquals(BigInteger.valueOf(2), values.items().get("minecraft:cobblestone"));
+        assertEquals(BigInteger.valueOf(150), values.items().get("cobblemon:relic_coin"));
         assertEquals(BigInteger.valueOf(16), values.tags().get("minecraft:logs"));
     }
 
