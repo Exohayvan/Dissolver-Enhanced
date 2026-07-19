@@ -15,6 +15,8 @@ items:
   minecraft:moss_block: 2
   minecraft:raw_iron: 215
   minecraft:raw_gold: 1340
+  # Cobblemon relic coins smelt into one vanilla gold nugget.
+  cobblemon:relic_coin: 150
   minecraft:raw_copper: 206
   minecraft:cobbled_deepslate: 2
   minecraft:blackstone: 2
