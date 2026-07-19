@@ -47,3 +47,5 @@ obj/
 scripts/__pycache__/
 scripts/config.data
 scripts/tests.txt
+scripts/logs/
+scripts/cache.data*
