@@ -1,0 +1,330 @@
+{
+  "versions": {
+    "1.21": {
+      "create_world": {
+        "text": "| Create New World | Cancel",
+        "updated": "2026-05-22T04:03:48.000Z",
+        "variant": "bright-text",
+        "x": 0.416015625,
+        "y": 0.9346733668341709
+      },
+      "game_mode": {
+        "clicks": 2,
+        "text": "Gane Mode: JurVival",
+        "updated": "2026-05-22T04:03:12.000Z",
+        "variant": "easyocr",
+        "x": 0.5009765625,
+        "y": 0.3655778894472362
+      },
+      "open_create_world": {
+        "text": "Create New World",
+        "updated": "2026-05-22T04:08:02.000Z",
+        "variant": "fallback",
+        "x": 0.5,
+        "y": 0.8994974874371859
+      },
+      "singleplayer": {
+        "text": "Ingle ayer",
+        "updated": "2026-05-22T04:02:39.000Z",
+        "variant": "resized",
+        "x": 0.50390625,
+        "y": 0.49874371859296485
+      },
+      "world_tab": {
+        "text": "Horld",
+        "updated": "2026-05-22T04:03:17.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.08793969849246232
+      },
+      "world_type": {
+        "clicks": 1,
+        "text": "Horld Type Default",
+        "updated": "2026-05-22T04:03:43.000Z",
+        "variant": "easyocr",
+        "x": 0.267578125,
+        "y": 0.21482412060301506
+      }
+    },
+    "1.21.1": {
+      "create_world": {
+        "text": "| Create New World | Cancel",
+        "updated": "2026-05-22T05:27:47.000Z",
+        "variant": "bright-text",
+        "x": 0.416015625,
+        "y": 0.9346733668341709
+      },
+      "game_mode": {
+        "clicks": 2,
+        "text": "Gane Mode: JurVival",
+        "updated": "2026-05-22T05:27:09.000Z",
+        "variant": "easyocr",
+        "x": 0.5009765625,
+        "y": 0.3655778894472362
+      },
+      "open_create_world": {
+        "text": "Create New World",
+        "updated": "2026-05-22T05:36:14.000Z",
+        "variant": "fallback",
+        "x": 0.5,
+        "y": 0.8994974874371859
+      },
+      "singleplayer": {
+        "text": "Ingle ayer",
+        "updated": "2026-05-22T05:26:36.000Z",
+        "variant": "resized",
+        "x": 0.50390625,
+        "y": 0.49874371859296485
+      },
+      "world_tab": {
+        "text": "Horld",
+        "updated": "2026-05-22T05:27:15.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.08793969849246232
+      },
+      "world_type": {
+        "clicks": 1,
+        "text": "Horld Type Default",
+        "updated": "2026-05-22T05:27:42.000Z",
+        "variant": "easyocr",
+        "x": 0.267578125,
+        "y": 0.21482412060301506
+      }
+    },
+    "1.21.2": {
+      "create_world": {
+        "text": "| Create New World | Cancel",
+        "updated": "2026-05-23T03:31:11.000Z",
+        "variant": "bright-text",
+        "x": 0.416015625,
+        "y": 0.9346733668341709
+      },
+      "game_mode": {
+        "clicks": 2,
+        "text": "Gane Mode: JurVival",
+        "updated": "2026-05-23T03:30:29.000Z",
+        "variant": "easyocr",
+        "x": 0.5009765625,
+        "y": 0.3655778894472362
+      },
+      "singleplayer": {
+        "text": "Singleplayer",
+        "updated": "2026-05-23T03:29:53.000Z",
+        "variant": "easyocr",
+        "x": 0.498046875,
+        "y": 0.4949748743718593
+      },
+      "world_tab": {
+        "text": "Horld",
+        "updated": "2026-05-23T03:30:35.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.08793969849246232
+      },
+      "world_type": {
+        "clicks": 1,
+        "text": "Horld Type: Default",
+        "updated": "2026-05-23T03:31:05.000Z",
+        "variant": "easyocr",
+        "x": 0.267578125,
+        "y": 0.21482412060301506
+      }
+    },
+    "1.21.3": {
+      "create_world": {
+        "text": "| Create New World | Cancel",
+        "updated": "2026-05-23T03:34:10.000Z",
+        "variant": "bright-text",
+        "x": 0.416015625,
+        "y": 0.9346733668341709
+      },
+      "game_mode": {
+        "clicks": 2,
+        "text": "Game Mode: Survival",
+        "updated": "2026-05-23T03:33:29.000Z",
+        "variant": "raw",
+        "x": 0.501953125,
+        "y": 0.36809045226130654
+      },
+      "singleplayer": {
+        "text": "Ingle ayer",
+        "updated": "2026-05-23T03:32:53.000Z",
+        "variant": "resized",
+        "x": 0.50390625,
+        "y": 0.49874371859296485
+      },
+      "world_tab": {
+        "text": "Horld",
+        "updated": "2026-05-23T03:33:35.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.08793969849246232
+      },
+      "world_type": {
+        "clicks": 1,
+        "text": "Horld Type: Default",
+        "updated": "2026-05-23T03:34:04.000Z",
+        "variant": "easyocr",
+        "x": 0.267578125,
+        "y": 0.21482412060301506
+      }
+    },
+    "1.21.4": {
+      "create_world": {
+        "text": "| Create New World | Cancel",
+        "updated": "2026-05-23T03:37:11.000Z",
+        "variant": "bright-text",
+        "x": 0.416015625,
+        "y": 0.9346733668341709
+      },
+      "game_mode": {
+        "clicks": 2,
+        "text": "Game Mode: Survival",
+        "updated": "2026-05-23T03:36:29.000Z",
+        "variant": "raw",
+        "x": 0.501953125,
+        "y": 0.36809045226130654
+      },
+      "singleplayer": {
+        "text": "Singleplayer",
+        "updated": "2026-05-23T03:35:52.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.4949748743718593
+      },
+      "world_tab": {
+        "text": "Horld",
+        "updated": "2026-05-23T03:36:35.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.08793969849246232
+      },
+      "world_type": {
+        "clicks": 1,
+        "text": "Horld Type Default",
+        "updated": "2026-05-23T03:37:05.000Z",
+        "variant": "easyocr",
+        "x": 0.267578125,
+        "y": 0.21482412060301506
+      }
+    },
+    "1.21.5": {
+      "create_world": {
+        "text": "| Create New World | Cancel",
+        "updated": "2026-05-23T03:40:17.000Z",
+        "variant": "bright-text",
+        "x": 0.416015625,
+        "y": 0.9346733668341709
+      },
+      "game_mode": {
+        "clicks": 2,
+        "text": "Gane Mode; Survival",
+        "updated": "2026-05-23T03:39:35.000Z",
+        "variant": "easyocr",
+        "x": 0.5,
+        "y": 0.36683417085427134
+      },
+      "singleplayer": {
+        "text": "Singleplayer",
+        "updated": "2026-05-23T03:38:58.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.4949748743718593
+      },
+      "world_tab": {
+        "text": "Horld",
+        "updated": "2026-05-23T03:39:41.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.08793969849246232
+      },
+      "world_type": {
+        "clicks": 1,
+        "text": "Horld Type Default",
+        "updated": "2026-05-23T03:40:11.000Z",
+        "variant": "easyocr",
+        "x": 0.267578125,
+        "y": 0.21482412060301506
+      }
+    },
+    "1.21.6": {
+      "create_world": {
+        "text": "| Create New World | Taal",
+        "updated": "2026-05-23T03:43:20.000Z",
+        "variant": "medium-text",
+        "x": 0.416015625,
+        "y": 0.9183417085427136
+      },
+      "game_mode": {
+        "clicks": 2,
+        "text": "Game Mode: Survival",
+        "updated": "2026-05-23T03:42:39.000Z",
+        "variant": "easyocr",
+        "x": 0.5,
+        "y": 0.36683417085427134
+      },
+      "singleplayer": {
+        "text": "Singleplayer",
+        "updated": "2026-05-23T03:42:03.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.4949748743718593
+      },
+      "world_tab": {
+        "text": "Horld",
+        "updated": "2026-05-23T03:42:45.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.08793969849246232
+      },
+      "world_type": {
+        "clicks": 1,
+        "text": "Horld Type Default",
+        "updated": "2026-05-23T03:43:14.000Z",
+        "variant": "easyocr",
+        "x": 0.267578125,
+        "y": 0.21482412060301506
+      }
+    },
+    "1.21.7": {
+      "create_world": {
+        "text": "| Create New World | Cancel |",
+        "updated": "2026-05-23T03:46:24.000Z",
+        "variant": "medium-text",
+        "x": 0.51953125,
+        "y": 0.9346733668341709
+      },
+      "game_mode": {
+        "clicks": 2,
+        "text": "Game Mode: Survival",
+        "updated": "2026-05-23T03:45:42.000Z",
+        "variant": "easyocr",
+        "x": 0.5,
+        "y": 0.36683417085427134
+      },
+      "singleplayer": {
+        "text": "Singleplayer",
+        "updated": "2026-05-23T03:45:05.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.4949748743718593
+      },
+      "world_tab": {
+        "text": "Horld",
+        "updated": "2026-05-23T03:45:48.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.08793969849246232
+      },
+      "world_type": {
+        "clicks": 1,
+        "text": "Horld Type Default",
+        "updated": "2026-05-23T03:46:18.000Z",
+        "variant": "easyocr",
+        "x": 0.267578125,
+        "y": 0.21482412060301506
+      }
+    }
+  }
+}
