@@ -27,7 +27,7 @@ permissions:
   contents: write
 
 env:
-  COMMON_BRANCH: main
+  COMMON_BRANCH: common
   COMMON_DIR: Dissolver Enhanced (Common)
   TARGET_DIR: Dissolver Enhanced (Target)
 
