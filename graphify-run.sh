@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
-# Build or refresh Graphify artifacts for the checked-out repository.
+# Build the hierarchy-first Dissolver Enhanced architecture maps.
+# Outputs stay on this data/graphify-out worktree so source worktrees remain clean.
 set -euo pipefail
 
-repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-cd "$repo_root"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+workspace_root="$(cd -- "$script_dir/../.." && pwd)"
 
-if ! command -v graphify >/dev/null 2>&1; then
-    printf '%s\n' 'graphify is not installed or is not on PATH.' >&2
-    exit 1
-fi
-
-exec graphify . "$@"
+case "${1:-build}" in
+  build)
+    exec python3 "$script_dir/build_architecture_map.py" --root "$workspace_root" --out "$script_dir"
+    ;;
+  2d)
+    exec open "$script_dir/graph-2d.html"
+    ;;
+  3d)
+    exec open "$script_dir/graph-3d.html"
+    ;;
+  *)
+    printf '%s\n' 'Usage: graphify-run.sh [build|2d|3d]' >&2
+    exit 64
+    ;;
+esac
