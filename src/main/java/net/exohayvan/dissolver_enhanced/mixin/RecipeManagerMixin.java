@@ -31,6 +31,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.profiler.Profiler;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
+import net.exohayvan.dissolver_enhanced.data.RecipeLoadCoordinator;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
 
 @Mixin(RecipeManager.class)
@@ -47,23 +48,21 @@ public class RecipeManagerMixin {
 
     @Inject(method = "apply", at = @At("HEAD"))
     private void applyMixin(Map<Identifier, JsonElement> map, ResourceManager resourceManager, Profiler profiler, CallbackInfo info) {
-        EMCValues.beginStartup(map.size());
-        RECIPES.clear();
-        RECIPE_SOURCES.clear();
-        RECIPE_JSON.clear();
-        STONE_CUTTER_LIST.clear();
+        Map<Identifier, JsonElement> recipeSnapshot = new HashMap<>(map);
         RegistryOps<JsonElement> registryOps = this.registryLookup.getOps(JsonOps.INSTANCE);
 
-        // let tag items load before looking through recipes
-        new Thread(() -> {
+        new Thread(() -> RecipeLoadCoordinator.GLOBAL.runExclusive(() -> {
+            EMCValues.beginStartup(recipeSnapshot.size());
+            RECIPES.clear();
+            RECIPE_SOURCES.clear();
+            RECIPE_JSON.clear();
+            STONE_CUTTER_LIST.clear();
             wait(800);
 
-            Iterator<Map.Entry<Identifier, JsonElement>> recipeIterator = map.entrySet().iterator();
-            while (recipeIterator.hasNext()) {
-                Map.Entry<Identifier, JsonElement> entry = recipeIterator.next();
+            for (Map.Entry<Identifier, JsonElement> entry : recipeSnapshot.entrySet()) {
                 try {
                     getRecipe(entry, registryOps);
-                }catch (Exception e) {
+                } catch (Exception e) {
                     if (!getJsonRecipe(entry)) {
                         EMCValues.incrementRecipesNotUnderstood();
                     }
@@ -71,7 +70,7 @@ public class RecipeManagerMixin {
             }
 
             EMCValues.recipesLoaded(RECIPES, RECIPE_SOURCES, RECIPE_JSON, STONE_CUTTER_LIST);
-        }).start();
+        })).start();
     }
 
     private static final HashMap<String, List<String>> RECIPES = new HashMap<String, List<String>>();
