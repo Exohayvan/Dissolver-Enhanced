@@ -13,7 +13,7 @@ def commonDir = [
 	"Common/minecraft"
 ].collect { file(it) }.find { it.exists() }
 if (commonDir == null) {
-	throw new GradleException("Common worktree not found. Expected one of ../Common, ../Dissolver Enhanced (Common), or ./Common.")
+	throw new GradleException("Common worktree not found. Expected one of ../../common, ../Common, ../Dissolver Enhanced (Common), or ./Common.")
 }
 
 def commonPropertiesFile = file("${commonDir}/gradle.properties")

@@ -1,39 +1,27 @@
 package net.exohayvan.dissolver_enhanced.inventory;
 
 import java.math.BigInteger;
-import java.util.Iterator;
-import java.util.List;
 import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
-import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
-import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
-import net.minecraft.core.NonNullList;
-import net.minecraft.world.Container;
-import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-public class DissolverInventoryInput implements Container {
-    private final NonNullList<ItemStack> stacks;
-    private final int width;
-    private final int height;
-    private final DissolverScreenHandler handler;
-    private Player player;
+public class DissolverInventoryInput extends BaseDissolverInventory {
+    private static final int SLOTS = 3;
 
-    private int SLOTS = 3;
+    private final DissolverScreenHandler handler;
+    private final Player player;
 
     public DissolverInventoryInput(DissolverScreenHandler handler, Player player) {
-        this.stacks = NonNullList.withSize(SLOTS, ItemStack.EMPTY);
+        super(handler, SLOTS, 1);
         this.handler = handler;
         this.player = player;
-        this.width = SLOTS;
-        this.height = 1;
     }
 
     public DissolverSlotInput getInputSlot() {
@@ -49,45 +37,10 @@ public class DissolverInventoryInput implements Container {
     }
 
     public int slots() {
-        return this.SLOTS;
+        return SLOTS;
     }
 
-    public int getContainerSize() {
-        return this.stacks.size();
-    }
-
-    public boolean isEmpty() {
-        Iterator<ItemStack> var1 = this.stacks.iterator();
-
-        ItemStack itemStack;
-        do {
-            if (!var1.hasNext()) {
-                return true;
-            }
-
-            itemStack = (ItemStack)var1.next();
-        } while(itemStack.isEmpty());
-
-        return false;
-    }
-
-    public ItemStack getItem(int slot) {
-        return slot >= this.getContainerSize() ? ItemStack.EMPTY : (ItemStack)this.stacks.get(slot);
-    }
-
-    public ItemStack removeItemNoUpdate(int slot) {
-        return ContainerHelper.takeItem(this.stacks, slot);
-    }
-
-    public ItemStack removeItem(int slot, int amount) {
-        ItemStack itemStack = ContainerHelper.removeItem(this.stacks, slot, amount);
-        if (!itemStack.isEmpty()) {
-            this.handler.slotsChanged(this);
-        }
-
-        return itemStack;
-    }
-
+    @Override
     public void setItem(int slot, ItemStack stack) {
         if (player == null) return;
 
@@ -118,7 +71,7 @@ public class DissolverInventoryInput implements Container {
             } else if (slot == 1) {
                 String itemId = EMCKey.fromStack(stack);
                 if (EMCValues.get(itemId) == 0) {
-                    ModAnalytics.captureDissolverItemRejected(namespace(itemId), itemName(itemId), baseItemId(itemId), rejectionReason(itemId));
+                    EMCHelper.captureDissolverItemRejected(itemId, EMCHelper.rejectionReason(itemId));
                     EMCHelper.reportMissingItemValue(player, stack);
                     player.getInventory().placeItemBackInInventory(stack);
                     return;
@@ -138,67 +91,5 @@ public class DissolverInventoryInput implements Container {
 
         this.stacks.set(slot, stack);
         this.handler.slotsChanged(this);
-    }
-
-    public void setChanged() {
-    }
-
-    public boolean stillValid(Player player) {
-        return true;
-    }
-
-    public void clearContent() {
-        this.stacks.clear();
-    }
-
-    public int getHeight() {
-        return this.height;
-    }
-
-    public int getWidth() {
-        return this.width;
-    }
-
-    public List<ItemStack> getHeldStacks() {
-        return List.copyOf(this.stacks);
-    }
-
-    private static String baseItemId(String itemId) {
-        return EMCKey.baseItemId(itemId);
-    }
-
-    private static String namespace(String itemId) {
-        String baseItemId = baseItemId(itemId);
-        int namespaceEnd = baseItemId.indexOf(":");
-        return namespaceEnd == -1 ? "unknown" : baseItemId.substring(0, namespaceEnd);
-    }
-
-    private static String itemName(String itemId) {
-        String baseItemId = baseItemId(itemId);
-        int namespaceEnd = baseItemId.indexOf(":");
-        return namespaceEnd == -1 ? baseItemId : baseItemId.substring(namespaceEnd + 1);
-    }
-
-    private static boolean isCreativeItem(String itemId) {
-        String baseItemId = baseItemId(itemId);
-        return baseItemId.contains("spawn_egg")
-            || baseItemId.contains("command_block")
-            || baseItemId.contains("bedrock")
-            || baseItemId.contains("barrier")
-            || baseItemId.contains("structure_block")
-            || baseItemId.contains("jigsaw")
-            || baseItemId.contains("spawner")
-            || baseItemId.contains("vault")
-            || baseItemId.contains("end_portal_frame")
-            || baseItemId.contains("budding_amethyst")
-            || baseItemId.contains("reinforced_deepslate");
-    }
-
-    private static String rejectionReason(String itemId) {
-        if (isCreativeItem(itemId) && !ModConfig.CREATIVE_ITEMS) {
-            return "creative_disabled";
-        }
-
-        return "no_emc";
     }
 }

@@ -29,6 +29,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.exohayvan.dissolver_enhanced.common.machine.MachineTiming;
 
 public abstract class CustomBlockEntity extends BlockEntity implements WorldlyContainer, MenuProvider, Nameable {
     private LockCode lock;
@@ -88,6 +89,35 @@ public abstract class CustomBlockEntity extends BlockEntity implements WorldlyCo
     protected abstract NonNullList<ItemStack> getHeldStacks();
 
     protected abstract void setHeldStacks(NonNullList<ItemStack> inventory);
+
+    protected static int machineTicksForRate(int emc, int emcPerSecond, int idleTicks) {
+        if (emc <= 0) return idleTicks;
+
+        int rate = Math.max(1, emcPerSecond);
+        long ticks = ((long) emc * MachineTiming.TICKS_PER_SECOND + rate - 1L) / rate;
+        return (int) Math.max(1L, Math.min(Integer.MAX_VALUE, ticks));
+    }
+
+    protected static NonNullList<ItemStack> loadInventory(ValueInput input, int size) {
+        NonNullList<ItemStack> inventory = NonNullList.withSize(size, ItemStack.EMPTY);
+        ContainerHelper.loadAllItems(input, inventory);
+        return inventory;
+    }
+
+    protected static void saveInventory(ValueOutput output, NonNullList<ItemStack> inventory) {
+        ContainerHelper.saveAllItems(output, inventory);
+    }
+
+    protected static int[] slotsForFace(
+        Direction side,
+        int[] topSlots,
+        int[] bottomSlots,
+        int[] sideSlots
+    ) {
+        if (side == Direction.UP) return topSlots;
+        if (side == Direction.DOWN) return bottomSlots;
+        return sideSlots;
+    }
 
     public boolean isEmpty() {
         Iterator<ItemStack> var1 = this.getHeldStacks().iterator();

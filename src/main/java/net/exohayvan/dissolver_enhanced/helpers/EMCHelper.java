@@ -154,64 +154,62 @@ public class EMCHelper {
     }
 
     public static boolean canAddItem(ItemStack itemStack, Player player) {
-        String itemId = EMCKey.fromStack(itemStack);
-        BigInteger emcValue = EMCValues.getBig(itemId);
-
-        if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
-            captureDissolverItemRejected(itemId, rejectionReason(itemId));
-            reportMissingItemValue(player, itemStack, itemId);
-            return false;
-        }
-
-        return true;
+        return validateAddItem(itemStack, player) != null;
     }
 
     // ADD
 
     // added from another inventory & not private EMC
     public static boolean addItem(ItemStack itemStack, Level world) {
-        String itemId = EMCKey.fromStack(itemStack);
-        BigInteger emcValue = EMCValues.getBig(itemId);
-
-        if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
-            captureDissolverItemRejected(itemId, rejectionReason(itemId));
+        ValidatedItem validated = validateAddItem(itemStack, null);
+        if (validated == null) {
             return false;
         }
 
         int itemCount = itemStack.getCount();
-        BigInteger addedEmcValue = stackValue(emcValue, itemCount, ItemHelper.getDurabilityPercentage(itemStack));
+        BigInteger addedEmcValue = stackValue(
+            validated.emcValue(), itemCount, ItemHelper.getDurabilityPercentage(itemStack)
+        );
 
-        boolean learned = serverAddItem(world, storageKey(itemId), addedEmcValue);
+        boolean learned = serverAddItem(world, storageKey(validated.itemId()), addedEmcValue);
         if (learned) {
-            captureDissolverItemDissolved(itemId, itemCount, emcValue, addedEmcValue, isCreativeItem(itemId));
-            captureDissolverItemLearned(itemId, itemCount, emcValue, addedEmcValue, isCreativeItem(itemId));
+            boolean creativeItem = isCreativeItem(validated.itemId());
+            captureDissolverItemDissolved(
+                validated.itemId(), itemCount, validated.emcValue(), addedEmcValue, creativeItem
+            );
+            captureDissolverItemLearned(
+                validated.itemId(), itemCount, validated.emcValue(), addedEmcValue, creativeItem
+            );
         }
         return learned;
     }
 
     public static boolean addItem(ItemStack itemStack, Player player, DissolverScreenHandler handler) {
-        String itemId = EMCKey.fromStack(itemStack);
-        BigInteger emcValue = EMCValues.getBig(itemId);
-
-        if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
-            captureDissolverItemRejected(itemId, rejectionReason(itemId));
-            reportMissingItemValue(player, itemStack, itemId);
+        ValidatedItem validated = validateAddItem(itemStack, player);
+        if (validated == null) {
             return false;
         }
 
         // calculated new EMC (from DissolverInventoryInput)
         int itemCount = itemStack.getCount();
-        BigInteger addedEmcValue = stackValue(emcValue, itemCount, ItemHelper.getDurabilityPercentage(itemStack));
+        BigInteger addedEmcValue = stackValue(
+            validated.emcValue(), itemCount, ItemHelper.getDurabilityPercentage(itemStack)
+        );
 
-        boolean learned = learnItem(player, storageKey(itemId), false);
-        ModCriteria.triggerLearnedItem(player, itemId);
+        boolean learned = learnItem(player, storageKey(validated.itemId()), false);
+        ModCriteria.triggerLearnedItem(player, validated.itemId());
 
         EMCHelper.addEMCValue(player, addedEmcValue);
         sendEmcDeltaToClient(player, addedEmcValue);
 
-        captureDissolverItemDissolved(itemId, itemCount, emcValue, addedEmcValue, isCreativeItem(itemId));
+        boolean creativeItem = isCreativeItem(validated.itemId());
+        captureDissolverItemDissolved(
+            validated.itemId(), itemCount, validated.emcValue(), addedEmcValue, creativeItem
+        );
         if (learned) {
-            captureDissolverItemLearned(itemId, itemCount, emcValue, addedEmcValue, isCreativeItem(itemId));
+            captureDissolverItemLearned(
+                validated.itemId(), itemCount, validated.emcValue(), addedEmcValue, creativeItem
+            );
         }
 
         // refresh block inv content
@@ -222,6 +220,23 @@ public class EMCHelper {
         }).start();
 
         return true;
+    }
+
+    private static ValidatedItem validateAddItem(ItemStack itemStack, Player missingValueReporter) {
+        String itemId = EMCKey.fromStack(itemStack);
+        BigInteger emcValue = EMCValues.getBig(itemId);
+        if (checkValidEMC(emcValue, itemId, Action.ADD)) {
+            return new ValidatedItem(itemId, emcValue);
+        }
+
+        captureDissolverItemRejected(itemId, rejectionReason(itemId));
+        if (missingValueReporter != null) {
+            reportMissingItemValue(missingValueReporter, itemStack, itemId);
+        }
+        return null;
+    }
+
+    private record ValidatedItem(String itemId, BigInteger emcValue) {
     }
 
     // LEARN
@@ -446,7 +461,7 @@ public class EMCHelper {
         );
     }
 
-    private static void captureDissolverItemRejected(String itemId, String reason) {
+    public static void captureDissolverItemRejected(String itemId, String reason) {
         String baseItemId = EMCKey.baseItemId(itemId);
         ModAnalytics.captureDissolverItemRejected(
             namespace(itemId),
@@ -471,7 +486,7 @@ public class EMCHelper {
             || baseItemId.contains("reinforced_deepslate");
     }
 
-    private static String rejectionReason(String itemId) {
+    public static String rejectionReason(String itemId) {
         if (isCreativeItem(itemId) && !ModConfig.CREATIVE_ITEMS) {
             return "creative_disabled";
         }

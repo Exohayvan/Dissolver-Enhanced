@@ -18,7 +18,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
+import net.exohayvan.dissolver_enhanced.data.RecipeLoadCoordinator;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
+import net.exohayvan.dissolver_enhanced.helpers.RecipeMapAugmenter;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.FileToIdConverter;
@@ -39,11 +41,31 @@ public class RecipeManagerMixin {
 
     @Shadow
     protected static RecipeHolder<?> fromJson(
-        ResourceKey<Recipe<?>> recipeKey,
-        JsonObject recipeJson,
+        ResourceKey<Recipe<?>> id,
+        JsonObject json,
         HolderLookup.Provider registries
     ) {
         throw new AssertionError();
+    }
+
+    @Inject(method = "prepare", at = @At("RETURN"), cancellable = true)
+    private void addGeneratedDissolverRecipe(
+        ResourceManager resourceManager,
+        ProfilerFiller profiler,
+        CallbackInfoReturnable<RecipeMap> info
+    ) {
+        if (RecipeGenerator.DISSOLVER_RECIPE == null) return;
+
+        ResourceKey<Recipe<?>> recipeKey = ResourceKey.create(
+            Registries.RECIPE,
+            Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe")
+        );
+        RecipeHolder<?> generatedRecipe = fromJson(
+            recipeKey,
+            RecipeGenerator.DISSOLVER_RECIPE.deepCopy(),
+            registries
+        );
+        info.setReturnValue(RecipeMapAugmenter.append(info.getReturnValue(), generatedRecipe));
     }
 
     @Inject(method = "prepare", at = @At("HEAD"))
@@ -54,18 +76,17 @@ public class RecipeManagerMixin {
         if (RecipeGenerator.DISSOLVER_RECIPE != null) {
             recipes.put(Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe"), RecipeGenerator.DISSOLVER_RECIPE);
         }
+        Map<Identifier, JsonElement> recipeSnapshot = new HashMap<>(recipes);
 
-        EMCValues.beginStartup(recipes.size());
-        RECIPES.clear();
-        RECIPE_SOURCES.clear();
-        RECIPE_JSON.clear();
-        STONE_CUTTER_LIST.clear();
-
-        // let tag items load before looking through recipes
-        new Thread(() -> {
+        new Thread(() -> RecipeLoadCoordinator.GLOBAL.runExclusive(() -> {
+            EMCValues.beginStartup(recipeSnapshot.size());
+            RECIPES.clear();
+            RECIPE_SOURCES.clear();
+            RECIPE_JSON.clear();
+            STONE_CUTTER_LIST.clear();
             wait(800);
 
-            for (Map.Entry<Identifier, JsonElement> entry : recipes.entrySet()) {
+            for (Map.Entry<Identifier, JsonElement> entry : recipeSnapshot.entrySet()) {
                 try {
                     if (!getJsonRecipe(entry)) {
                         EMCValues.incrementRecipesNotUnderstood();
@@ -76,26 +97,7 @@ public class RecipeManagerMixin {
             }
 
             EMCValues.recipesLoaded(RECIPES, RECIPE_SOURCES, RECIPE_JSON, STONE_CUTTER_LIST);
-        }).start();
-    }
-
-    @Inject(method = "prepare", at = @At("RETURN"), cancellable = true)
-    private void addDissolverRecipe(
-        ResourceManager resourceManager,
-        ProfilerFiller profiler,
-        CallbackInfoReturnable<RecipeMap> info
-    ) {
-        JsonObject recipeJson = RecipeGenerator.DISSOLVER_RECIPE;
-        if (recipeJson == null) return;
-
-        ResourceKey<Recipe<?>> recipeKey = ResourceKey.create(
-            Registries.RECIPE,
-            Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe")
-        );
-        List<RecipeHolder<?>> recipes = new ArrayList<>(info.getReturnValue().values());
-        recipes.removeIf(recipe -> recipe.id().equals(recipeKey));
-        recipes.add(fromJson(recipeKey, recipeJson, registries));
-        info.setReturnValue(RecipeMap.create(recipes));
+        })).start();
     }
 
     private static final HashMap<String, List<String>> RECIPES = new HashMap<String, List<String>>();

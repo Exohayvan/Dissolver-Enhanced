@@ -19,7 +19,7 @@ def commonBuildDir = [
 ].collect { file(it) }.find { it.exists() }
 
 if (commonBuildDir == null) {
-	throw new GradleException("Common build not found. Expected one of ../Common, ../Dissolver Enhanced (Common), or ./Common.")
+	throw new GradleException("Common build not found. Expected one of ../../common, ../Common, ../Dissolver Enhanced (Common), or ./Common.")
 }
 
 includeBuild(commonBuildDir)

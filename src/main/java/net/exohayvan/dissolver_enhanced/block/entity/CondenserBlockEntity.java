@@ -134,18 +134,11 @@ public class CondenserBlockEntity extends CustomBlockEntity {
 
     private int getConversionTime() {
         int emc = condenseValue(this.stacks.get(INPUT_SLOT));
-        return ticksForRate(emc, getEmcPerSecond());
+        return machineTicksForRate(emc, getEmcPerSecond(), CONVERSION_TICKS_PER_EMC);
     }
 
     private int getEmcPerSecond() {
         return EmcCoreItem.getEmcPerSecond(this.stacks.get(CORE_SLOT));
-    }
-
-    private int ticksForRate(int emc, int emcPerSecond) {
-        if (emc <= 0) return CONVERSION_TICKS_PER_EMC;
-
-        long ticks = ((long) emc * MachineTiming.TICKS_PER_SECOND + Math.max(1, emcPerSecond) - 1L) / Math.max(1, emcPerSecond);
-        return (int) Math.max(1L, Math.min(Integer.MAX_VALUE, ticks));
     }
 
     private void resetProgress() {
@@ -155,15 +148,14 @@ public class CondenserBlockEntity extends CustomBlockEntity {
     @Override
     protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
         super.loadAdditional(input);
-        this.stacks = NonNullList.withSize(SIZE, ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(input, this.stacks);
+        this.stacks = loadInventory(input, SIZE);
         this.progress = input.getIntOr("Progress", 0);
     }
 
     @Override
     protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
         super.saveAdditional(output);
-        ContainerHelper.saveAllItems(output, this.stacks);
+        saveInventory(output, this.stacks);
         output.putInt("Progress", this.progress);
     }
 
@@ -194,9 +186,7 @@ public class CondenserBlockEntity extends CustomBlockEntity {
 
     @Override
     public int[] getSlotsForFace(Direction side) {
-        if (side == Direction.UP) return TOP_SLOTS;
-        if (side == Direction.DOWN) return BOTTOM_SLOTS;
-        return SIDE_SLOTS;
+        return slotsForFace(side, TOP_SLOTS, BOTTOM_SLOTS, SIDE_SLOTS);
     }
 
     @Override
