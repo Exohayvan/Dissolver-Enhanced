@@ -1,0 +1,33 @@
+plugins {
+    id 'net.minecraftforge.gradle' version '6.0.53'
+}
+
+group = 'net.exohayvan.dissolver_enhanced.compat'
+version = '1.20.2'
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.20.2'
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.2-48.1.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
+    testImplementation 'org.assertj:assertj-core:3.26.3'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+jar {
+    archiveBaseName = 'dissolver-criterion-compat-1.20.2'
+}

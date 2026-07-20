@@ -7,11 +7,12 @@ import net.minecraft.network.chat.Component;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.data.PlayerDataClient;
 import net.exohayvan.dissolver_enhanced.helpers.NumberHelpers;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = DissolverEnhanced.MOD_ID)
+@Mod.EventBusSubscriber(modid = DissolverEnhanced.MOD_ID, value = Dist.CLIENT)
 public class EMCOverlay {
     private static final int WHITE_COLOR = 0xFFFFFF;
 

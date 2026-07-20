@@ -155,6 +155,15 @@ test {
 }
 
 jar {
+	dependsOn ':criterion-compat-1.20.2:reobfJar', ':criterion-compat-1.20.3:reobfJar'
+
+	from({ zipTree(project(':criterion-compat-1.20.2').tasks.named('jar').get().archiveFile.get().asFile) }) {
+		include 'net/exohayvan/dissolver_enhanced/advancement/compat/v1202/**'
+	}
+	from({ zipTree(project(':criterion-compat-1.20.3').tasks.named('jar').get().archiveFile.get().asFile) }) {
+		include 'net/exohayvan/dissolver_enhanced/advancement/compat/v1203/**'
+	}
+
 	manifest {
 		attributes([
 			"Specification-Title": project.archives_base_name,

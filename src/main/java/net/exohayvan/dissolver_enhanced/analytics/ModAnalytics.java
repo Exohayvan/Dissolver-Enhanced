@@ -9,6 +9,7 @@ import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.config.SimpleConfig;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
+import net.exohayvan.dissolver_enhanced.helpers.MinecraftServerCompat;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
@@ -266,7 +267,7 @@ public final class ModAnalytics {
         properties.put("world_info", "server");
         properties.put("game_mode", "server");
         properties.put("session_location", "server");
-        int connectedPlayers = server.getPlayerCount();
+        int connectedPlayers = MinecraftServerCompat.connectedPlayerCount(server);
         properties.put("player_count", connectedPlayers);
         properties.put("connected_players", connectedPlayers);
         properties.put("emc_storage_mode", ModConfig.PRIVATE_EMC ? "private_total" : "shared");

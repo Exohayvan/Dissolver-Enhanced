@@ -52,7 +52,7 @@ public class DissolverEnhanced {
 			LOGGER::info,
 			(message, exception) -> LOGGER.warn(message, exception)
 		);
-		ModCriteria.init();
+		ModCriteria.init(modEventBus);
 		RecipeGenerator.init();
 
 		EMCValues.init();

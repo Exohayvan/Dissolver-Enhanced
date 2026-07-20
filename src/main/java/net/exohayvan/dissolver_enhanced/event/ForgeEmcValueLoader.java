@@ -8,6 +8,7 @@ import java.util.Map;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
+import net.exohayvan.dissolver_enhanced.helpers.RecipeCompat;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.ItemStack;
@@ -39,23 +40,25 @@ public class ForgeEmcValueLoader {
         RECIPE_JSON.clear();
         STONE_CUTTER_LIST.clear();
 
-        List<Recipe<?>> recipes = new ArrayList<>(server.getRecipeManager().getRecipes());
+        List<?> recipes = new ArrayList<>(server.getRecipeManager().getRecipes());
         EMCValues.beginStartup(recipes.size());
 
-        for (Recipe<?> recipe : recipes) {
+        for (Object value : recipes) {
+            ResourceLocation recipeId = null;
             try {
-                addRecipe(server, recipe);
+                RecipeCompat.Entry entry = RecipeCompat.unwrap(value);
+                recipeId = entry.id();
+                addRecipe(server, recipeId, entry.recipe());
             } catch (RuntimeException exception) {
                 EMCValues.incrementRecipesNotUnderstood();
-                DissolverEnhanced.LOGGER.debug("Could not read recipe {} for EMC calculation.", recipe.getId(), exception);
+                DissolverEnhanced.LOGGER.debug("Could not read recipe {} for EMC calculation.", recipeId, exception);
             }
         }
 
         EMCValues.recipesLoaded(RECIPES, RECIPE_SOURCES, RECIPE_JSON, STONE_CUTTER_LIST);
     }
 
-    private static void addRecipe(MinecraftServer server, Recipe<?> recipe) {
-        ResourceLocation recipeId = recipe.getId();
+    private static void addRecipe(MinecraftServer server, ResourceLocation recipeId, Recipe<?> recipe) {
         RecipeType<?> recipeType = recipe.getType();
 
         ItemStack resultItem = recipe.getResultItem(server.registryAccess());

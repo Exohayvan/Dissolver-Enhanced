@@ -17,6 +17,7 @@ import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
+import net.exohayvan.dissolver_enhanced.helpers.SavedDataCompat;
 import net.exohayvan.dissolver_enhanced.migration.LegacyNamespaceMigration;
 
 // https://fabricmc.net/wiki/tutorial:persistent_states#player_specific_persistent_state
@@ -210,9 +211,15 @@ public class StateSaverAndLoader extends SavedData {
         // The first time the following 'getOrCreate' function is called, it creates a brand new 'StateSaverAndLoader' and
         // stores it inside the 'PersistentStateManager'. The subsequent calls to 'getOrCreate' pass in the saved
         // 'StateSaverAndLoader' NBT on disk to our function 'StateSaverAndLoader::createFromNbt'.
-        StateSaverAndLoader state = persistentStateManager.get(StateSaverAndLoader::createFromNbt, DissolverEnhanced.MOD_ID);
+        StateSaverAndLoader state = SavedDataCompat.get(
+            persistentStateManager, DissolverEnhanced.MOD_ID,
+            StateSaverAndLoader::new, StateSaverAndLoader::createFromNbt
+        );
         if (state == null) {
-            state = persistentStateManager.get(StateSaverAndLoader::createFromNbt, DissolverEnhanced.OLD_MOD_ID);
+            state = SavedDataCompat.get(
+                persistentStateManager, DissolverEnhanced.OLD_MOD_ID,
+                StateSaverAndLoader::new, StateSaverAndLoader::createFromNbt
+            );
             if (state != null) {
                 DissolverEnhanced.LOGGER.info("Migrating player EMC state from {} to {}.", DissolverEnhanced.OLD_MOD_ID, DissolverEnhanced.MOD_ID);
                 persistentStateManager.set(DissolverEnhanced.MOD_ID, state);

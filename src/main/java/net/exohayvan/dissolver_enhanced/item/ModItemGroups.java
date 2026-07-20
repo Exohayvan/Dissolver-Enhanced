@@ -2,7 +2,7 @@ package net.exohayvan.dissolver_enhanced.item;
 
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.block.ModBlocks;
-import net.minecraft.core.registries.Registries;
+import net.exohayvan.dissolver_enhanced.helpers.RegistryKeyCompat;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTab.ItemDisplayParameters;
@@ -14,7 +14,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class ModItemGroups {
     public static final DeferredRegister<CreativeModeTab> ITEM_GROUPS =
-            DeferredRegister.create(Registries.CREATIVE_MODE_TAB, DissolverEnhanced.MOD_ID);
+            DeferredRegister.create(RegistryKeyCompat.creativeModeTab(), DissolverEnhanced.MOD_ID);
 
     public static final RegistryObject<CreativeModeTab> VANILLAEMC_GROUP = ITEM_GROUPS.register(
             "dissolver_enhanced_group",
