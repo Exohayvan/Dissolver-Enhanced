@@ -1,0 +1,49 @@
+name: Quality Gate
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+
+jobs:
+  duplicate-code:
+    name: Duplicate Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install jscpd
+        run: npm install --global jscpd@5.0.12
+
+      - name: Check for duplicated code
+        id: duplicate-scan
+        uses: kucherenko/jscpd@v5.0.12
+        with:
+          skip-install: true
+          path: .
+          threshold: 0
+          min-lines: 8
+          min-tokens: 60
+          ignore-pattern: '(?m)^(?:package|import)\s+[^;\r\n]+;\s*(?:\r?\n|$)'
+          reporters: console
+          upload-sarif: false
+          ignore: >-
+            **/.git/**,
+            **/node_modules/**,
+            **/.venv/**,
+            **/vendor/**,
+            **/dist/**,
+            **/build/**,
+            **/coverage/**,
+            **/generated/**
+
+      - name: Enforce duplicate-code threshold
+        if: ${{ always() && steps.duplicate-scan.outputs.exit-code != '0' }}
+        run: |
+          echo "::error::Duplicate-code threshold exceeded."
+          exit 1

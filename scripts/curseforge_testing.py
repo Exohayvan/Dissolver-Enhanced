@@ -1862,6 +1862,11 @@ def gradle_command(worktree_path, gradle_task):
 
 def gradle_clean_command(command):
     clean_command = list(command)
+    # Generated loader outputs can retain iCloud conflict-copy jars (for example
+    # "dependency 2.jar") even when every tracked source is unchanged. Reusing
+    # that output changes the final artifact hash and defeats the test cache.
+    if "clean" not in clean_command:
+        clean_command.insert(len(clean_command) - 1, "clean")
     if "--console=plain" not in clean_command:
         clean_command.append("--console=plain")
     if "--warning-mode=summary" not in clean_command:
@@ -1976,6 +1981,7 @@ def find_branch_artifact(worktree_path):
     jars = [
         path for path in libs.glob("*.jar")
         if not re.search(r"-(sources|javadoc|dev|all-dev)\.jar$", path.name, re.IGNORECASE)
+        and not re.search(r" \d+\.jar$", path.name, re.IGNORECASE)
     ]
     if not jars:
         return None
@@ -3002,7 +3008,12 @@ def latest_advancement_file(instance):
     saves_path = Path(instance["path"]) / "saves"
     if not saves_path.exists():
         return None
-    files = list(saves_path.glob("*/advancements/*.json"))
+    files = []
+    for pattern in (
+        "*/players/advancements/*.json",  # Minecraft 26.1+
+        "*/advancements/*.json",          # Legacy layout
+    ):
+        files.extend(path for path in saves_path.glob(pattern) if path.is_file())
     if not files:
         return None
     return max(files, key=lambda path: path.stat().st_mtime)
@@ -3036,6 +3047,15 @@ def wait_for_recipe_advancements(instance, tests, timeout=20):
     return best
 
 
+def minecraft_instance_is_running(instance, stage=None, verbose=True):
+    if minecraft_processes_for_instance(instance):
+        return True
+    if verbose:
+        suffix = f" before {stage}" if stage else ""
+        print(f"    Minecraft instance exited early{suffix}; stopping automation.")
+    return False
+
+
 def send_chat_line(pyautogui, message):
     pyautogui.press("t")
     time.sleep(0.5)
@@ -3043,32 +3063,44 @@ def send_chat_line(pyautogui, message):
     pyautogui.press("enter")
 
 
-def pause_unpause_to_save(pyautogui, verbose=True, progress_callback=None):
+def pause_unpause_to_save(pyautogui, verbose=True, progress_callback=None, instance=None):
+    if instance is not None and not minecraft_instance_is_running(instance, "pause/save", verbose):
+        return False
     if verbose:
         print("    Pausing briefly to nudge singleplayer save.")
     progress_step(progress_callback, "pause to save")
     time.sleep(0.5)
     pyautogui.press("esc")
     time.sleep(2.0)
+    if instance is not None and not minecraft_instance_is_running(instance, "unpause", verbose):
+        return False
     pyautogui.press("esc")
     time.sleep(0.5)
+    return True
 
 
-def place_smoke_test_blocks(pyautogui, progress_callback=None):
+def place_smoke_test_blocks(pyautogui, progress_callback=None, instance=None, verbose=True):
+    if instance is not None and not minecraft_instance_is_running(instance, "smoke-test placement", verbose):
+        return False
     progress_step(progress_callback, "look down")
     send_chat_line(pyautogui, "/tp @s ~ ~ ~ ~ 65")
     time.sleep(0.5)
 
     for slot in ("1", "2", "3"):
+        if instance is not None and not minecraft_instance_is_running(instance, f"placing slot {slot}", verbose):
+            return False
         progress_step(progress_callback, f"place slot {slot}")
         pyautogui.press(slot)
         time.sleep(0.2)
         pyautogui.click(button="right")
         time.sleep(0.3)
         if slot != "3":
+            if instance is not None and not minecraft_instance_is_running(instance, "smoke-test movement", verbose):
+                return False
             progress_step(progress_callback, "move right")
             send_chat_line(pyautogui, "/tp @s ~1 ~ ~ ~ 65")
             time.sleep(0.5)
+    return True
 
 
 def type_testing_started_message(instance, verbose=True, progress_callback=None):
@@ -3097,21 +3129,29 @@ def type_testing_started_message(instance, verbose=True, progress_callback=None)
     for index, message in enumerate(startup_messages + recipe_commands):
         if index:
             time.sleep(0.5)
+        if not minecraft_instance_is_running(instance, f"typing {message!r}", verbose):
+            return False
         progress_step(progress_callback, message)
         send_chat_line(pyautogui, message)
 
-    pause_unpause_to_save(pyautogui, verbose, progress_callback)
+    if not pause_unpause_to_save(pyautogui, verbose, progress_callback, instance):
+        return False
     time.sleep(1.0)
     passed, total, _ = wait_for_recipe_advancements(instance, recipe_tests)
     result_message = f"Recipe test: {passed}/{total} recipes work"
+    if not minecraft_instance_is_running(instance, "typing the recipe result", verbose):
+        return False
     progress_step(progress_callback, result_message)
     send_chat_line(pyautogui, result_message)
     for message in smoke_test_commands:
         time.sleep(0.5)
+        if not minecraft_instance_is_running(instance, f"typing {message!r}", verbose):
+            return False
         progress_step(progress_callback, message)
         send_chat_line(pyautogui, message)
-    place_smoke_test_blocks(pyautogui, progress_callback)
-    return True
+    if not place_smoke_test_blocks(pyautogui, progress_callback, instance, verbose):
+        return False
+    return total > 0 and passed == total
 
 
 def wait_for_ocr_phrase(phrases, timeout=120, delay=2.0, progress_label=None, progress_interval=10, region=None):

@@ -49,3 +49,4 @@ scripts/config.data
 scripts/tests.txt
 scripts/logs/
 scripts/cache.data*
+scripts/test_timings.json

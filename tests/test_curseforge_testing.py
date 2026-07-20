@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "curseforge_testing.py"
@@ -484,7 +485,111 @@ class BranchTestResultTests(unittest.TestCase):
         self.assertEqual(results[0]["logs"], [failure_log])
 
 
+class RecipeResultGatingTests(unittest.TestCase):
+    def run_recipe_flow(self, advancement_result):
+        recipe_tests = [{"advancement": "dissolver_enhanced:test", "trigger_items": []}]
+        with (
+            mock.patch.dict("sys.modules", {"pyautogui": object()}),
+            mock.patch.object(curseforge_testing, "load_recipe_unlock_tests", return_value=recipe_tests),
+            mock.patch.object(curseforge_testing, "wait_for_recipe_advancements", return_value=advancement_result),
+            mock.patch.object(curseforge_testing, "minecraft_processes_for_instance", return_value=[("123", "java")]),
+            mock.patch.object(curseforge_testing, "send_chat_line"),
+            mock.patch.object(curseforge_testing, "pause_unpause_to_save"),
+            mock.patch.object(curseforge_testing, "place_smoke_test_blocks"),
+            mock.patch.object(curseforge_testing.time, "sleep"),
+        ):
+            return curseforge_testing.type_testing_started_message(
+                {"path": Path("unused")},
+                verbose=False,
+            )
+
+    def test_incomplete_recipe_check_fails_instance_setup(self):
+        self.assertFalse(self.run_recipe_flow((0, 1, [])))
+
+    def test_complete_recipe_check_passes_instance_setup(self):
+        self.assertTrue(self.run_recipe_flow((1, 1, ["dissolver_enhanced:test"])))
+
+    def test_early_instance_exit_stops_typing_remaining_steps(self):
+        recipe_tests = [{"advancement": "dissolver_enhanced:test", "trigger_items": []}]
+        with (
+            mock.patch.dict("sys.modules", {"pyautogui": object()}),
+            mock.patch.object(curseforge_testing, "load_recipe_unlock_tests", return_value=recipe_tests),
+            mock.patch.object(
+                curseforge_testing,
+                "minecraft_processes_for_instance",
+                side_effect=[[('123', 'java')], []],
+            ),
+            mock.patch.object(curseforge_testing, "send_chat_line") as send_chat_line,
+            mock.patch.object(curseforge_testing, "pause_unpause_to_save"),
+            mock.patch.object(curseforge_testing, "place_smoke_test_blocks"),
+            mock.patch.object(curseforge_testing.time, "sleep"),
+        ):
+            passed = curseforge_testing.type_testing_started_message(
+                {"path": Path("unused")},
+                verbose=False,
+            )
+
+        self.assertFalse(passed)
+        self.assertEqual(send_chat_line.call_count, 1)
+
+
+class RecipeAdvancementDiscoveryTests(unittest.TestCase):
+    def test_finds_legacy_world_advancement_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            instance_path = Path(temp_dir) / "instance"
+            expected = instance_path / "saves" / "New World" / "advancements" / "player.json"
+            expected.parent.mkdir(parents=True)
+            expected.write_text("{}", encoding="utf-8")
+
+            self.assertEqual(
+                curseforge_testing.latest_advancement_file({"path": instance_path}),
+                expected,
+            )
+
+    def test_finds_minecraft_26_player_advancement_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            instance_path = Path(temp_dir) / "instance"
+            expected = instance_path / "saves" / "New World" / "players" / "advancements" / "player.json"
+            expected.parent.mkdir(parents=True)
+            expected.write_text("{}", encoding="utf-8")
+
+            self.assertEqual(
+                curseforge_testing.latest_advancement_file({"path": instance_path}),
+                expected,
+            )
+
+
 class BuildTestCacheTests(unittest.TestCase):
+    def test_gradle_build_cleans_stale_outputs_before_assemble(self):
+        command = curseforge_testing.gradle_clean_command(
+            ["sh", "gradlew", "assemble"]
+        )
+
+        self.assertEqual(
+            command,
+            [
+                "sh",
+                "gradlew",
+                "clean",
+                "assemble",
+                "--console=plain",
+                "--warning-mode=summary",
+            ],
+        )
+
+    def test_artifact_discovery_ignores_icloud_conflict_copy_jar(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            libs = Path(temp_dir) / "build" / "libs"
+            libs.mkdir(parents=True)
+            canonical = libs / "dissolver-enhanced.jar"
+            conflict_copy = libs / "dissolver-enhanced 2.jar"
+            canonical.write_bytes(b"canonical")
+            conflict_copy.write_bytes(b"stale conflict copy")
+
+            artifact = curseforge_testing.find_branch_artifact(Path(temp_dir))
+
+        self.assertEqual(artifact, canonical)
+
     def test_common_archive_is_configured_for_reproducible_sha256(self):
         common_build = SCRIPT_PATH.parents[1] / "minecraft" / "build.gradle"
         build_text = common_build.read_text(encoding="utf-8")
