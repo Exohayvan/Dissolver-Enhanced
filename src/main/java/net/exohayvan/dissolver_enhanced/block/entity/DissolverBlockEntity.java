@@ -55,20 +55,10 @@ public class DissolverBlockEntity extends CustomBlockEntity {
     // HOPPER/DROPPER INSERT (WIP not working)
     
     @Override
-    public int[] getAvailableSlots(Direction side) {
-        // DissolverEnhanced.LOGGER.info("INSERTING........");
-        return new int[0];
-    }
-
-    @Override
     public boolean canInsert(int slot, ItemStack stack, Direction direction) {
         return true;
     }
 
-    @Override
-    public boolean canExtract(int slot, ItemStack stack, Direction direction) {
-        return false;
-    }
 
 	// public int getComparatorOutput() {
 	// 	int i = 0;

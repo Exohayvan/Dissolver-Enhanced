@@ -1,0 +1,96 @@
+name: Quality Gate
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+
+jobs:
+  duplicate-code:
+    name: Duplicate Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Install jscpd
+        run: npm install --global jscpd@5.0.12
+      - name: Check for duplicated code
+        id: duplicate-scan
+        uses: kucherenko/jscpd@v5.0.12
+        with:
+          skip-install: true
+          path: .
+          # Locale JSON files are translation data, not duplicated implementation.
+          threshold: 0
+          min-lines: 8
+          min-tokens: 60
+          ignore-pattern: '(?m)^(?:package|import)\s+[^;\r\n]+;\s*(?:\r?\n|$)'
+          reporters: console
+          upload-sarif: false
+          ignore: >-
+            **/.git/**,
+            **/node_modules/**,
+            **/.venv/**,
+            **/vendor/**,
+            **/dist/**,
+            **/build/**,
+            **/coverage/**,
+            **/generated/**,
+            **/src/main/resources/assets/**/lang/**
+      - name: Enforce duplicate-code threshold
+        if: ${{ always() && steps.duplicate-scan.outputs.exit-code != '0' }}
+        run: |
+          echo "::error::Duplicate-code threshold exceeded."
+          exit 1
+
+
+  workflow-integrity:
+    name: Workflow Tamper Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch workflow
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: current
+          persist-credentials: false
+          sparse-checkout: .github/workflows/quality-gate.yml
+          sparse-checkout-cone-mode: false
+      - name: Checkout canonical workflow from common
+        uses: actions/checkout@v7
+        with:
+          ref: common
+          path: canonical
+          persist-credentials: false
+          sparse-checkout: .github/workflows/quality-gate.yml
+          sparse-checkout-cone-mode: false
+      - name: Compare Quality Gate workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          CURRENT="current/.github/workflows/quality-gate.yml"
+          CANONICAL="canonical/.github/workflows/quality-gate.yml"
+          if [[ ! -f "$CURRENT" ]]; then
+            echo "::error file=.github/workflows/quality-gate.yml::Quality Gate workflow is missing from the current branch."
+            exit 1
+          fi
+          if [[ ! -f "$CANONICAL" ]]; then
+            echo "::error::Canonical Quality Gate workflow is missing from the common branch."
+            exit 1
+          fi
+          if ! cmp --silent "$CANONICAL" "$CURRENT"; then
+            echo "::error file=.github/workflows/quality-gate.yml::Quality Gate does not match the common branch."
+            echo
+            echo "Workflow differences:"
+            diff \
+              --unified \
+              --label "common/.github/workflows/quality-gate.yml" \
+              --label "current/.github/workflows/quality-gate.yml" \
+              "$CANONICAL" \
+              "$CURRENT" || true
+            exit 1
+          fi
+          echo "Quality Gate matches the canonical workflow on common."

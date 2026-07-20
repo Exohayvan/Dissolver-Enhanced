@@ -33,13 +33,34 @@ import net.exohayvan.dissolver_enhanced.helpers.ContainerLockCompat;
 import net.exohayvan.dissolver_enhanced.helpers.NbtCompat;
 
 public abstract class CustomBlockEntity extends BlockEntity implements SidedInventory, NamedScreenHandlerFactory, Nameable {
+    private static final int[] NO_SLOTS = new int[0];
     private ContainerLock lock;
+    private final int[] topSlots;
+    private final int[] bottomSlots;
+    private final int[] sideSlots;
+    private final int outputSlot;
     @Nullable
     private Text customName;
 
     protected CustomBlockEntity(BlockEntityType<?> blockEntityType, BlockPos blockPos, BlockState blockState) {
+        this(blockEntityType, blockPos, blockState, NO_SLOTS, NO_SLOTS, NO_SLOTS, -1);
+    }
+
+    protected CustomBlockEntity(
+        BlockEntityType<?> blockEntityType,
+        BlockPos blockPos,
+        BlockState blockState,
+        int[] topSlots,
+        int[] bottomSlots,
+        int[] sideSlots,
+        int outputSlot
+    ) {
         super(blockEntityType, blockPos, blockState);
         this.lock = ContainerLock.EMPTY;
+        this.topSlots = topSlots;
+        this.bottomSlots = bottomSlots;
+        this.sideSlots = sideSlots;
+        this.outputSlot = outputSlot;
     }
 
     protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
@@ -172,7 +193,12 @@ public abstract class CustomBlockEntity extends BlockEntity implements SidedInve
     // HOPPER/DROPPER INSERT
     
     @Override
-    public int[] getAvailableSlots(Direction side) {
-        return new int[0];
+    public final int[] getAvailableSlots(Direction side) {
+        return MachineBlockEntitySupport.slotsFor(side, topSlots, bottomSlots, sideSlots);
+    }
+
+    @Override
+    public final boolean canExtract(int slot, ItemStack stack, Direction direction) {
+        return slot == outputSlot;
     }
 }

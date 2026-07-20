@@ -42,7 +42,15 @@ public class CondenserBlockEntity extends CustomBlockEntity {
     private int progress = 0;
 
     public CondenserBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.CONDENSER_BLOCK_ENTITY, pos, state);
+        super(
+            ModBlockEntities.CONDENSER_BLOCK_ENTITY,
+            pos,
+            state,
+            TOP_SLOTS,
+            BOTTOM_SLOTS,
+            SIDE_SLOTS,
+            OUTPUT_SLOT
+        );
         this.propertyDelegate = new PropertyDelegate() {
             @Override
             public int get(int index) {
@@ -137,18 +145,11 @@ public class CondenserBlockEntity extends CustomBlockEntity {
 
     private int getConversionTime() {
         int emc = condenseValue(this.stacks.get(INPUT_SLOT));
-        return ticksForRate(emc, getEmcPerSecond());
+        return MachineBlockEntitySupport.ticksForRate(emc, getEmcPerSecond(), CONVERSION_TICKS_PER_EMC);
     }
 
     private int getEmcPerSecond() {
         return EmcCoreItem.getEmcPerSecond(this.stacks.get(CORE_SLOT));
-    }
-
-    private int ticksForRate(int emc, int emcPerSecond) {
-        if (emc <= 0) return CONVERSION_TICKS_PER_EMC;
-
-        long ticks = ((long) emc * MachineTiming.TICKS_PER_SECOND + Math.max(1, emcPerSecond) - 1L) / Math.max(1, emcPerSecond);
-        return (int) Math.max(1L, Math.min(Integer.MAX_VALUE, ticks));
     }
 
     private void resetProgress() {
@@ -196,21 +197,10 @@ public class CondenserBlockEntity extends CustomBlockEntity {
     }
 
     @Override
-    public int[] getAvailableSlots(Direction side) {
-        if (side == Direction.UP) return TOP_SLOTS;
-        if (side == Direction.DOWN) return BOTTOM_SLOTS;
-        return SIDE_SLOTS;
-    }
-
-    @Override
     public boolean canInsert(int slot, ItemStack stack, Direction direction) {
         if (slot == CORE_SLOT) return EmcCoreItem.isEmcCore(stack);
         if (slot != INPUT_SLOT) return false;
         return EMCOrbItem.isEMCOrb(stack) ? EMCOrbItem.getEMC(stack) > 0 : EMCValues.get(EMCKey.fromStack(stack)) > 0;
     }
 
-    @Override
-    public boolean canExtract(int slot, ItemStack stack, Direction direction) {
-        return slot == OUTPUT_SLOT;
-    }
 }

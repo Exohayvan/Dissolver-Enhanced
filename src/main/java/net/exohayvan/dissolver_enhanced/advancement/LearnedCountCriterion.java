@@ -10,10 +10,9 @@ import net.minecraft.predicate.entity.EntityPredicate;
 import net.minecraft.predicate.entity.LootContextPredicate;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-public class LearnedCountCriterion extends AbstractCriterion<LearnedCountCriterion.Conditions> {
-    @Override
-    public Codec<Conditions> getConditionsCodec() {
-        return Conditions.CODEC;
+public class LearnedCountCriterion extends CodecBackedCriterion<LearnedCountCriterion.Conditions> {
+    public LearnedCountCriterion() {
+        super(Conditions.CODEC);
     }
 
     public void trigger(ServerPlayerEntity player, int learnedItems) {

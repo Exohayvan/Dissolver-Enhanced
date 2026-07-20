@@ -1,5 +1,10 @@
 package net.exohayvan.dissolver_enhanced.helpers;
 
+import static net.exohayvan.dissolver_enhanced.helpers.EmcItemClassifier.isCreativeItem;
+import static net.exohayvan.dissolver_enhanced.helpers.EmcItemClassifier.itemName;
+import static net.exohayvan.dissolver_enhanced.helpers.EmcItemClassifier.namespace;
+import static net.exohayvan.dissolver_enhanced.helpers.EmcItemClassifier.rejectionReason;
+
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -94,6 +99,9 @@ public class EMCHelper {
         GET, ADD;
     }
 
+    private record ValidatedItem(String itemId, BigInteger emcValue) {
+    }
+
     private static final long MISSING_ITEM_REPORT_COOLDOWN_MS = 30_000;
     private static final String MISSING_ITEM_TEMPLATE_URL = "https://github.com/ExoHayvan/Dissolver-Enhanced/issues/new?template=missing_item.yml";
     private static final int REPORT_FIELD_MAX_LENGTH = 1_500;
@@ -154,16 +162,19 @@ public class EMCHelper {
     }
 
     public static boolean canAddItem(ItemStack itemStack, PlayerEntity player) {
+        return validateItemForPlayer(itemStack, player) != null;
+    }
+
+    private static ValidatedItem validateItemForPlayer(ItemStack itemStack, PlayerEntity player) {
         String itemId = EMCKey.fromStack(itemStack);
         BigInteger emcValue = EMCValues.getBig(itemId);
-
-        if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
-            captureDissolverItemRejected(itemId, rejectionReason(itemId));
-            reportMissingItemValue(player, itemStack, itemId);
-            return false;
+        if (checkValidEMC(emcValue, itemId, Action.ADD)) {
+            return new ValidatedItem(itemId, emcValue);
         }
 
-        return true;
+        captureDissolverItemRejected(itemId, rejectionReason(itemId));
+        reportMissingItemValue(player, itemStack, itemId);
+        return null;
     }
 
     // ADD
@@ -190,14 +201,11 @@ public class EMCHelper {
     }
 
     public static boolean addItem(ItemStack itemStack, PlayerEntity player, DissolverScreenHandler handler) {
-        String itemId = EMCKey.fromStack(itemStack);
-        BigInteger emcValue = EMCValues.getBig(itemId);
+        ValidatedItem item = validateItemForPlayer(itemStack, player);
+        if (item == null) return false;
 
-        if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
-            captureDissolverItemRejected(itemId, rejectionReason(itemId));
-            reportMissingItemValue(player, itemStack, itemId);
-            return false;
-        }
+        String itemId = item.itemId();
+        BigInteger emcValue = item.emcValue();
 
         // calculated new EMC (from DissolverInventoryInput)
         int itemCount = itemStack.getCount();
@@ -394,18 +402,6 @@ public class EMCHelper {
         return "Not detected automatically by Fabric Loader";
     }
 
-    private static String namespace(String itemId) {
-        String baseItemId = EMCKey.baseItemId(itemId);
-        int namespaceEnd = baseItemId.indexOf(":");
-        return namespaceEnd == -1 ? "unknown" : baseItemId.substring(0, namespaceEnd);
-    }
-
-    private static String itemName(String itemId) {
-        String baseItemId = EMCKey.baseItemId(itemId);
-        int namespaceEnd = baseItemId.indexOf(":");
-        return namespaceEnd == -1 ? baseItemId : baseItemId.substring(namespaceEnd + 1);
-    }
-
     private static void captureDissolverItemLearned(String itemId, int stackCount, BigInteger singleValue, BigInteger totalValue, boolean creativeItem) {
         String baseItemId = EMCKey.baseItemId(itemId);
         ModAnalytics.captureDissolverItemLearned(
@@ -453,29 +449,6 @@ public class EMCHelper {
             baseItemId,
             reason
         );
-    }
-
-    private static boolean isCreativeItem(String itemId) {
-        String baseItemId = EMCKey.baseItemId(itemId);
-        return baseItemId.contains("spawn_egg")
-            || baseItemId.contains("command_block")
-            || baseItemId.contains("bedrock")
-            || baseItemId.contains("barrier")
-            || baseItemId.contains("structure_block")
-            || baseItemId.contains("jigsaw")
-            || baseItemId.contains("spawner")
-            || baseItemId.contains("vault")
-            || baseItemId.contains("end_portal_frame")
-            || baseItemId.contains("budding_amethyst")
-            || baseItemId.contains("reinforced_deepslate");
-    }
-
-    private static String rejectionReason(String itemId) {
-        if (isCreativeItem(itemId) && !ModConfig.CREATIVE_ITEMS) {
-            return "creative_disabled";
-        }
-
-        return "no_emc";
     }
 
     private static String modVersion(String modId) {

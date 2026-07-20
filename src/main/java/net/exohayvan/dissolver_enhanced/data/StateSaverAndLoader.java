@@ -6,7 +6,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -32,6 +31,7 @@ import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 import net.exohayvan.dissolver_enhanced.helpers.EMCHelper;
+import net.exohayvan.dissolver_enhanced.helpers.NbtCompat;
 import net.exohayvan.dissolver_enhanced.helpers.ServerCompat;
 import net.exohayvan.dissolver_enhanced.migration.LegacyNamespaceMigration;
 
@@ -54,7 +54,7 @@ public class StateSaverAndLoader extends PersistentState {
     }
 
     private static PlayerData getData(NbtCompound playerNbt, PlayerData playerData) {
-        playerData.NAME = getStringCompat(playerNbt, "NAME");
+        playerData.NAME = NbtCompat.getString(playerNbt, "NAME");
         playerData.EMC = loadEmc(playerNbt);
         playerData.LEARNED_ITEMS = migrateLearnedItemIds(getList(playerNbt, "LEARNED_ITEMS"));
 
@@ -62,11 +62,11 @@ public class StateSaverAndLoader extends PersistentState {
     }
 
     private static BigInteger loadEmc(NbtCompound playerNbt) {
-        if (hasKey(playerNbt, "EMC_BIG")) {
-            return EmcNumber.parse(getStringCompat(playerNbt, "EMC_BIG"));
+        if (NbtCompat.hasKey(playerNbt, "EMC_BIG")) {
+            return EmcNumber.parse(NbtCompat.getString(playerNbt, "EMC_BIG"));
         }
 
-        return EmcNumber.of(getIntCompat(playerNbt, "EMC"));
+        return EmcNumber.of(NbtCompat.getInt(playerNbt, "EMC"));
     }
 
     private static List<String> migrateLearnedItemIds(List<String> learnedItems) {
@@ -102,71 +102,19 @@ public class StateSaverAndLoader extends PersistentState {
     }
 
     private static List<String> getList(NbtCompound playerNbt, String key) {
-        int listLength = getIntCompat(playerNbt, key + "_SIZE");
+        int listLength = NbtCompat.getInt(playerNbt, key + "_SIZE");
         List<String> list = new ArrayList<>();
 
         for (int i = 0; i < listLength; i++) {
-            list.add(getStringCompat(playerNbt, key + ":" + i));
+            list.add(NbtCompat.getString(playerNbt, key + ":" + i));
         }
 
         return list;
     }
 
-    private static boolean hasKey(NbtCompound nbt, String key) {
-        return nbt.get(key) != null;
-    }
-
     private static NbtCompound getCompoundCompat(NbtCompound nbt, String key) {
         NbtElement element = nbt.get(key);
         return element instanceof NbtCompound compound ? compound : new NbtCompound();
-    }
-
-    private static String getStringCompat(NbtCompound nbt, String key) {
-        return readString(nbt.get(key));
-    }
-
-    private static int getIntCompat(NbtCompound nbt, String key) {
-        return readInt(nbt.get(key));
-    }
-
-    private static String readString(NbtElement element) {
-        if (element == null) return "";
-
-        for (String methodName : new String[] { "comp_3831", "asString", "method_10714", "method_68658" }) {
-            try {
-                Method method = element.getClass().getMethod(methodName);
-                Object value = method.invoke(element);
-                if (value instanceof String stringValue) return stringValue;
-                if (value instanceof Optional<?> optional && optional.orElse(null) instanceof String stringValue) return stringValue;
-            } catch (ReflectiveOperationException ignored) {
-            }
-        }
-
-        String raw = element.toString();
-        if (raw.length() >= 2 && raw.startsWith("\"") && raw.endsWith("\"")) {
-            return raw.substring(1, raw.length() - 1);
-        }
-        return raw;
-    }
-
-    private static int readInt(NbtElement element) {
-        if (element == null) return 0;
-
-        for (String methodName : new String[] { "intValue", "method_10701", "method_10698", "method_68659" }) {
-            try {
-                Method method = element.getClass().getMethod(methodName);
-                Object value = method.invoke(element);
-                if (value instanceof Number number) return number.intValue();
-                if (value instanceof Optional<?> optional && optional.orElse(null) instanceof Number number) return number.intValue();
-            } catch (ReflectiveOperationException ignored) {
-            }
-        }
-
-        try {
-            return Integer.parseInt(element.toString());
-        } catch (NumberFormatException ignored) {
-            return 0;
-        }
     }
 
     // STORE DATA
@@ -185,7 +133,7 @@ public class StateSaverAndLoader extends PersistentState {
     private NbtCompound storePlayersData(NbtCompound nbt, StoreDataInterface func) {
         // PLAYER SPECIFIC
 
-        NbtCompound playersNbt = hasKey(nbt, "players") ? getCompoundCompat(nbt, "players") : new NbtCompound();
+        NbtCompound playersNbt = NbtCompat.hasKey(nbt, "players") ? getCompoundCompat(nbt, "players") : new NbtCompound();
         
         players.forEach((uuid, playerData) -> {
             NbtCompound playerNbt = new NbtCompound();

@@ -119,20 +119,8 @@ jobs:
         id: java
         shell: bash
         run: |
-          case "${{ matrix.branch }}" in
-            minecraft/forge-1.20.x)
-              echo "version=17" >> "$GITHUB_OUTPUT"
-              echo "distribution=temurin" >> "$GITHUB_OUTPUT"
-              ;;
-            minecraft/fabric-26.1.x)
-              echo "version=25" >> "$GITHUB_OUTPUT"
-              echo "distribution=temurin" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "version=21" >> "$GITHUB_OUTPUT"
-              echo "distribution=microsoft" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
+          echo "version=${{ matrix.branch == 'minecraft/forge-1.20.x' && '17' || matrix.branch == 'minecraft/fabric-26.1.x' && '25' || '21' }}" >> "$GITHUB_OUTPUT"
+          echo "distribution=${{ (matrix.branch == 'minecraft/forge-1.20.x' || matrix.branch == 'minecraft/fabric-26.1.x') && 'temurin' || 'microsoft' }}" >> "$GITHUB_OUTPUT"
 
       - name: Setup Java ${{ steps.java.outputs.version }}
         if: ${{ startsWith(matrix.branch, 'minecraft/') }}
@@ -264,20 +252,8 @@ jobs:
         id: current-java
         shell: bash
         run: |
-          case "${{ github.ref_name }}" in
-            minecraft/forge-1.20.x)
-              echo "version=17" >> "$GITHUB_OUTPUT"
-              echo "distribution=temurin" >> "$GITHUB_OUTPUT"
-              ;;
-            minecraft/fabric-26.1.x)
-              echo "version=25" >> "$GITHUB_OUTPUT"
-              echo "distribution=temurin" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "version=21" >> "$GITHUB_OUTPUT"
-              echo "distribution=microsoft" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
+          echo "version=${{ github.ref_name == 'minecraft/forge-1.20.x' && '17' || github.ref_name == 'minecraft/fabric-26.1.x' && '25' || '21' }}" >> "$GITHUB_OUTPUT"
+          echo "distribution=${{ (github.ref_name == 'minecraft/forge-1.20.x' || github.ref_name == 'minecraft/fabric-26.1.x') && 'temurin' || 'microsoft' }}" >> "$GITHUB_OUTPUT"
 
       - name: Setup Java ${{ steps.current-java.outputs.version }}
         if: ${{ startsWith(github.ref_name, 'minecraft/') }}

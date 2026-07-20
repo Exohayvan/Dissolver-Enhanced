@@ -99,23 +99,26 @@ public class RecipeManagerMixin {
     }
 
     private static void loadRecipeJson(ResourceManager resourceManager, String directory, Map<Identifier, JsonElement> recipes) {
-        Map<Identifier, Resource> resources;
-        try {
-            resources = resourceManager.findResources(directory, id -> id.getPath().endsWith(".json"));
-        } catch (RuntimeException exception) {
-            return;
-        }
+        Map<Identifier, Resource> resources = findJsonResources(resourceManager, directory);
 
         for (Map.Entry<Identifier, Resource> entry : resources.entrySet()) {
             try (BufferedReader reader = entry.getValue().getReader()) {
-                recipes.put(stripRecipePath(directory, entry.getKey()), JsonParser.parseReader(reader));
+                recipes.put(stripJsonPath(directory, entry.getKey()), JsonParser.parseReader(reader));
             } catch (IOException | RuntimeException exception) {
                 EMCValues.incrementRecipesNotUnderstood();
             }
         }
     }
 
-    private static Identifier stripRecipePath(String directory, Identifier resourceId) {
+    private static Map<Identifier, Resource> findJsonResources(ResourceManager resourceManager, String directory) {
+        try {
+            return resourceManager.findResources(directory, id -> id.getPath().endsWith(".json"));
+        } catch (RuntimeException exception) {
+            return Map.of();
+        }
+    }
+
+    private static Identifier stripJsonPath(String directory, Identifier resourceId) {
         String prefix = directory + "/";
         String path = resourceId.getPath();
         if (path.startsWith(prefix)) {
@@ -165,15 +168,10 @@ public class RecipeManagerMixin {
     }
 
     private static void loadItemTags(ResourceManager resourceManager, String directory, HashMap<String, List<String>> tagItems) {
-        Map<Identifier, Resource> resources;
-        try {
-            resources = resourceManager.findResources(directory, id -> id.getPath().endsWith(".json"));
-        } catch (RuntimeException exception) {
-            return;
-        }
+        Map<Identifier, Resource> resources = findJsonResources(resourceManager, directory);
 
         for (Map.Entry<Identifier, Resource> entry : resources.entrySet()) {
-            String tagId = stripTagPath(directory, entry.getKey()).toString();
+            String tagId = stripJsonPath(directory, entry.getKey()).toString();
             List<String> values = tagItems.getOrDefault(tagId, new ArrayList<>());
 
             try (BufferedReader reader = entry.getValue().getReader()) {
@@ -239,19 +237,6 @@ public class RecipeManagerMixin {
         }
 
         return Identifier.of(namespace, valuePath);
-    }
-
-    private static Identifier stripTagPath(String directory, Identifier resourceId) {
-        String prefix = directory + "/";
-        String path = resourceId.getPath();
-        if (path.startsWith(prefix)) {
-            path = path.substring(prefix.length());
-        }
-        if (path.endsWith(".json")) {
-            path = path.substring(0, path.length() - ".json".length());
-        }
-
-        return Identifier.of(resourceId.getNamespace(), path);
     }
 
     private static void loadTagValues(Resource resource, List<String> values) {

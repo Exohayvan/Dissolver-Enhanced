@@ -44,7 +44,15 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     private BigInteger storedEmc = BigInteger.ZERO;
 
     public MaterializerBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.MATERIALIZER_BLOCK_ENTITY, pos, state);
+        super(
+            ModBlockEntities.MATERIALIZER_BLOCK_ENTITY,
+            pos,
+            state,
+            TOP_SLOTS,
+            BOTTOM_SLOTS,
+            SIDE_SLOTS,
+            OUTPUT_SLOT
+        );
         this.propertyDelegate = new PropertyDelegate() {
             @Override
             public int get(int index) {
@@ -155,18 +163,15 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     }
 
     private int getConversionTime() {
-        return ticksForRate(getInputValue(), getEmcPerSecond());
+        return MachineBlockEntitySupport.ticksForRate(
+            getInputValue(),
+            getEmcPerSecond(),
+            CONVERSION_TICKS_PER_EMC
+        );
     }
 
     private int getEmcPerSecond() {
         return EmcCoreItem.getEmcPerSecond(this.stacks.get(CORE_SLOT));
-    }
-
-    private int ticksForRate(int emc, int emcPerSecond) {
-        if (emc <= 0) return CONVERSION_TICKS_PER_EMC;
-
-        long ticks = ((long) emc * MachineTiming.TICKS_PER_SECOND + Math.max(1, emcPerSecond) - 1L) / Math.max(1, emcPerSecond);
-        return (int) Math.max(1L, Math.min(Integer.MAX_VALUE, ticks));
     }
 
     private int stackValue(ItemStack stack, boolean allowOrb) {
@@ -239,13 +244,6 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     }
 
     @Override
-    public int[] getAvailableSlots(Direction side) {
-        if (side == Direction.UP) return TOP_SLOTS;
-        if (side == Direction.DOWN) return BOTTOM_SLOTS;
-        return SIDE_SLOTS;
-    }
-
-    @Override
     public boolean canInsert(int slot, ItemStack stack, Direction direction) {
         if (slot == TARGET_SLOT) return stackValue(stack, false) > 0;
         if (slot == EMC_INPUT_SLOT) return stackValue(stack, true) > 0;
@@ -253,8 +251,4 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
         return false;
     }
 
-    @Override
-    public boolean canExtract(int slot, ItemStack stack, Direction direction) {
-        return slot == OUTPUT_SLOT;
-    }
 }

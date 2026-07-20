@@ -1,6 +1,5 @@
 package net.exohayvan.dissolver_enhanced.command;
 
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import com.mojang.brigadier.context.CommandContext;
@@ -15,12 +14,6 @@ import net.exohayvan.dissolver_enhanced.data.EMCValues;
 public class ItemSuggestionProvider implements SuggestionProvider<ServerCommandSource> {
 	@Override
 	public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-		Set<String> itemIds = EMCValues.getList();
-
-		for (String itemId : itemIds) {
-			builder.suggest(itemId);
-		}
-
-		return builder.buildFuture();
+	    return CommandSuggestions.suggest(EMCValues.getList(), builder);
 	}
 }
