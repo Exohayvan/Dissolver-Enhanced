@@ -6,7 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -18,15 +20,54 @@ import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.RecipeLoadCoordinator;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
+import net.exohayvan.dissolver_enhanced.helpers.RecipeMapAugmenter;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.item.crafting.RecipeManager;
 
 @Mixin(RecipeManager.class)
 public class RecipeManagerMixin {
+    @Shadow
+    @Final
+    private HolderLookup.Provider registries;
+
+    @Shadow
+    protected static RecipeHolder<?> fromJson(
+        ResourceKey<Recipe<?>> id,
+        JsonObject json,
+        HolderLookup.Provider registries
+    ) {
+        throw new AssertionError();
+    }
+
+    @Inject(method = "prepare", at = @At("RETURN"), cancellable = true)
+    private void addGeneratedDissolverRecipe(
+        ResourceManager resourceManager,
+        ProfilerFiller profiler,
+        CallbackInfoReturnable<RecipeMap> info
+    ) {
+        if (RecipeGenerator.DISSOLVER_RECIPE == null) return;
+
+        ResourceKey<Recipe<?>> recipeKey = ResourceKey.create(
+            Registries.RECIPE,
+            Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe")
+        );
+        RecipeHolder<?> generatedRecipe = fromJson(
+            recipeKey,
+            RecipeGenerator.DISSOLVER_RECIPE.deepCopy(),
+            registries
+        );
+        info.setReturnValue(RecipeMapAugmenter.append(info.getReturnValue(), generatedRecipe));
+    }
+
     @Inject(method = "prepare", at = @At("HEAD"))
     private void prepareMixin(ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfoReturnable<RecipeMap> info) {
         loadItemTags(resourceManager);

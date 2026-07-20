@@ -137,10 +137,6 @@ tasks.register("translateCommonResources") {
 		}
 
 		commonRecipeAdvancementsDir.eachFileMatch(~/.*\.json/) { File advancementFile ->
-			if (advancementFile.name == "dissolver_block.json") {
-				return
-			}
-
 			writeJson(
 				new File(outputDir, "data/dissolver_enhanced/advancement/recipes/misc/${advancementFile.name}"),
 				jsonSlurper.parse(advancementFile)
