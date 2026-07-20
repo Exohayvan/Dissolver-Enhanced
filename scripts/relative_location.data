@@ -515,6 +515,13 @@
         "x": 0.5009765625,
         "y": 0.3655778894472362
       },
+      "open_create_world": {
+        "text": "Create New World",
+        "updated": "2026-07-20T04:54:52.000Z",
+        "variant": "fallback",
+        "x": 0.5,
+        "y": 0.8994974874371859
+      },
       "singleplayer": {
         "text": "Singleplayer",
         "updated": "2026-07-20T02:27:18.000Z",
