@@ -39,8 +39,14 @@ CONFIG_FILE = Path(__file__).with_name("config.data")
 CACHE_FILE = Path(__file__).with_name("cache.data")
 RELATIVE_LOCATION_FILE = Path(__file__).with_name("relative_location.data")
 TEST_RESULTS_FILE = Path(__file__).with_name("tests.txt")
+TEST_TIMINGS_FILE = Path(__file__).with_name("test_timings.json")
 TEST_LOG_DIR = Path(__file__).with_name("logs")
 TEST_RESULTS_LOCK = threading.Lock()
+TEST_TIMINGS_LOCK = threading.Lock()
+EASYOCR_READER_LOCK = threading.Lock()
+EASYOCR_PREWARM_LOCK = threading.Lock()
+EASYOCR_READER = None
+EASYOCR_PREWARM_STARTED = False
 CONFIG_TEMPLATE = """# Dissolver Enhanced CurseForge testing profile manager
 curseforge_instances_path: ""
 curseforge_groups_path: ""
@@ -71,7 +77,8 @@ PRESERVED_DISSOLVER_CONFIG_FILES = {"analytics-instance-id.txt"}
 
 DE_NAME_RE = re.compile(r"^DE\s*[\(\[]\s*([^\)\]]+?)\s*[\)\]]\s*$", re.IGNORECASE)
 BUILD_BRANCH_RE = re.compile(
-    r"^(?:minecraft[-_/])?(fabric|forge|neoforge|quilt)[-_/](\d+(?:\.\d+)*(?:\.x)?)(?:[-_/].+)?$",
+    r"^(?:(?:build|chore|ci|docs|feat|fix|improve|perf|refactor|test|work)[-_/])?"
+    r"(?:minecraft[-_/])?(fabric|forge|neoforge|quilt)[-_/](\d+(?:\.\d+)*(?:\.x)?)(?:[-_/].+)?$",
     re.IGNORECASE,
 )
 USE_EASYOCR = True
@@ -129,6 +136,15 @@ def step_bar_text(label, current, total, status, width=24):
     bar = "#" * filled + "." * (width - filled)
     percent = int(100 * current / total)
     return f"{label:<28} [{bar}] {current}/{total} {percent:3d}% {status}"
+
+
+def rich_progress_timing_columns(TextColumn, TimeElapsedColumn, TimeRemainingColumn):
+    return [
+        TimeElapsedColumn(),
+        TextColumn("(Est."),
+        TimeRemainingColumn(compact=True),
+        TextColumn("remaining)"),
+    ]
 
 
 class BranchProgressDisplay:
@@ -195,6 +211,41 @@ def progress_step(callback, status, amount=1):
         callback(status, amount)
 
 
+class StepTimingTracker:
+    def __init__(self, clock=time.monotonic):
+        self.clock = clock
+        self.started_at = self.clock()
+        self.current_step = None
+        self.current_started_at = self.started_at
+        self.steps = []
+
+    def step(self, status, amount=1):
+        now = self.clock()
+        self._finish_current_step(now)
+        self.current_step = str(status)
+        self.current_started_at = now
+
+    def _finish_current_step(self, finished_at):
+        if self.current_step is None:
+            return
+        self.steps.append(
+            {
+                "step": self.current_step,
+                "seconds": round(max(0.0, finished_at - self.current_started_at), 4),
+            }
+        )
+
+    def finish(self):
+        finished_at = self.clock()
+        self._finish_current_step(finished_at)
+        self.current_step = None
+        return {
+            "completed_at": utc_now_text(),
+            "total_seconds": round(max(0.0, finished_at - self.started_at), 4),
+            "steps": list(self.steps),
+        }
+
+
 def reset_test_results_file():
     try:
         TEST_RESULTS_FILE.write_text("", encoding="utf-8")
@@ -249,6 +300,114 @@ def save_test_cache(cache, path=CACHE_FILE):
     temporary = path.with_name(f"{path.name}.tmp")
     temporary.write_text(json.dumps(cache, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     temporary.replace(path)
+
+
+def empty_timing_history():
+    return {"schema_version": 1, "loaders": {}}
+
+
+def load_timing_history(path=TEST_TIMINGS_FILE):
+    path = Path(path)
+    if not path.is_file():
+        return empty_timing_history()
+    try:
+        history = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        print(f"Warning: could not read timing history {path}: {error}")
+        return empty_timing_history()
+    if not isinstance(history, dict) or not isinstance(history.get("loaders"), dict):
+        return empty_timing_history()
+    history.setdefault("schema_version", 1)
+    return history
+
+
+def save_timing_history(history, path=TEST_TIMINGS_FILE):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f"{path.name}.tmp")
+    temporary.write_text(json.dumps(history, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def record_instance_timing(instance, timing_run, passed, path=TEST_TIMINGS_FILE):
+    if not passed:
+        return False
+    loader = str(instance.get("de_loader") or instance.get("loader") or "unknown").lower()
+    version = str(
+        instance.get("de_game_version")
+        or instance.get("game_version")
+        or instance.get("version")
+        or "unknown"
+    )
+    with TEST_TIMINGS_LOCK:
+        history = load_timing_history(path)
+        versions = history.setdefault("loaders", {}).setdefault(loader, {})
+        runs = versions.setdefault(version, [])
+        runs.append(copy.deepcopy(timing_run))
+        versions[version] = runs[-5:]
+        save_timing_history(history, path)
+    return True
+
+
+def speed_report_text(history):
+    loaders = history.get("loaders", {}) if isinstance(history, dict) else {}
+    version_rows = []
+    step_samples = {}
+    details = []
+    for loader, versions in sorted(loaders.items()):
+        if not isinstance(versions, dict):
+            continue
+        for version, runs in sorted(versions.items(), key=lambda item: version_sort_key(item[0])):
+            valid_runs = [run for run in runs if isinstance(run, dict)] if isinstance(runs, list) else []
+            if not valid_runs:
+                continue
+            display = f"{branch_loader_display(loader)} {version}"
+            totals = [float(run.get("total_seconds", 0.0)) for run in valid_runs]
+            version_rows.append(
+                (sum(totals) / len(totals), display, len(totals), min(totals), max(totals))
+            )
+            details.append((display, valid_runs))
+            for run in valid_runs:
+                for step in run.get("steps", []):
+                    if not isinstance(step, dict) or "step" not in step:
+                        continue
+                    step_samples.setdefault(str(step["step"]), []).append(float(step.get("seconds", 0.0)))
+
+    if not version_rows:
+        return "Speed Overview\n--------------\nNo passing run timing data recorded yet."
+
+    lines = ["Speed Overview", "--------------"]
+    for average, display, count, fastest, slowest in sorted(version_rows, reverse=True):
+        lines.append(
+            f"{display}: {count} run{'s' if count != 1 else ''} | "
+            f"avg {average:.2f}s | fastest {fastest:.2f}s | slowest {slowest:.2f}s"
+        )
+
+    lines.extend(["", "Slowest Average Steps", "---------------------"])
+    ranked_steps = sorted(
+        (
+            (sum(samples) / len(samples), step, len(samples), max(samples))
+            for step, samples in step_samples.items()
+            if samples
+        ),
+        reverse=True,
+    )
+    for average, step, count, slowest in ranked_steps:
+        lines.append(f"{step}: avg {average:.2f}s | slowest {slowest:.2f}s | {count} sample{'s' if count != 1 else ''}")
+
+    lines.extend(["", "Passing Run Details", "-------------------"])
+    for display, runs in details:
+        lines.append(display)
+        for run in reversed(runs):
+            lines.append(f"  {run.get('completed_at', 'unknown time')} | total {float(run.get('total_seconds', 0.0)):.2f}s")
+            for step in run.get("steps", []):
+                if isinstance(step, dict):
+                    lines.append(f"    {step.get('step', 'unknown step')}: {float(step.get('seconds', 0.0)):.2f}s")
+    return "\n".join(lines)
+
+
+def print_speed_report(path=TEST_TIMINGS_FILE):
+    print(speed_report_text(load_timing_history(path)))
 
 
 def record_cached_pass(cache, plan, jar_hash, test_count, cache_path=CACHE_FILE):
@@ -1489,7 +1648,7 @@ def clean_instance_folders_compact(de_instances, apply):
         print("No DE instances to clean.")
         return
     try:
-        from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
+        from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn, TimeRemainingColumn
     except ImportError:
         progress = SingleProgressDisplay("cleanup", len(de_instances))
         for instance in de_instances:
@@ -1505,7 +1664,7 @@ def clean_instance_folders_compact(de_instances, apply):
         BarColumn(bar_width=24),
         TextColumn("{task.completed:.0f}/{task.total:.0f}"),
         TextColumn("{task.fields[status]}"),
-        TimeElapsedColumn(),
+        *rich_progress_timing_columns(TextColumn, TimeElapsedColumn, TimeRemainingColumn),
         transient=False,
     ) as progress:
         task = progress.add_task("cleanup", total=len(de_instances), status="starting")
@@ -1522,7 +1681,7 @@ def launch_instances_compact(plan, apply, automate_menus=False, ocr_debug=False)
     instances = plan["instances"]
     description = f"launch {plan['loader_version']}"
     try:
-        from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
+        from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn, TimeRemainingColumn
     except ImportError:
         progress = SingleProgressDisplay(description, len(instances))
         for instance in instances:
@@ -1535,7 +1694,7 @@ def launch_instances_compact(plan, apply, automate_menus=False, ocr_debug=False)
         BarColumn(bar_width=24),
         TextColumn("{task.completed:.0f}/{task.total:.0f}"),
         TextColumn("{task.fields[status]}"),
-        TimeElapsedColumn(),
+        *rich_progress_timing_columns(TextColumn, TimeElapsedColumn, TimeRemainingColumn),
         transient=False,
     ) as progress:
         task = progress.add_task(description, total=len(instances), status="waiting")
@@ -1670,6 +1829,33 @@ def finalize_branch_test_result(
     return result
 
 
+def launch_timed_instance(
+    instance,
+    apply,
+    automate_menus=False,
+    ocr_debug=False,
+    verbose=True,
+    progress_callback=None,
+    clock=time.monotonic,
+):
+    tracker = StepTimingTracker(clock=clock)
+
+    def report(status, amount=1):
+        tracker.step(status, amount)
+        if progress_callback:
+            progress_callback(status, amount)
+
+    passed = launch_instance(
+        instance,
+        apply,
+        automate_menus,
+        ocr_debug,
+        verbose,
+        report,
+    )
+    return passed, tracker.finish()
+
+
 def launch_all_instances_compact(
     plans,
     apply,
@@ -1677,6 +1863,7 @@ def launch_all_instances_compact(
     ocr_debug=False,
     on_plan_complete=None,
     on_instance_complete=None,
+    timings_path=TEST_TIMINGS_FILE,
 ):
     all_instances = [(plan, instance) for plan in plans for instance in plan["instances"]]
     total_instances = len(all_instances)
@@ -1685,13 +1872,25 @@ def launch_all_instances_compact(
         return list(results.values())
 
     try:
-        from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
+        from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn, TimeRemainingColumn
     except ImportError:
         total_progress = SingleProgressDisplay("Total Progress", total_instances)
         for plan in plans:
             for instance in plan["instances"]:
                 total_progress.step(f"{instance_progress_label(plan, instance)} testing")
-                passed = launch_instance(instance, apply, automate_menus, ocr_debug, verbose=False)
+                passed, timing_run = launch_timed_instance(
+                    instance,
+                    apply,
+                    automate_menus,
+                    ocr_debug,
+                    verbose=False,
+                )
+                record_instance_timing(
+                    instance,
+                    timing_run,
+                    passed=bool(passed and apply and automate_menus),
+                    path=timings_path,
+                )
                 failure_logs = [] if passed else copy_instance_logs_for_failure(instance, instance_test_label(instance))
                 if not passed and not failure_logs:
                     failure_logs = [write_test_failure_log(
@@ -1709,7 +1908,7 @@ def launch_all_instances_compact(
         BarColumn(bar_width=24),
         TextColumn("{task.completed:.0f}/{task.total:.0f}"),
         TextColumn("{task.fields[status]}"),
-        TimeElapsedColumn(),
+        *rich_progress_timing_columns(TextColumn, TimeElapsedColumn, TimeRemainingColumn),
         transient=False,
     ) as progress:
         first_plan = plans[0]
@@ -1755,7 +1954,7 @@ def launch_all_instances_compact(
 
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                     future = executor.submit(
-                        launch_instance,
+                        launch_timed_instance,
                         instance,
                         apply,
                         automate_menus,
@@ -1776,11 +1975,19 @@ def launch_all_instances_compact(
                     except queue.Empty:
                         pass
                     try:
-                        passed = future.result()
+                        passed, timing_run = future.result()
                     except Exception as error:
                         passed = False
+                        timing_run = None
                         progress.update(instance_task, status=f"error: {error}")
 
+                if timing_run is not None:
+                    record_instance_timing(
+                        instance,
+                        timing_run,
+                        passed=bool(passed and apply and automate_menus),
+                        path=timings_path,
+                    )
                 if passed:
                     failure_logs = []
                     progress.update(instance_task, completed=total_steps, status="done")
@@ -2219,6 +2426,21 @@ def minecraft_processes_for_instance(instance):
     return rows
 
 
+def wait_for_minecraft_process(instance, timeout=180, poll_seconds=0.5):
+    deadline = time.monotonic() + timeout
+    next_progress = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        if minecraft_processes_for_instance(instance):
+            return True
+        now = time.monotonic()
+        if now >= next_progress:
+            remaining = max(0, int(deadline - now))
+            print(f"    Minecraft process not found yet; still waiting ({remaining}s left).")
+            next_progress = now + 10
+        time.sleep(poll_seconds)
+    return False
+
+
 def kill_minecraft_processes_for_instance(instance, verbose=True):
     rows = minecraft_processes_for_instance(instance)
     if not rows:
@@ -2437,7 +2659,7 @@ def focus_minecraft_window():
     return pyautogui_focus_minecraft_window()
 
 
-def wait_for_minecraft_window(timeout=180, poll_seconds=2):
+def wait_for_minecraft_window(timeout=180, poll_seconds=0.5):
     deadline = time.time() + timeout
     next_progress = time.time() + 10
     while time.time() < deadline:
@@ -2594,16 +2816,69 @@ def ocr_screen(region=None):
     return all_lines
 
 
+def create_easyocr_reader(easyocr_module=None, torch_module=None):
+    if easyocr_module is None:
+        import easyocr as easyocr_module
+    if torch_module is None:
+        import torch as torch_module
+
+    mps_available = bool(
+        hasattr(torch_module.backends, "mps")
+        and torch_module.backends.mps.is_available()
+    )
+    gpu_available = bool(torch_module.cuda.is_available() or mps_available)
+    if mps_available:
+        os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+    try:
+        return easyocr_module.Reader(["en"], gpu=gpu_available, verbose=False)
+    except Exception as error:
+        if not gpu_available:
+            raise
+        print(f"    EasyOCR GPU initialization failed; falling back to CPU: {error}")
+        return easyocr_module.Reader(["en"], gpu=False, verbose=False)
+
+
+def get_easyocr_reader():
+    global EASYOCR_READER
+    with EASYOCR_READER_LOCK:
+        if EASYOCR_READER is None:
+            EASYOCR_READER = create_easyocr_reader()
+        return EASYOCR_READER
+
+
+def prewarm_easyocr():
+    try:
+        import numpy
+
+        reader = get_easyocr_reader()
+        blank_image = numpy.zeros((96, 384, 3), dtype="uint8")
+        reader.readtext(blank_image, detail=0)
+    except Exception as error:
+        print(f"    EasyOCR prewarm failed; OCR will retry on demand: {error}")
+
+
+def start_easyocr_prewarm():
+    global EASYOCR_PREWARM_STARTED
+    with EASYOCR_PREWARM_LOCK:
+        if EASYOCR_PREWARM_STARTED:
+            return False
+        EASYOCR_PREWARM_STARTED = True
+        thread = threading.Thread(
+            target=prewarm_easyocr,
+            name="easyocr-prewarm",
+            daemon=True,
+        )
+        thread.start()
+    return True
+
+
 def easyocr_screen(region=None):
     try:
-        import easyocr
         import numpy
         import pyautogui
+        reader = get_easyocr_reader()
     except ImportError:
         return []
-
-    if not hasattr(easyocr_screen, "_reader"):
-        easyocr_screen._reader = easyocr.Reader(["en"], gpu=False)
 
     offset_x = 0
     offset_y = 0
@@ -2615,7 +2890,7 @@ def easyocr_screen(region=None):
     image = numpy.array(image)
     results = []
     try:
-        read_results = easyocr_screen._reader.readtext(image)
+        read_results = reader.readtext(image)
     except Exception as error:
         print(f"    Warning: EasyOCR failed and will be skipped for this screen: {error}")
         return []
@@ -3058,8 +3333,18 @@ def minecraft_instance_is_running(instance, stage=None, verbose=True):
 
 def send_chat_line(pyautogui, message):
     pyautogui.press("t")
-    time.sleep(0.5)
-    pyautogui.write(message, interval=0.01)
+    time.sleep(0.05)
+    try:
+        import pyperclip
+
+        pyperclip.copy(message)
+        paste_modifier = "command" if platform.system().lower() == "darwin" else "ctrl"
+        pyautogui.hotkey(paste_modifier, "v")
+        time.sleep(0.05)
+    except Exception:
+        # Clipboard integration can be unavailable on minimal Linux desktops.
+        # Keep a fast keystroke fallback so automation still works there.
+        pyautogui.write(message, interval=0)
     pyautogui.press("enter")
 
 
@@ -3128,7 +3413,7 @@ def type_testing_started_message(instance, verbose=True, progress_callback=None)
     time.sleep(5.0)
     for index, message in enumerate(startup_messages + recipe_commands):
         if index:
-            time.sleep(0.5)
+            time.sleep(0.1)
         if not minecraft_instance_is_running(instance, f"typing {message!r}", verbose):
             return False
         progress_step(progress_callback, message)
@@ -3144,7 +3429,7 @@ def type_testing_started_message(instance, verbose=True, progress_callback=None)
     progress_step(progress_callback, result_message)
     send_chat_line(pyautogui, result_message)
     for message in smoke_test_commands:
-        time.sleep(0.5)
+        time.sleep(0.1)
         if not minecraft_instance_is_running(instance, f"typing {message!r}", verbose):
             return False
         progress_step(progress_callback, message)
@@ -3310,6 +3595,34 @@ def set_world_type_superflat(region, verbose=True, version=None):
     return True
 
 
+def wait_for_create_world_screen(region, timeout=8):
+    controls = {
+        "game_mode": {
+            "phrases": (
+                "Game Mode",
+                "Game Mode: Survival",
+                "Game Mode Survival",
+                "Game Mode: Creative",
+                "Game Mode Creative",
+            ),
+            "center": (0.5, 0.38),
+        },
+        "create_world": {
+            "phrases": ("Create", "Create New World", "Create New"),
+            "center": (0.5, 0.90),
+        },
+    }
+    return bool(
+        wait_for_expected_controls(
+            region,
+            controls,
+            ("game_mode", "create_world"),
+            timeout=timeout,
+            delay=0.1,
+        )[1]
+    )
+
+
 def run_cached_menu_sequence(region, version, instance, verbose=True, progress_callback=None):
     if not cached_menu_sequence_available(version):
         return False
@@ -3321,7 +3634,8 @@ def run_cached_menu_sequence(region, version, instance, verbose=True, progress_c
 
     progress_step(progress_callback, "singleplayer")
     cached_relative_click(region, "singleplayer", verbose, version)
-    time.sleep(5.0)
+    if not wait_for_create_world_screen(region, timeout=8) and verbose:
+        print("    Create-world screen was not detected yet; continuing with cached controls.")
 
     progress_step(progress_callback, "create world screen")
     if not cached_relative_click(region, "open_create_world", verbose, version):
@@ -3401,8 +3715,15 @@ def automate_minecraft_menus(instance, apply, ocr_debug=False, verbose=True, pro
     import pyautogui
 
     pyautogui.PAUSE = 0.0
-    progress_step(progress_callback, "waiting for window")
-    window_info = wait_for_minecraft_window()
+    if has_easyocr():
+        start_easyocr_prewarm()
+    progress_step(progress_callback, "waiting for process")
+    if not wait_for_minecraft_process(instance, timeout=180, poll_seconds=0.5):
+        if verbose:
+            print("    Minecraft process was not detected before timeout; failing this instance.")
+        return False
+    progress_step(progress_callback, "waiting for Minecraft window")
+    window_info = wait_for_minecraft_window(timeout=180, poll_seconds=0.5)
     if window_info:
         region = window_info["region"]
         if verbose:
@@ -3592,9 +3913,20 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
 
     launch_plans = []
 
+    def start_setup_workers(progress_events):
+        # Every loader includes the same Common composite build. Keep Gradle
+        # builds serialized so the shared source tree is never read or cached
+        # concurrently, especially from iCloud-backed workspaces.
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        future_to_plan = {
+            executor.submit(setup_branch, plan, progress_events): plan
+            for plan in setup_plans
+        }
+        return executor, future_to_plan, set(future_to_plan)
+
     def run_apply_setups_with_rich():
         try:
-            from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
+            from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn, TimeRemainingColumn
         except ImportError:
             return False
 
@@ -3604,7 +3936,7 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
             BarColumn(bar_width=24),
             TextColumn("{task.completed:.0f}/{task.total:.0f}"),
             TextColumn("{task.fields[status]}"),
-            TimeElapsedColumn(),
+            *rich_progress_timing_columns(TextColumn, TimeElapsedColumn, TimeRemainingColumn),
             transient=False,
         ) as progress:
             for plan in setup_plans:
@@ -3614,14 +3946,8 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
                     status="building",
             )
             progress_events = queue.Queue()
-            # Every loader includes the same Common composite build. Keep Gradle
-            # builds serialized so the shared source tree is never read or cached
-            # concurrently, especially from iCloud-backed workspaces.
-            setup_workers = 1
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=setup_workers)
+            executor, future_to_plan, pending = start_setup_workers(progress_events)
             try:
-                future_to_plan = {executor.submit(setup_branch, plan, progress_events): plan for plan in setup_plans}
-                pending = set(future_to_plan)
                 while pending:
                     try:
                         while True:
@@ -3757,14 +4083,8 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
         if not run_apply_setups_with_rich():
             progress_events = queue.Queue()
             progress_display = BranchProgressDisplay(setup_plans)
-            # Every loader includes the same Common composite build. Keep Gradle
-            # builds serialized so the shared source tree is never read or cached
-            # concurrently, especially from iCloud-backed workspaces.
-            setup_workers = 1
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=setup_workers)
+            executor, future_to_plan, pending = start_setup_workers(progress_events)
             try:
-                future_to_plan = {executor.submit(setup_branch, plan, progress_events): plan for plan in setup_plans}
-                pending = set(future_to_plan)
                 while pending:
                     try:
                         while True:
@@ -3881,7 +4201,17 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
             for instance in branch_instances:
                 print(f"    {instance['de_game_version']}: {instance['folder']}")
             for instance in branch_instances:
-                passed = launch_instance(instance, apply, automate_menus, ocr_debug)
+                passed, timing_run = launch_timed_instance(
+                    instance,
+                    apply,
+                    automate_menus,
+                    ocr_debug,
+                )
+                record_instance_timing(
+                    instance,
+                    timing_run,
+                    passed=bool(passed and apply and automate_menus),
+                )
                 failure_logs = [] if passed else copy_instance_logs_for_failure(instance, instance_test_label(instance))
                 if not passed and not failure_logs:
                     failure_logs = [write_test_failure_log(
@@ -3937,6 +4267,7 @@ def parse_args(argv):
     parser.add_argument("--automate-menus", action="store_true", help="Use optional OCR/click automation after each Minecraft launch.")
     parser.add_argument("--use-easyocr", action="store_true", help="Use EasyOCR during menu automation. Slower, but can help with Minecraft's font.")
     parser.add_argument("--ocr-debug", action="store_true", help="Print recognized OCR text lines during menu automation.")
+    parser.add_argument("--speed", action="store_true", help="Show the overview and detailed timings from the last five passing runs per loader/version, then exit.")
     parser.add_argument("--debug", action="store_true", help="Print detailed scan, profile, cleanup, and setup diagnostics.")
     return parser.parse_args(argv)
 
@@ -3944,6 +4275,9 @@ def parse_args(argv):
 def main(argv=None):
     global USE_EASYOCR
     args = parse_args(argv or sys.argv[1:])
+    if args.speed:
+        print_speed_report()
+        return 0
     if args.full_run:
         args.apply = True
         args.test_instances = True

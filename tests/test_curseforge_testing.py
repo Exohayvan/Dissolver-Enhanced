@@ -1,6 +1,7 @@
 import contextlib
 import importlib.util
 import io
+import json
 import subprocess
 import tempfile
 import unittest
@@ -14,6 +15,22 @@ if SPEC is None or SPEC.loader is None:
     raise RuntimeError(f"Could not load {SCRIPT_PATH}")
 curseforge_testing = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(curseforge_testing)
+
+
+class BuildBranchParsingTests(unittest.TestCase):
+    def test_conventional_prefix_before_minecraft_branch_is_supported(self):
+        branch = curseforge_testing.parse_loader_version_from_branch(
+            "feat/minecraft-fabric-1.21.x-quality_check_action"
+        )
+
+        self.assertEqual(
+            branch,
+            {
+                "name": "feat/minecraft-fabric-1.21.x-quality_check_action",
+                "loader": "fabric",
+                "version": "1.21.x",
+            },
+        )
 
 
 class PullRequestBranchTests(unittest.TestCase):
@@ -84,6 +101,44 @@ class PullRequestCommentTests(unittest.TestCase):
 
 
 class PullRequestPublishingTests(unittest.TestCase):
+    def _publish(self, result, runner):
+        with contextlib.redirect_stdout(io.StringIO()):
+            published = curseforge_testing.publish_pull_request_test_result(
+                result,
+                Path("/repo"),
+                runner=runner,
+            )
+        self.assertTrue(published)
+
+    def _publish_cached_pass(self, labels):
+        calls = []
+
+        def runner(command, **kwargs):
+            calls.append((command, kwargs))
+            if command[1:3] == ["pr", "list"]:
+                return subprocess.CompletedProcess(
+                    command,
+                    0,
+                    stdout=json.dumps([{"number": 42, "labels": labels}]) + "\n",
+                    stderr="",
+                )
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+        result = {
+            "branch": {
+                "name": "minecraft-fabric-1.21.x-fix-null-guard",
+                "loader": "fabric",
+                "version": "1.21.x",
+            },
+            "passed": True,
+            "cached": True,
+            "passed_tests": 37,
+            "tested_instances": 2,
+            "logs": [],
+        }
+        self._publish(result, runner)
+        return calls
+
     def test_pass_result_comments_and_adds_passed_label(self):
         calls = []
 
@@ -109,14 +164,7 @@ class PullRequestPublishingTests(unittest.TestCase):
             "logs": [],
         }
 
-        with contextlib.redirect_stdout(io.StringIO()):
-            published = curseforge_testing.publish_pull_request_test_result(
-                result,
-                Path("/repo"),
-                runner=runner,
-            )
-
-        self.assertTrue(published)
+        self._publish(result, runner)
         commands = [call[0] for call in calls]
         self.assertIn(
             [
@@ -163,14 +211,8 @@ class PullRequestPublishingTests(unittest.TestCase):
                 "tested_instances": 1,
                 "logs": [log_path],
             }
-            with contextlib.redirect_stdout(io.StringIO()):
-                published = curseforge_testing.publish_pull_request_test_result(
-                    result,
-                    Path("/repo"),
-                    runner=runner,
-                )
+            self._publish(result, runner)
 
-        self.assertTrue(published)
         commands = [call[0] for call in calls]
         self.assertIn(
             [
@@ -183,40 +225,7 @@ class PullRequestPublishingTests(unittest.TestCase):
         self.assertIn("```text\nMinecraft test failed\n```", comment_call[1]["input"])
 
     def test_cached_pass_with_present_label_does_not_post_duplicate_update(self):
-        calls = []
-
-        def runner(command, **kwargs):
-            calls.append((command, kwargs))
-            if command[1:3] == ["pr", "list"]:
-                return subprocess.CompletedProcess(
-                    command,
-                    0,
-                    stdout='[{"number": 42, "labels": [{"name": "testing:passed"}]}]\n',
-                    stderr="",
-                )
-            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
-
-        result = {
-            "branch": {
-                "name": "minecraft-fabric-1.21.x-fix-null-guard",
-                "loader": "fabric",
-                "version": "1.21.x",
-            },
-            "passed": True,
-            "cached": True,
-            "passed_tests": 37,
-            "tested_instances": 2,
-            "logs": [],
-        }
-
-        with contextlib.redirect_stdout(io.StringIO()):
-            published = curseforge_testing.publish_pull_request_test_result(
-                result,
-                Path("/repo"),
-                runner=runner,
-            )
-
-        self.assertTrue(published)
+        calls = self._publish_cached_pass([{"name": "testing:passed"}])
         mutation_calls = [
             command for command, _kwargs in calls
             if command[:3] in (
@@ -228,40 +237,7 @@ class PullRequestPublishingTests(unittest.TestCase):
         self.assertEqual(mutation_calls, [])
 
     def test_cached_pass_restores_missing_pass_label_without_commenting(self):
-        calls = []
-
-        def runner(command, **kwargs):
-            calls.append((command, kwargs))
-            if command[1:3] == ["pr", "list"]:
-                return subprocess.CompletedProcess(
-                    command,
-                    0,
-                    stdout='[{"number": 42, "labels": []}]\n',
-                    stderr="",
-                )
-            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
-
-        result = {
-            "branch": {
-                "name": "minecraft-fabric-1.21.x-fix-null-guard",
-                "loader": "fabric",
-                "version": "1.21.x",
-            },
-            "passed": True,
-            "cached": True,
-            "passed_tests": 37,
-            "tested_instances": 2,
-            "logs": [],
-        }
-
-        with contextlib.redirect_stdout(io.StringIO()):
-            published = curseforge_testing.publish_pull_request_test_result(
-                result,
-                Path("/repo"),
-                runner=runner,
-            )
-
-        self.assertTrue(published)
+        calls = self._publish_cached_pass([])
         commands = [command for command, _kwargs in calls]
         self.assertIn(
             ["gh", "pr", "edit", "42", "--add-label", "testing:passed"],
@@ -336,14 +312,7 @@ class PullRequestPublishingTests(unittest.TestCase):
             "logs": [],
         }
 
-        with contextlib.redirect_stdout(io.StringIO()):
-            published = curseforge_testing.publish_pull_request_test_result(
-                result,
-                Path("/repo"),
-                runner=runner,
-            )
-
-        self.assertTrue(published)
+        self._publish(result, runner)
         commands = [call[0] for call in calls]
         self.assertIn(
             [
@@ -485,6 +454,166 @@ class BranchTestResultTests(unittest.TestCase):
         self.assertEqual(results[0]["logs"], [failure_log])
 
 
+class EasyOCRAccelerationTests(unittest.TestCase):
+    def test_reader_uses_gpu_when_mps_is_available(self):
+        easyocr = mock.Mock()
+        reader = mock.Mock()
+        easyocr.Reader.return_value = reader
+        torch = mock.Mock()
+        torch.cuda.is_available.return_value = False
+        torch.backends.mps.is_available.return_value = True
+
+        result = curseforge_testing.create_easyocr_reader(easyocr, torch)
+
+        self.assertIs(result, reader)
+        easyocr.Reader.assert_called_once_with(["en"], gpu=True, verbose=False)
+
+    def test_prewarm_runs_one_dummy_inference(self):
+        reader = mock.Mock()
+        numpy = mock.Mock()
+        blank_image = mock.Mock()
+        numpy.zeros.return_value = blank_image
+        with (
+            mock.patch.dict("sys.modules", {"numpy": numpy}),
+            mock.patch.object(curseforge_testing, "get_easyocr_reader", return_value=reader),
+        ):
+            curseforge_testing.prewarm_easyocr()
+
+        numpy.zeros.assert_called_once_with((96, 384, 3), dtype="uint8")
+        reader.readtext.assert_called_once_with(blank_image, detail=0)
+
+    def test_async_prewarm_starts_only_once(self):
+        thread = mock.Mock()
+        with (
+            mock.patch.object(curseforge_testing, "EASYOCR_PREWARM_STARTED", False),
+            mock.patch.object(curseforge_testing.threading, "Thread", return_value=thread) as thread_factory,
+        ):
+            curseforge_testing.start_easyocr_prewarm()
+            curseforge_testing.start_easyocr_prewarm()
+
+        thread_factory.assert_called_once_with(
+            target=curseforge_testing.prewarm_easyocr,
+            name="easyocr-prewarm",
+            daemon=True,
+        )
+        thread.start.assert_called_once_with()
+
+    def test_reader_falls_back_to_cpu_when_gpu_initialization_fails(self):
+        easyocr = mock.Mock()
+        cpu_reader = mock.Mock()
+        easyocr.Reader.side_effect = [RuntimeError("MPS failed"), cpu_reader]
+        torch = mock.Mock()
+        torch.cuda.is_available.return_value = False
+        torch.backends.mps.is_available.return_value = True
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = curseforge_testing.create_easyocr_reader(easyocr, torch)
+
+        self.assertIs(result, cpu_reader)
+        self.assertEqual(
+            easyocr.Reader.call_args_list,
+            [
+                mock.call(["en"], gpu=True, verbose=False),
+                mock.call(["en"], gpu=False, verbose=False),
+            ],
+        )
+
+
+class MenuAutomationPerformanceTests(unittest.TestCase):
+    def test_startup_timing_separates_process_from_window_detection(self):
+        instance = {"path": Path("unused"), "de_game_version": "26.1"}
+        statuses = []
+        pyautogui = mock.Mock()
+        with (
+            mock.patch.dict("sys.modules", {"pyautogui": pyautogui}),
+            mock.patch.object(curseforge_testing, "require_menu_automation_backend", return_value=[]),
+            mock.patch.object(curseforge_testing, "has_easyocr", return_value=True),
+            mock.patch.object(curseforge_testing, "start_easyocr_prewarm") as start_prewarm,
+            mock.patch.object(curseforge_testing, "wait_for_minecraft_process", return_value=True) as wait_process,
+            mock.patch.object(curseforge_testing, "wait_for_minecraft_window", return_value=None) as wait_window,
+        ):
+            passed = curseforge_testing.automate_minecraft_menus(
+                instance,
+                apply=True,
+                verbose=False,
+                progress_callback=lambda status, _amount: statuses.append(status),
+            )
+
+        self.assertFalse(passed)
+        self.assertEqual(statuses[:2], ["waiting for process", "waiting for Minecraft window"])
+        start_prewarm.assert_called_once_with()
+        wait_process.assert_called_once_with(instance, timeout=180, poll_seconds=0.5)
+        wait_window.assert_called_once_with(timeout=180, poll_seconds=0.5)
+
+    def test_cached_singleplayer_waits_for_create_screen_instead_of_fixed_sleep(self):
+        region = (0, 0, 1000, 700)
+        instance = {"path": Path("unused")}
+        with (
+            mock.patch.object(curseforge_testing, "cached_menu_sequence_available", return_value=True),
+            mock.patch.object(curseforge_testing, "cached_control_clicks", return_value=0),
+            mock.patch.object(curseforge_testing, "cached_relative_click", return_value=True),
+            mock.patch.object(curseforge_testing, "wait_for_create_world_screen", return_value=True) as wait_ready,
+            mock.patch.object(curseforge_testing, "type_testing_started_message", return_value=True),
+            mock.patch.object(curseforge_testing.time, "sleep") as sleep,
+        ):
+            passed = curseforge_testing.run_cached_menu_sequence(
+                region,
+                "26.1",
+                instance,
+                verbose=False,
+            )
+
+        self.assertTrue(passed)
+        wait_ready.assert_called_once_with(region, timeout=8)
+        self.assertNotIn(mock.call(5.0), sleep.call_args_list)
+
+
+class RichProgressTimingTests(unittest.TestCase):
+    def test_progress_timing_columns_show_elapsed_and_estimated_remaining(self):
+        text_column = mock.Mock(side_effect=lambda text: ("text", text))
+        elapsed_column = mock.Mock(return_value=("elapsed",))
+        remaining_column = mock.Mock(return_value=("remaining",))
+
+        columns = curseforge_testing.rich_progress_timing_columns(
+            text_column,
+            elapsed_column,
+            remaining_column,
+        )
+
+        self.assertEqual(
+            columns,
+            [
+                ("elapsed",),
+                ("text", "(Est."),
+                ("remaining",),
+                ("text", "remaining)"),
+            ],
+        )
+        remaining_column.assert_called_once_with(compact=True)
+
+
+class ChatInputTests(unittest.TestCase):
+    def test_chat_line_uses_clipboard_paste_instead_of_typing_each_character(self):
+        pyautogui = mock.Mock()
+        pyperclip = mock.Mock()
+
+        with (
+            mock.patch.dict("sys.modules", {"pyperclip": pyperclip}),
+            mock.patch.object(curseforge_testing.platform, "system", return_value="Darwin"),
+            mock.patch.object(curseforge_testing.time, "sleep") as sleep,
+        ):
+            curseforge_testing.send_chat_line(pyautogui, "/give @s minecraft:stone 64")
+
+        pyperclip.copy.assert_called_once_with("/give @s minecraft:stone 64")
+        pyautogui.hotkey.assert_called_once_with("command", "v")
+        pyautogui.write.assert_not_called()
+        self.assertEqual(sleep.call_args_list, [mock.call(0.05), mock.call(0.05)])
+        self.assertEqual(
+            pyautogui.press.call_args_list,
+            [mock.call("t"), mock.call("enter")],
+        )
+
+
 class RecipeResultGatingTests(unittest.TestCase):
     def run_recipe_flow(self, advancement_result):
         recipe_tests = [{"advancement": "dissolver_enhanced:test", "trigger_items": []}]
@@ -502,6 +631,26 @@ class RecipeResultGatingTests(unittest.TestCase):
                 {"path": Path("unused")},
                 verbose=False,
             )
+
+    def test_command_sequences_use_short_inter_command_pacing(self):
+        recipe_tests = [{"advancement": "dissolver_enhanced:test", "trigger_items": []}]
+        with (
+            mock.patch.object(curseforge_testing, "load_recipe_unlock_tests", return_value=recipe_tests),
+            mock.patch.object(curseforge_testing, "minecraft_instance_is_running", return_value=True),
+            mock.patch.object(curseforge_testing, "wait_for_recipe_advancements", return_value=(1, 1, [])),
+            mock.patch.object(curseforge_testing, "send_chat_line"),
+            mock.patch.object(curseforge_testing, "pause_unpause_to_save", return_value=True),
+            mock.patch.object(curseforge_testing, "place_smoke_test_blocks", return_value=True),
+            mock.patch.object(curseforge_testing.time, "sleep") as sleep,
+        ):
+            passed = curseforge_testing.type_testing_started_message(
+                {"path": Path("unused")},
+                verbose=False,
+            )
+
+        self.assertTrue(passed)
+        self.assertEqual(sleep.call_args_list.count(mock.call(0.1)), 8)
+        self.assertNotIn(mock.call(0.5), sleep.call_args_list)
 
     def test_incomplete_recipe_check_fails_instance_setup(self):
         self.assertFalse(self.run_recipe_flow((0, 1, [])))
@@ -557,6 +706,132 @@ class RecipeAdvancementDiscoveryTests(unittest.TestCase):
                 curseforge_testing.latest_advancement_file({"path": instance_path}),
                 expected,
             )
+
+
+class StepTimingHistoryTests(unittest.TestCase):
+    def test_tracker_records_elapsed_time_for_each_ordered_step(self):
+        clock = mock.Mock(side_effect=[0.0, 0.0, 2.5, 5.0])
+        tracker = curseforge_testing.StepTimingTracker(clock=clock)
+
+        tracker.step("launching")
+        tracker.step("waiting for window")
+        run = tracker.finish()
+
+        self.assertEqual(
+            run["steps"],
+            [
+                {"step": "launching", "seconds": 2.5},
+                {"step": "waiting for window", "seconds": 2.5},
+            ],
+        )
+        self.assertEqual(run["total_seconds"], 5.0)
+
+    def test_timed_launch_wraps_existing_progress_steps(self):
+        instance = {"path": Path("unused")}
+        forwarded = []
+        clock = mock.Mock(side_effect=[0.0, 0.0, 1.5, 4.0])
+
+        def launch(_instance, _apply, _automate, _ocr, _verbose, progress_callback):
+            progress_callback("launching", 1)
+            progress_callback("waiting for window", 1)
+            return True
+
+        with mock.patch.object(curseforge_testing, "launch_instance", side_effect=launch):
+            passed, timing_run = curseforge_testing.launch_timed_instance(
+                instance,
+                True,
+                True,
+                progress_callback=lambda status, amount: forwarded.append((status, amount)),
+                clock=clock,
+            )
+
+        self.assertTrue(passed)
+        self.assertEqual(forwarded, [("launching", 1), ("waiting for window", 1)])
+        self.assertEqual(
+            timing_run["steps"],
+            [
+                {"step": "launching", "seconds": 1.5},
+                {"step": "waiting for window", "seconds": 2.5},
+            ],
+        )
+
+    def test_history_keeps_only_last_five_passing_runs_per_loader_version(self):
+        instance = {"de_loader": "fabric", "de_game_version": "1.21.1"}
+        with tempfile.TemporaryDirectory() as temp_dir:
+            history_path = Path(temp_dir) / "test_timings.json"
+            failed_run = {
+                "completed_at": "failed",
+                "total_seconds": 99.0,
+                "steps": [{"step": "failed", "seconds": 99.0}],
+            }
+            curseforge_testing.record_instance_timing(
+                instance,
+                failed_run,
+                passed=False,
+                path=history_path,
+            )
+            for run_number in range(1, 7):
+                curseforge_testing.record_instance_timing(
+                    instance,
+                    {
+                        "completed_at": f"run-{run_number}",
+                        "total_seconds": float(run_number),
+                        "steps": [{"step": "launching", "seconds": float(run_number)}],
+                    },
+                    passed=True,
+                    path=history_path,
+                )
+            history = json.loads(history_path.read_text(encoding="utf-8"))
+
+        runs = history["loaders"]["fabric"]["1.21.1"]
+        self.assertEqual(len(runs), 5)
+        self.assertEqual([run["completed_at"] for run in runs], ["run-2", "run-3", "run-4", "run-5", "run-6"])
+        self.assertNotIn("failed", [run["completed_at"] for run in runs])
+
+    def test_speed_report_has_overview_bottlenecks_and_run_details(self):
+        history = {
+            "schema_version": 1,
+            "loaders": {
+                "fabric": {
+                    "1.21.1": [
+                        {
+                            "completed_at": "2026-07-19T10:00:00.000Z",
+                            "total_seconds": 12.0,
+                            "steps": [
+                                {"step": "launching", "seconds": 2.0},
+                                {"step": "waiting for window", "seconds": 10.0},
+                            ],
+                        },
+                        {
+                            "completed_at": "2026-07-19T11:00:00.000Z",
+                            "total_seconds": 22.0,
+                            "steps": [
+                                {"step": "launching", "seconds": 2.0},
+                                {"step": "waiting for window", "seconds": 20.0},
+                            ],
+                        },
+                    ]
+                }
+            },
+        }
+
+        report = curseforge_testing.speed_report_text(history)
+
+        self.assertIn("Speed Overview", report)
+        self.assertIn("Fabric 1.21.1", report)
+        self.assertIn("avg 17.00s", report)
+        self.assertIn("Slowest Average Steps", report)
+        self.assertIn("waiting for window", report)
+        self.assertIn("avg 15.00s", report)
+        self.assertIn("Passing Run Details", report)
+        self.assertIn("2026-07-19T11:00:00.000Z", report)
+
+    def test_speed_flag_prints_report_without_running_normal_workflow(self):
+        with mock.patch.object(curseforge_testing, "print_speed_report") as print_speed_report:
+            result = curseforge_testing.main(["--speed"])
+
+        self.assertEqual(result, 0)
+        print_speed_report.assert_called_once_with()
 
 
 class BuildTestCacheTests(unittest.TestCase):
@@ -804,7 +1079,7 @@ class BuildTestCacheTests(unittest.TestCase):
             setattr(curseforge_testing, "launch_instance", launch)
             setattr(curseforge_testing, "estimated_instance_steps", lambda _instance: 1)
             setattr(curseforge_testing, "append_test_result", lambda _line: None)
-            with contextlib.redirect_stdout(io.StringIO()):
+            with tempfile.TemporaryDirectory() as temp_dir, contextlib.redirect_stdout(io.StringIO()):
                 curseforge_testing.launch_all_instances_compact(
                     [plan],
                     True,
@@ -812,6 +1087,7 @@ class BuildTestCacheTests(unittest.TestCase):
                     on_instance_complete=lambda _result, _plan, instance, _passed: events.append(
                         f"cached:{instance['de_game_version']}"
                     ),
+                    timings_path=Path(temp_dir) / "test_timings.json",
                 )
         finally:
             for name, value in originals.items():
