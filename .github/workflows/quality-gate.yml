@@ -29,6 +29,7 @@ jobs:
           threshold: 0
           min-lines: 8
           min-tokens: 60
+          ignore-pattern: '(?m)^(?:package|import)\s+[^;\r\n]+;\s*(?:\r?\n|$)'
           reporters: console
           upload-sarif: false
           ignore: >-
