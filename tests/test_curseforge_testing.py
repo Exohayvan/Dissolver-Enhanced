@@ -492,6 +492,7 @@ class RecipeResultGatingTests(unittest.TestCase):
             mock.patch.dict("sys.modules", {"pyautogui": object()}),
             mock.patch.object(curseforge_testing, "load_recipe_unlock_tests", return_value=recipe_tests),
             mock.patch.object(curseforge_testing, "wait_for_recipe_advancements", return_value=advancement_result),
+            mock.patch.object(curseforge_testing, "minecraft_processes_for_instance", return_value=[("123", "java")]),
             mock.patch.object(curseforge_testing, "send_chat_line"),
             mock.patch.object(curseforge_testing, "pause_unpause_to_save"),
             mock.patch.object(curseforge_testing, "place_smoke_test_blocks"),
@@ -507,6 +508,29 @@ class RecipeResultGatingTests(unittest.TestCase):
 
     def test_complete_recipe_check_passes_instance_setup(self):
         self.assertTrue(self.run_recipe_flow((1, 1, ["dissolver_enhanced:test"])))
+
+    def test_early_instance_exit_stops_typing_remaining_steps(self):
+        recipe_tests = [{"advancement": "dissolver_enhanced:test", "trigger_items": []}]
+        with (
+            mock.patch.dict("sys.modules", {"pyautogui": object()}),
+            mock.patch.object(curseforge_testing, "load_recipe_unlock_tests", return_value=recipe_tests),
+            mock.patch.object(
+                curseforge_testing,
+                "minecraft_processes_for_instance",
+                side_effect=[[('123', 'java')], []],
+            ),
+            mock.patch.object(curseforge_testing, "send_chat_line") as send_chat_line,
+            mock.patch.object(curseforge_testing, "pause_unpause_to_save"),
+            mock.patch.object(curseforge_testing, "place_smoke_test_blocks"),
+            mock.patch.object(curseforge_testing.time, "sleep"),
+        ):
+            passed = curseforge_testing.type_testing_started_message(
+                {"path": Path("unused")},
+                verbose=False,
+            )
+
+        self.assertFalse(passed)
+        self.assertEqual(send_chat_line.call_count, 1)
 
 
 class RecipeAdvancementDiscoveryTests(unittest.TestCase):
