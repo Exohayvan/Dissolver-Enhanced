@@ -704,6 +704,36 @@ public sealed class ModEntry : Mod
             && parameters.Select(parameter => parameter.ParameterType).SequenceEqual(parameterTypes);
     }
 
+    private static object? CreateDissolverItem()
+    {
+        Type? itemRegistryType = Type.GetType("StardewValley.ItemRegistry, Stardew Valley");
+        itemRegistryType?.GetMethod("ResetCache", Type.EmptyTypes)?.Invoke(null, Array.Empty<object>());
+        MethodInfo? createItem = itemRegistryType?.GetMethods()
+            .FirstOrDefault(method =>
+                method.Name == "Create"
+                && !method.IsGenericMethod
+                && ParametersMatch(method, typeof(string), typeof(int), typeof(int), typeof(bool))
+            );
+        return createItem?.Invoke(
+            null,
+            new object[] { DissolverContent.DissolverQualifiedItemId, 1, 0, false }
+        );
+    }
+
+    private static bool TryAddItemToInventory(object item)
+    {
+        Type? gameType = Type.GetType("StardewValley.Game1, Stardew Valley");
+        object? player = gameType?.GetProperty("player")?.GetValue(null);
+        MethodInfo? addItem = player?.GetType().GetMethods()
+            .FirstOrDefault(method =>
+                method.Name == "addItemToInventoryBool"
+                && ParametersMatch(method, item.GetType().BaseType ?? item.GetType(), typeof(bool))
+            )
+            ?? player?.GetType().GetMethods()
+                .FirstOrDefault(method => method.Name == "addItemToInventoryBool" && method.GetParameters().Length == 2);
+        return addItem?.Invoke(player, new[] { item, true }) as bool? ?? false;
+    }
+
     private void OnButtonPressed(object? sender, object args)
     {
         try
@@ -790,32 +820,14 @@ public sealed class ModEntry : Mod
             return;
         }
 
-        Type? itemRegistryType = Type.GetType("StardewValley.ItemRegistry, Stardew Valley");
-        itemRegistryType?.GetMethod("ResetCache", Type.EmptyTypes)?.Invoke(null, Array.Empty<object>());
-        MethodInfo? createItem = itemRegistryType?.GetMethods()
-            .FirstOrDefault(method =>
-                method.Name == "Create"
-                && !method.IsGenericMethod
-                && ParametersMatch(method, typeof(string), typeof(int), typeof(int), typeof(bool))
-            );
-        object? dissolverItem = createItem
-            ?.Invoke(null, new object[] { DissolverContent.DissolverQualifiedItemId, 1, 0, false });
+        object? dissolverItem = CreateDissolverItem();
         if (dissolverItem == null)
         {
             Monitor.Log("Could not create the Dissolver item while picking it up.", LogLevel.Warn);
             return;
         }
 
-        Type? gameType = Type.GetType("StardewValley.Game1, Stardew Valley");
-        object? player = gameType?.GetProperty("player")?.GetValue(null);
-        MethodInfo? addItem = player?.GetType().GetMethods()
-            .FirstOrDefault(method =>
-                method.Name == "addItemToInventoryBool"
-                && ParametersMatch(method, dissolverItem.GetType().BaseType ?? dissolverItem.GetType(), typeof(bool))
-            )
-            ?? player?.GetType().GetMethods()
-                .FirstOrDefault(method => method.Name == "addItemToInventoryBool" && method.GetParameters().Length == 2);
-        bool added = addItem?.Invoke(player, new[] { dissolverItem, true }) as bool? ?? false;
+        bool added = TryAddItemToInventory(dissolverItem);
         if (!added)
         {
             Monitor.Log("Your inventory is full, so the Dissolver was not picked up.", LogLevel.Info);
@@ -998,32 +1010,14 @@ public sealed class ModEntry : Mod
                 return;
             }
 
-            Type? itemRegistryType = Type.GetType("StardewValley.ItemRegistry, Stardew Valley");
-            itemRegistryType?.GetMethod("ResetCache", Type.EmptyTypes)?.Invoke(null, Array.Empty<object>());
-            MethodInfo? createItem = itemRegistryType?.GetMethods()
-                .FirstOrDefault(method =>
-                    method.Name == "Create"
-                    && !method.IsGenericMethod
-                    && ParametersMatch(method, typeof(string), typeof(int), typeof(int), typeof(bool))
-                );
-            object? dissolver = createItem
-                ?.Invoke(null, new object[] { DissolverContent.DissolverQualifiedItemId, 1, 0, false });
+            object? dissolver = CreateDissolverItem();
             if (dissolver == null)
             {
                 Monitor.Log($"Could not create item {DissolverContent.DissolverQualifiedItemId}. The big craftable content is not registered yet.", LogLevel.Warn);
                 return;
             }
 
-            Type? gameType = Type.GetType("StardewValley.Game1, Stardew Valley");
-            object? player = gameType?.GetProperty("player")?.GetValue(null);
-            MethodInfo? addItem = player?.GetType().GetMethods()
-                .FirstOrDefault(method =>
-                    method.Name == "addItemToInventoryBool"
-                    && ParametersMatch(method, dissolver.GetType().BaseType ?? dissolver.GetType(), typeof(bool))
-                )
-                ?? player?.GetType().GetMethods()
-                    .FirstOrDefault(method => method.Name == "addItemToInventoryBool" && method.GetParameters().Length == 2);
-            bool added = addItem?.Invoke(player, new[] { dissolver, true }) as bool? ?? false;
+            bool added = TryAddItemToInventory(dissolver);
             Monitor.Log(added ? "Added a Dissolver to your inventory." : "Created a Dissolver, but it could not be added to your inventory.", LogLevel.Info);
         }
         catch (Exception exception)

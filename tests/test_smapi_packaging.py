@@ -134,9 +134,10 @@ class SmapiPackagingTests(unittest.TestCase):
 
     def test_workflow_builds_stardew_fix_branches_outside_protected_namespace(self) -> None:
         workflow = (ROOT / ".github/workflows/build.yml").read_text(encoding="utf-8")
+        build_script = (ROOT / "scripts/build_smapi.sh").read_text(encoding="utf-8")
 
         self.assertEqual(3, workflow.count("startsWith(github.ref_name, 'fix/stardew')"))
-        self.assertEqual(2, workflow.count('loader_name="smapi"'))
+        self.assertIn('-smapi-sv${game_version}-c${common_version}', build_script)
 
     def test_workflow_checks_out_common_branch(self) -> None:
         workflow = (ROOT / ".github/workflows/build.yml").read_text(encoding="utf-8")
@@ -145,11 +146,21 @@ class SmapiPackagingTests(unittest.TestCase):
 
     def test_workflow_passes_common_assets_and_uses_verified_packager(self) -> None:
         workflow = (ROOT / ".github/workflows/build.yml").read_text(encoding="utf-8")
+        build_script = (ROOT / "scripts/build_smapi.sh").read_text(encoding="utf-8")
 
-        self.assertEqual(2, workflow.count("-p:CommonAssetsPath="))
-        self.assertEqual(2, workflow.count("scripts/package_smapi.py"))
-        self.assertEqual(2, workflow.count("tests/SmapiTextureSmoke/SmapiTextureSmoke.csproj"))
+        self.assertEqual(2, workflow.count('bash scripts/build_smapi.sh "../${{ env.COMMON_DIR }}"'))
+        self.assertIn('-p:CommonProjectPath="${common_project}"', build_script)
+        self.assertIn('-p:CommonAssetsPath="${common_assets}"', build_script)
+        self.assertEqual(1, build_script.count('python3 scripts/package_smapi.py --build-dir build --archive "${archive_name}.zip"'))
+        self.assertEqual(
+            1,
+            build_script.count(
+                'dotnet run --project tests/SmapiTextureSmoke/SmapiTextureSmoke.csproj '
+                '--configuration Release -- "${archive_name}.zip"'
+            ),
+        )
         self.assertNotIn("cp build/*.dll build/manifest.json", workflow)
+        self.assertNotIn("cp build/*.dll build/manifest.json", build_script)
 
 
 if __name__ == "__main__":

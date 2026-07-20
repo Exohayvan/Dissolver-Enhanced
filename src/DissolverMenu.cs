@@ -139,19 +139,14 @@ internal sealed class DissolverMenu : IClickableMenu
             return;
         }
 
-        IReadOnlyList<string> learnedItems = DissolverState.LearnedItems;
-        for (int index = 0; index < storedSlots.Count; index++)
+        if (TryGetLearnedItemAt(x, y, out string? learnedItem))
         {
-            if (storedSlots[index].containsPoint(x, y))
+            if (learnedItem != null)
             {
-                int learnedIndex = LearnedItemIndex(index);
-                if (learnedIndex < learnedItems.Count)
-                {
-                    ExtractLearnedItem(learnedItems[learnedIndex], 1);
-                }
-
-                return;
+                ExtractLearnedItem(learnedItem, 1);
             }
+
+            return;
         }
 
         for (int index = 0; index < inventorySlots.Count; index++)
@@ -187,19 +182,14 @@ internal sealed class DissolverMenu : IClickableMenu
             return;
         }
 
-        IReadOnlyList<string> learnedItems = DissolverState.LearnedItems;
-        for (int index = 0; index < storedSlots.Count; index++)
+        if (TryGetLearnedItemAt(x, y, out string? learnedItem))
         {
-            if (storedSlots[index].containsPoint(x, y))
+            if (learnedItem != null)
             {
-                int learnedIndex = LearnedItemIndex(index);
-                if (learnedIndex < learnedItems.Count)
-                {
-                    ExtractLearnedItem(learnedItems[learnedIndex], MaxExtractStack);
-                }
-
-                return;
+                ExtractLearnedItem(learnedItem, MaxExtractStack);
             }
+
+            return;
         }
 
         for (int index = 0; index < inventorySlots.Count; index++)
@@ -222,18 +212,11 @@ internal sealed class DissolverMenu : IClickableMenu
             return;
         }
 
-        IReadOnlyList<string> learnedItems = DissolverState.LearnedItems;
-        for (int index = 0; index < storedSlots.Count; index++)
+        if (TryGetLearnedItemAt(x, y, out string? learnedItem))
         {
-            if (!storedSlots[index].containsPoint(x, y))
+            if (learnedItem != null)
             {
-                continue;
-            }
-
-            int learnedIndex = LearnedItemIndex(index);
-            if (learnedIndex < learnedItems.Count)
-            {
-                ExtractLearnedItem(learnedItems[learnedIndex], 1);
+                ExtractLearnedItem(learnedItem, 1);
                 nextHeldExtractAtMs = Environment.TickCount64 + HeldExtractDelayMs;
             }
 
@@ -263,18 +246,11 @@ internal sealed class DissolverMenu : IClickableMenu
         }
         else
         {
-            IReadOnlyList<string> learnedItems = DissolverState.LearnedItems;
-            for (int index = 0; index < storedSlots.Count; index++)
+            if (TryGetLearnedItemAt(x, y, out string? learnedItem))
             {
-                if (!storedSlots[index].containsPoint(x, y))
+                if (learnedItem != null)
                 {
-                    continue;
-                }
-
-                int learnedIndex = LearnedItemIndex(index);
-                if (learnedIndex < learnedItems.Count)
-                {
-                    hoveredItem = EmcValueRegistry.CreateItem(learnedItems[learnedIndex]);
+                    hoveredItem = EmcValueRegistry.CreateItem(learnedItem);
                     hoverText = ItemTooltip(hoveredItem, "Learned item.");
                 }
 
@@ -594,6 +570,29 @@ internal sealed class DissolverMenu : IClickableMenu
     {
         int learnedCount = DissolverState.LearnedCount;
         return Math.Max(0, (learnedCount - 1) / storedSlots.Count);
+    }
+
+    private bool TryGetLearnedItemAt(int x, int y, out string? itemId)
+    {
+        itemId = null;
+        IReadOnlyList<string> learnedItems = DissolverState.LearnedItems;
+        for (int index = 0; index < storedSlots.Count; index++)
+        {
+            if (!storedSlots[index].containsPoint(x, y))
+            {
+                continue;
+            }
+
+            int learnedIndex = LearnedItemIndex(index);
+            if (learnedIndex < learnedItems.Count)
+            {
+                itemId = learnedItems[learnedIndex];
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     private int LearnedItemIndex(int slotIndex)

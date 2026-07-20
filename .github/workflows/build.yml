@@ -135,17 +135,7 @@ jobs:
       - name: Build Stardew Valley ${{ matrix.branch }}
         if: ${{ startsWith(matrix.branch, 'stardewvalley/') }}
         working-directory: ${{ env.TARGET_DIR }}
-        run: |
-          dotnet build --configuration Release \
-            -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" \
-            -p:CommonAssetsPath="../${{ env.COMMON_DIR }}/stardewvalley/assets"
-          common_version="$(grep -m1 '<Version>' "../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
-          mod_version="$(grep -m1 '<Version>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
-          game_version="$(grep -m1 '<GameVersion>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<GameVersion>([^<]+)</GameVersion>.*#\1#')"
-          loader_name="smapi"
-          archive_name="dissolver-enhanced-${mod_version}-${loader_name}-sv${game_version}-c${common_version}"
-          python3 scripts/package_smapi.py --build-dir build --archive "${archive_name}.zip"
-          dotnet run --project tests/SmapiTextureSmoke/SmapiTextureSmoke.csproj --configuration Release -- "${archive_name}.zip"
+        run: bash scripts/build_smapi.sh "../${{ env.COMMON_DIR }}"
       - name: Upload Stardew Valley ${{ matrix.branch }} artifacts
         if: ${{ startsWith(matrix.branch, 'stardewvalley/') }}
         uses: actions/upload-artifact@v7.0.1
@@ -251,17 +241,7 @@ jobs:
       - name: Build current Stardew Valley branch
         if: ${{ startsWith(github.ref_name, 'stardewvalley/') || startsWith(github.ref_name, 'fix/stardew') }}
         working-directory: ${{ env.TARGET_DIR }}
-        run: |
-          dotnet build --configuration Release \
-            -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" \
-            -p:CommonAssetsPath="../${{ env.COMMON_DIR }}/stardewvalley/assets"
-          common_version="$(grep -m1 '<Version>' "../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
-          mod_version="$(grep -m1 '<Version>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
-          game_version="$(grep -m1 '<GameVersion>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<GameVersion>([^<]+)</GameVersion>.*#\1#')"
-          loader_name="smapi"
-          archive_name="dissolver-enhanced-${mod_version}-${loader_name}-sv${game_version}-c${common_version}"
-          python3 scripts/package_smapi.py --build-dir build --archive "${archive_name}.zip"
-          dotnet run --project tests/SmapiTextureSmoke/SmapiTextureSmoke.csproj --configuration Release -- "${archive_name}.zip"
+        run: bash scripts/build_smapi.sh "../${{ env.COMMON_DIR }}"
       - name: Upload current Stardew Valley branch artifacts
         if: ${{ startsWith(github.ref_name, 'stardewvalley/') || startsWith(github.ref_name, 'fix/stardew') }}
         uses: actions/upload-artifact@v7.0.1
