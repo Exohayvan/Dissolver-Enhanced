@@ -50,9 +50,6 @@ jobs:
 
   workflow-integrity:
     name: Workflow Tamper Check
-    # Canonical workflow changes must remain possible through PRs to common.
-    # Other PRs must use the exact gate already approved on common.
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref != 'common' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch workflow
