@@ -39,7 +39,7 @@ jobs:
             **/build/**,
             **/coverage/**,
             **/generated/**,
-            **/lang/**
+            **/src/main/resources/assets/**/lang/**
       - name: Enforce duplicate-code threshold
         if: ${{ always() && steps.duplicate-scan.outputs.exit-code != '0' }}
         run: |
