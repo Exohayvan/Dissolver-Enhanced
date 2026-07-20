@@ -501,37 +501,30 @@
     },
     "1.21.7": {
       "create_world": {
-        "text": "| Create New World | Cancel |",
-        "updated": "2026-05-23T03:46:24.000Z",
-        "variant": "medium-text",
-        "x": 0.51953125,
+        "text": "| Create New World | Cancel",
+        "updated": "2026-07-20T02:33:04.000Z",
+        "variant": "bright-text",
+        "x": 0.416015625,
         "y": 0.9346733668341709
       },
       "game_mode": {
         "clicks": 2,
-        "text": "Game Mode: Survival",
-        "updated": "2026-05-23T03:45:42.000Z",
+        "text": "Gane Mode: JurVival",
+        "updated": "2026-07-20T02:30:16.000Z",
         "variant": "easyocr",
-        "x": 0.5,
-        "y": 0.36683417085427134
-      },
-      "open_create_world": {
-        "text": "Create New World",
-        "updated": "2026-07-19T19:00:45.000Z",
-        "variant": "fallback",
-        "x": 0.5,
-        "y": 0.8994974874371859
+        "x": 0.5009765625,
+        "y": 0.3655778894472362
       },
       "singleplayer": {
         "text": "Singleplayer",
-        "updated": "2026-05-23T03:45:05.000Z",
+        "updated": "2026-07-20T02:27:18.000Z",
         "variant": "easyocr",
         "x": 0.4990234375,
         "y": 0.4949748743718593
       },
       "world_tab": {
         "text": "Horld",
-        "updated": "2026-05-23T03:45:48.000Z",
+        "updated": "2026-07-20T02:30:33.000Z",
         "variant": "easyocr",
         "x": 0.4990234375,
         "y": 0.08793969849246232
@@ -539,7 +532,7 @@
       "world_type": {
         "clicks": 1,
         "text": "Horld Type Default",
-        "updated": "2026-05-23T03:46:18.000Z",
+        "updated": "2026-07-20T02:32:53.000Z",
         "variant": "easyocr",
         "x": 0.267578125,
         "y": 0.21482412060301506
@@ -652,6 +645,13 @@
         "variant": "easyocr",
         "x": 0.5,
         "y": 0.36683417085427134
+      },
+      "open_create_world": {
+        "text": "Create New World",
+        "updated": "2026-07-20T00:29:19.000Z",
+        "variant": "fallback",
+        "x": 0.5,
+        "y": 0.8994974874371859
       },
       "singleplayer": {
         "text": "Singleplager",
