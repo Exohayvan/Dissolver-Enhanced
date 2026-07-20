@@ -17,6 +17,22 @@ curseforge_testing = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(curseforge_testing)
 
 
+class BuildBranchParsingTests(unittest.TestCase):
+    def test_conventional_prefix_before_minecraft_branch_is_supported(self):
+        branch = curseforge_testing.parse_loader_version_from_branch(
+            "feat/minecraft-fabric-1.21.x-quality_check_action"
+        )
+
+        self.assertEqual(
+            branch,
+            {
+                "name": "feat/minecraft-fabric-1.21.x-quality_check_action",
+                "loader": "fabric",
+                "version": "1.21.x",
+            },
+        )
+
+
 class PullRequestBranchTests(unittest.TestCase):
     def test_canonical_loader_branch_is_not_a_pull_request_branch(self):
         branch = {

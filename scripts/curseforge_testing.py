@@ -77,7 +77,8 @@ PRESERVED_DISSOLVER_CONFIG_FILES = {"analytics-instance-id.txt"}
 
 DE_NAME_RE = re.compile(r"^DE\s*[\(\[]\s*([^\)\]]+?)\s*[\)\]]\s*$", re.IGNORECASE)
 BUILD_BRANCH_RE = re.compile(
-    r"^(?:minecraft[-_/])?(fabric|forge|neoforge|quilt)[-_/](\d+(?:\.\d+)*(?:\.x)?)(?:[-_/].+)?$",
+    r"^(?:(?:build|chore|ci|docs|feat|fix|improve|perf|refactor|test|work)[-_/])?"
+    r"(?:minecraft[-_/])?(fabric|forge|neoforge|quilt)[-_/](\d+(?:\.\d+)*(?:\.x)?)(?:[-_/].+)?$",
     re.IGNORECASE,
 )
 USE_EASYOCR = True
