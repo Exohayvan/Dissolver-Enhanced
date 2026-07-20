@@ -12,10 +12,9 @@ import net.minecraft.predicate.entity.LootContextPredicate;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
 
-public class EmcBalanceCriterion extends AbstractCriterion<EmcBalanceCriterion.Conditions> {
-    @Override
-    public Codec<Conditions> getConditionsCodec() {
-        return Conditions.CODEC;
+public class EmcBalanceCriterion extends CodecBackedCriterion<EmcBalanceCriterion.Conditions> {
+    public EmcBalanceCriterion() {
+        super(Conditions.CODEC);
     }
 
     public void trigger(ServerPlayerEntity player, BigInteger emc) {

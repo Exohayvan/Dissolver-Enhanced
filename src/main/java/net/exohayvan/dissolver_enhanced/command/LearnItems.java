@@ -2,6 +2,8 @@ package net.exohayvan.dissolver_enhanced.command;
 
 import com.mojang.brigadier.context.CommandContext;
 
+import java.util.function.BiFunction;
+
 import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
@@ -55,13 +57,13 @@ public class LearnItems {
     }
 
     public static int add(CommandContext<ServerCommandSource> context, String command) {
-        PlayerEntity player = context.getSource().getPlayer();
-        boolean learned = EMCHelper.learnItem(player, getItemId(context));
-
-        if (learned) ModCommands.feedback(context, Text.translatable("command.feedback.memory.add", getItemName(context)).getString());
-        else ModCommands.feedback(context, Text.translatable("command.feedback.memory.add.fail").getString());
-
-        return 1;
+        return updateItem(
+            context,
+            context.getSource().getPlayer(),
+            EMCHelper::learnItem,
+            "command.feedback.memory.add",
+            "command.feedback.memory.add.fail"
+        );
     }
 
     public static int addPlayer(CommandContext<ServerCommandSource> context, String command, PlayerEntity player) {
@@ -70,22 +72,23 @@ public class LearnItems {
             return 1;
         }
 
-        boolean learned = EMCHelper.learnItem(player, getItemId(context));
-
-        if (learned) ModCommands.feedback(context, Text.translatable("command.feedback.memory.add", getItemName(context)).getString());
-        else ModCommands.feedback(context, Text.translatable("command.feedback.memory.add.fail").getString());
-
-        return 1;
+        return updateItem(
+            context,
+            player,
+            EMCHelper::learnItem,
+            "command.feedback.memory.add",
+            "command.feedback.memory.add.fail"
+        );
     }
 
     public static int remove(CommandContext<ServerCommandSource> context, String command) {
-        PlayerEntity player = context.getSource().getPlayer();
-        boolean removed = EMCHelper.forgetItem(player, getItemId(context));
-
-        if (removed) ModCommands.feedback(context, Text.translatable("command.feedback.memory.remove", getItemName(context)).getString());
-        else ModCommands.feedback(context, Text.translatable("command.feedback.memory.remove.fail").getString());
-
-        return 1;
+        return updateItem(
+            context,
+            context.getSource().getPlayer(),
+            EMCHelper::forgetItem,
+            "command.feedback.memory.remove",
+            "command.feedback.memory.remove.fail"
+        );
     }
 
     public static int removePlayer(CommandContext<ServerCommandSource> context, String command, PlayerEntity player) {
@@ -94,11 +97,27 @@ public class LearnItems {
             return 1;
         }
 
-        boolean removed = EMCHelper.forgetItem(player, getItemId(context));
-        
-        if (removed) ModCommands.feedback(context, Text.translatable("command.feedback.memory.remove", getItemName(context)).getString());
-        else ModCommands.feedback(context, Text.translatable("command.feedback.memory.remove.fail").getString());
+        return updateItem(
+            context,
+            player,
+            EMCHelper::forgetItem,
+            "command.feedback.memory.remove",
+            "command.feedback.memory.remove.fail"
+        );
+    }
 
+    private static int updateItem(
+        CommandContext<ServerCommandSource> context,
+        PlayerEntity player,
+        BiFunction<PlayerEntity, String, Boolean> update,
+        String successTranslationKey,
+        String failureTranslationKey
+    ) {
+        boolean updated = update.apply(player, getItemId(context));
+        Text feedback = updated
+            ? Text.translatable(successTranslationKey, getItemName(context))
+            : Text.translatable(failureTranslationKey);
+        ModCommands.feedback(context, feedback.getString());
         return 1;
     }
 
