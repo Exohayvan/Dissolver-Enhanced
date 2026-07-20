@@ -6,7 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -17,15 +19,33 @@ import com.google.gson.JsonParser;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.item.crafting.RecipeManager;
 
 @Mixin(RecipeManager.class)
 public class RecipeManagerMixin {
+    @Shadow
+    @Final
+    private HolderLookup.Provider registries;
+
+    @Shadow
+    protected static RecipeHolder<?> fromJson(
+        ResourceKey<Recipe<?>> recipeKey,
+        JsonObject recipeJson,
+        HolderLookup.Provider registries
+    ) {
+        throw new AssertionError();
+    }
+
     @Inject(method = "prepare", at = @At("HEAD"))
     private void prepareMixin(ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfoReturnable<RecipeMap> info) {
         loadItemTags(resourceManager);
@@ -57,6 +77,25 @@ public class RecipeManagerMixin {
 
             EMCValues.recipesLoaded(RECIPES, RECIPE_SOURCES, RECIPE_JSON, STONE_CUTTER_LIST);
         }).start();
+    }
+
+    @Inject(method = "prepare", at = @At("RETURN"), cancellable = true)
+    private void addDissolverRecipe(
+        ResourceManager resourceManager,
+        ProfilerFiller profiler,
+        CallbackInfoReturnable<RecipeMap> info
+    ) {
+        JsonObject recipeJson = RecipeGenerator.DISSOLVER_RECIPE;
+        if (recipeJson == null) return;
+
+        ResourceKey<Recipe<?>> recipeKey = ResourceKey.create(
+            Registries.RECIPE,
+            Identifier.fromNamespaceAndPath(DissolverEnhanced.MOD_ID, "dissolver_block_recipe")
+        );
+        List<RecipeHolder<?>> recipes = new ArrayList<>(info.getReturnValue().values());
+        recipes.removeIf(recipe -> recipe.id().equals(recipeKey));
+        recipes.add(fromJson(recipeKey, recipeJson, registries));
+        info.setReturnValue(RecipeMap.create(recipes));
     }
 
     private static final HashMap<String, List<String>> RECIPES = new HashMap<String, List<String>>();
