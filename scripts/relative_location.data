@@ -676,6 +676,52 @@
         "y": 0.21482412060301506
       }
     },
+    "26.1.1": {
+      "create_world": {
+        "text": "Create Nel Honld",
+        "updated": "2026-07-19T23:27:58.000Z",
+        "variant": "easyocr",
+        "x": 0.2705078125,
+        "y": 0.9396984924623115
+      },
+      "game_mode": {
+        "clicks": 2,
+        "text": "Game Mode: Survival",
+        "updated": "2026-07-19T23:25:53.000Z",
+        "variant": "easyocr",
+        "x": 0.5,
+        "y": 0.36683417085427134
+      },
+      "open_create_world": {
+        "text": "Create New World",
+        "updated": "2026-07-20T00:29:19.000Z",
+        "variant": "fallback",
+        "x": 0.5,
+        "y": 0.8994974874371859
+      },
+      "singleplayer": {
+        "text": "Singleplager",
+        "updated": "2026-07-19T23:23:10.000Z",
+        "variant": "raw",
+        "x": 0.4990234375,
+        "y": 0.4949748743718593
+      },
+      "world_tab": {
+        "text": "Horld",
+        "updated": "2026-07-19T23:26:06.000Z",
+        "variant": "easyocr",
+        "x": 0.4990234375,
+        "y": 0.08793969849246232
+      },
+      "world_type": {
+        "clicks": 1,
+        "text": "Horld Type Default",
+        "updated": "2026-07-19T23:27:48.000Z",
+        "variant": "easyocr",
+        "x": 0.267578125,
+        "y": 0.21482412060301506
+      }
+    },
     "26.1.2": {
       "create_world": {
         "text": "Create Nel Honld",
@@ -685,7 +731,7 @@
         "y": 0.9396984924623115
       },
       "game_mode": {
-        "clicks": 3,
+        "clicks": 2,
         "text": "Gane Mode: JurVival",
         "updated": "2026-07-19T22:30:07.000Z",
         "variant": "easyocr",
