@@ -29,6 +29,8 @@ import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.MinecraftVersionCompat;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
+import net.exohayvan.dissolver_enhanced.internal.RecipeJsonResult;
+import net.exohayvan.dissolver_enhanced.internal.RecipeLoadCoordinator;
 
 @Mixin(RecipeManager.class)
 public class RecipeManagerMixin {
@@ -58,30 +60,34 @@ public class RecipeManagerMixin {
     }
 
     private static void queueRecipeLoad(Map<Identifier, JsonElement> map) {
-        EMCValues.beginStartup(map.size());
-        RECIPES.clear();
-        RECIPE_SOURCES.clear();
-        RECIPE_JSON.clear();
-        STONE_CUTTER_LIST.clear();
+        Map<Identifier, JsonElement> recipeSnapshot = new HashMap<>(map);
 
-        // let tag items load before looking through recipes
-        new Thread(() -> {
+        // Recipe reloads can overlap on the client. Keep the mutable collector state exclusive
+        // until EMCValues has copied it, so a newer reload cannot mutate the previous load's map.
+        new Thread(() -> RECIPE_LOAD_COORDINATOR.runExclusive(() -> {
+            EMCValues.beginStartup(recipeSnapshot.size());
+            RECIPES.clear();
+            RECIPE_SOURCES.clear();
+            RECIPE_JSON.clear();
+            STONE_CUTTER_LIST.clear();
+
+            // let tag items load before looking through recipes
             wait(800);
 
-            Iterator<Map.Entry<Identifier, JsonElement>> recipeIterator = map.entrySet().iterator();
+            Iterator<Map.Entry<Identifier, JsonElement>> recipeIterator = recipeSnapshot.entrySet().iterator();
             while (recipeIterator.hasNext()) {
                 Map.Entry<Identifier, JsonElement> entry = recipeIterator.next();
                 try {
                     if (!getJsonRecipe(entry)) {
                         EMCValues.incrementRecipesNotUnderstood();
                     }
-                }catch (Exception e) {
+                } catch (Exception e) {
                     EMCValues.incrementRecipesNotUnderstood();
                 }
             }
 
             EMCValues.recipesLoaded(RECIPES, RECIPE_SOURCES, RECIPE_JSON, STONE_CUTTER_LIST);
-        }).start();
+        })).start();
     }
 
     private static Map<Identifier, JsonElement> loadRecipeJson(ResourceManager resourceManager) {
@@ -418,6 +424,7 @@ public class RecipeManagerMixin {
     private static final HashMap<String, String> RECIPE_SOURCES = new HashMap<String, String>();
     private static final HashMap<String, String> RECIPE_JSON = new HashMap<String, String>();
     private static final List<String> STONE_CUTTER_LIST = new ArrayList<>();
+    private static final RecipeLoadCoordinator RECIPE_LOAD_COORDINATOR = new RecipeLoadCoordinator();
 
     private static void addRecipe(String id, int extraEMC, List<String> INGREDIENTS, String recipeId, JsonElement rawJson) {
         // multiple recipes for same output
@@ -460,14 +467,14 @@ public class RecipeManagerMixin {
         if (!recipeObject.has("result")) return false;
 
         String type = recipeObject.has("type") ? recipeObject.get("type").getAsString() : "";
-        JsonResult result = getJsonResult(recipeObject.get("result"));
-        if (result == null || result.itemId.contains("minecraft:air") || result.itemId.contains("firework")) {
+        RecipeJsonResult result = getJsonResult(recipeObject.get("result"));
+        if (result == null || result.itemId().contains("minecraft:air") || result.itemId().contains("firework")) {
             return false;
         }
 
         boolean isCooking = type.contains("smelting") || type.contains("blasting") || type.contains("smoking") ||
             type.contains("campfire_cooking");
-        if (isCooking && result.itemId.contains("nugget")) return false;
+        if (isCooking && result.itemId().contains("nugget")) return false;
 
         List<String> ingredients = new ArrayList<>();
         HashMap<String, List<String>> replaceIngredients = new HashMap<>();
@@ -507,13 +514,13 @@ public class RecipeManagerMixin {
         boolean isOre = listSearch(ingredients, "ore");
         boolean isStone = listSearch(ingredients, "stone");
         addRecipe(
-            result.itemId + "__" + result.count,
+            result.itemId() + "__" + result.count(),
             isCooking && !isOre && !isStone ? 10 : 0,
             ingredients,
             entry.getKey().toString(),
             entry.getValue()
         );
-        addReplacementRecipes(result.itemId, result.count, replaceIngredients, ingredients, entry.getKey().toString(), entry.getValue());
+        addReplacementRecipes(result.itemId(), result.count(), replaceIngredients, ingredients, entry.getKey().toString(), entry.getValue());
 
         return true;
     }
@@ -617,9 +624,9 @@ public class RecipeManagerMixin {
         }
     }
 
-    private static JsonResult getJsonResult(JsonElement resultJson) {
+    private static RecipeJsonResult getJsonResult(JsonElement resultJson) {
         if (resultJson.isJsonPrimitive()) {
-            return new JsonResult(resultJson.getAsString(), 1);
+            return new RecipeJsonResult(resultJson.getAsString(), 1);
         }
 
         if (!resultJson.isJsonObject()) return null;
@@ -631,17 +638,7 @@ public class RecipeManagerMixin {
         if (itemId == null) return null;
 
         int count = resultObject.has("count") ? resultObject.get("count").getAsInt() : 1;
-        return new JsonResult(itemId, count);
-    }
-
-    private static class JsonResult {
-        private final String itemId;
-        private final int count;
-
-        private JsonResult(String itemId, int count) {
-            this.itemId = itemId;
-            this.count = count;
-        }
+        return new RecipeJsonResult(itemId, count);
     }
 
     static private boolean listSearch(List<String> INGREDIENTS, String keyId) {
