@@ -6,16 +6,7 @@ import static net.exohayvan.dissolver_enhanced.helpers.EmcItemClassifier.namespa
 import static net.exohayvan.dissolver_enhanced.helpers.EmcItemClassifier.rejectionReason;
 
 import java.math.BigInteger;
-import java.util.Iterator;
-import java.util.List;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.util.collection.DefaultedList;
 import net.exohayvan.dissolver_enhanced.advancement.ModCriteria;
 import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
@@ -24,22 +15,19 @@ import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.WorldCompat;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.screen.DissolverScreenHandler;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.screen.slot.Slot;
+import net.minecraft.util.collection.DefaultedList;
 
-public class DissolverInventoryInput implements Inventory {
-    private final DefaultedList<ItemStack> stacks;
-    private final int width;
-    private final int height;
-    private final DissolverScreenHandler handler;
-    private PlayerEntity player;
-
-    private int SLOTS = 3;
+public class DissolverInventoryInput extends BaseDissolverInventory<DissolverScreenHandler> {
+    private static final int SLOTS = 3;
+    private final PlayerEntity player;
 
     public DissolverInventoryInput(DissolverScreenHandler handler, PlayerEntity player) {
-        this.stacks = DefaultedList.ofSize(SLOTS, ItemStack.EMPTY);
-        this.handler = handler;
+        super(handler, SLOTS, 1, DefaultedList.ofSize(SLOTS, ItemStack.EMPTY));
         this.player = player;
-        this.width = SLOTS;
-        this.height = 1;
     }
 
     public DissolverSlotInput getInputSlot() {
@@ -55,118 +43,69 @@ public class DissolverInventoryInput implements Inventory {
     }
 
     public int slots() {
-        return this.SLOTS;
+        return SLOTS;
     }
 
-    public int size() {
-        return this.stacks.size();
-    }
-
-    public boolean isEmpty() {
-        Iterator<ItemStack> var1 = this.stacks.iterator();
-
-        ItemStack itemStack;
-        do {
-            if (!var1.hasNext()) {
-                return true;
-            }
-
-            itemStack = (ItemStack)var1.next();
-        } while(itemStack.isEmpty());
-
-        return false;
-    }
-
-    public ItemStack getStack(int slot) {
-        return slot >= this.size() ? ItemStack.EMPTY : (ItemStack)this.stacks.get(slot);
-    }
-
-    public ItemStack removeStack(int slot) {
-        return Inventories.removeStack(this.stacks, slot);
-    }
-
-    public ItemStack removeStack(int slot, int amount) {
-        ItemStack itemStack = Inventories.splitStack(this.stacks, slot, amount);
-        if (!itemStack.isEmpty()) {
-            this.handler.onContentChanged(this);
-        }
-
-        return itemStack;
-    }
-
+    @Override
     public void setStack(int slot, ItemStack stack) {
-        if (player == null) return;
-
-        boolean NOT_HOLDING_ITEM = stack.getItem() == Items.AIR;
-        if (NOT_HOLDING_ITEM) return;
+        if (player == null || stack.getItem() == Items.AIR) return;
 
         if (!WorldCompat.isClient(player)) {
             if (EMCOrbItem.isEMCOrb(stack)) {
-                BigInteger emc = EMCOrbItem.getEmcBig(stack);
-                if (emc.signum() > 0) {
-                    EMCHelper.addEMCValue(player, emc);
-                    EMCHelper.sendEmcDeltaToClient(player, emc);
-                    ModCriteria.triggerEmcOrb(player, emc, "dissolved");
-                    this.stacks.set(slot, ItemStack.EMPTY);
-                    this.handler.onContentChanged(this);
-                    this.handler.refresh();
-                } else {
-                    player.getInventory().offerOrDrop(stack);
-                }
+                dissolveOrb(slot, stack);
                 return;
             }
 
             if (slot == 0) {
-                if (!EMCHelper.addItem(stack, player, this.handler)) {
+                if (!EMCHelper.addItem(stack, player, handler)) {
                     player.getInventory().offerOrDrop(stack);
                 }
                 return;
-            } else if (slot == 1) {
-                String itemId = EMCKey.fromStack(stack);
-                if (EMCValues.get(itemId) == 0) {
-                    ModAnalytics.captureDissolverItemRejected(namespace(itemId), itemName(itemId), baseItemId(itemId), rejectionReason(itemId));
-                    EMCHelper.reportMissingItemValue(player, stack);
-                    player.getInventory().offerOrDrop(stack);
-                    return;
-                }
-
-                EMCHelper.learnItem(player, itemId);
-                ModCriteria.triggerLearnedItem(player, itemId);
-                this.handler.refresh();
+            }
+            if (slot == 1) {
+                if (!learnItem(stack)) return;
             } else if (slot == 2) {
-                String itemId = stack.getItem().toString();
-                EMCHelper.forgetItem(player, itemId);
-                this.handler.refresh();
+                EMCHelper.forgetItem(player, stack.getItem().toString());
+                handler.refresh();
             }
         }
 
         if (slot == 0 && WorldCompat.isClient(player)) return;
-
-        this.stacks.set(slot, stack);
-        this.handler.onContentChanged(this);
+        super.setStack(slot, stack);
     }
 
-    public void markDirty() {
+    private void dissolveOrb(int slot, ItemStack stack) {
+        BigInteger emc = EMCOrbItem.getEmcBig(stack);
+        if (emc.signum() <= 0) {
+            player.getInventory().offerOrDrop(stack);
+            return;
+        }
+
+        EMCHelper.addEMCValue(player, emc);
+        EMCHelper.sendEmcDeltaToClient(player, emc);
+        ModCriteria.triggerEmcOrb(player, emc, "dissolved");
+        stacks.set(slot, ItemStack.EMPTY);
+        handler.onContentChanged(this);
+        handler.refresh();
     }
 
-    public boolean canPlayerUse(PlayerEntity player) {
+    private boolean learnItem(ItemStack stack) {
+        String itemId = EMCKey.fromStack(stack);
+        if (EMCValues.get(itemId) == 0) {
+            ModAnalytics.captureDissolverItemRejected(
+                namespace(itemId),
+                itemName(itemId),
+                baseItemId(itemId),
+                rejectionReason(itemId)
+            );
+            EMCHelper.reportMissingItemValue(player, stack);
+            player.getInventory().offerOrDrop(stack);
+            return false;
+        }
+
+        EMCHelper.learnItem(player, itemId);
+        ModCriteria.triggerLearnedItem(player, itemId);
+        handler.refresh();
         return true;
     }
-
-    public void clear() {
-        this.stacks.clear();
-    }
-
-    public int getHeight() {
-        return this.height;
-    }
-
-    public int getWidth() {
-        return this.width;
-    }
-
-    public List<ItemStack> getHeldStacks() {
-        return List.copyOf(this.stacks);
-    }
-
 }
