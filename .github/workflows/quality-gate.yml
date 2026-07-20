@@ -16,12 +16,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Scan entire repository for duplicate code
-        uses: kucherenko/jscpd@master
+      - name: Install jscpd
+        run: npm install --global jscpd@5.0.12
+
+      - name: Scan entire branch for duplicate code
+        uses: kucherenko/jscpd@v5.0.12
         with:
-          version: "5.0.12"
+          skip-install: true
           path: .
           threshold: 0
           min-lines: 8
