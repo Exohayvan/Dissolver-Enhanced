@@ -1862,6 +1862,11 @@ def gradle_command(worktree_path, gradle_task):
 
 def gradle_clean_command(command):
     clean_command = list(command)
+    # Generated loader outputs can retain iCloud conflict-copy jars (for example
+    # "dependency 2.jar") even when every tracked source is unchanged. Reusing
+    # that output changes the final artifact hash and defeats the test cache.
+    if "clean" not in clean_command:
+        clean_command.insert(len(clean_command) - 1, "clean")
     if "--console=plain" not in clean_command:
         clean_command.append("--console=plain")
     if "--warning-mode=summary" not in clean_command:
@@ -1976,6 +1981,7 @@ def find_branch_artifact(worktree_path):
     jars = [
         path for path in libs.glob("*.jar")
         if not re.search(r"-(sources|javadoc|dev|all-dev)\.jar$", path.name, re.IGNORECASE)
+        and not re.search(r" \d+\.jar$", path.name, re.IGNORECASE)
     ]
     if not jars:
         return None
@@ -3002,7 +3008,12 @@ def latest_advancement_file(instance):
     saves_path = Path(instance["path"]) / "saves"
     if not saves_path.exists():
         return None
-    files = list(saves_path.glob("*/advancements/*.json"))
+    files = []
+    for pattern in (
+        "*/players/advancements/*.json",  # Minecraft 26.1+
+        "*/advancements/*.json",          # Legacy layout
+    ):
+        files.extend(path for path in saves_path.glob(pattern) if path.is_file())
     if not files:
         return None
     return max(files, key=lambda path: path.stat().st_mtime)
@@ -3111,7 +3122,7 @@ def type_testing_started_message(instance, verbose=True, progress_callback=None)
         progress_step(progress_callback, message)
         send_chat_line(pyautogui, message)
     place_smoke_test_blocks(pyautogui, progress_callback)
-    return True
+    return total > 0 and passed == total
 
 
 def wait_for_ocr_phrase(phrases, timeout=120, delay=2.0, progress_label=None, progress_interval=10, region=None):
