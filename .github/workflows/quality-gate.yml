@@ -1,0 +1,39 @@
+name: Quality Gate
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  duplicate-code:
+    name: Duplicate Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Scan entire repository for duplicate code
+        uses: kucherenko/jscpd@master
+        with:
+          version: "5.0.12"
+          path: .
+          threshold: 0
+          min-lines: 8
+          min-tokens: 60
+          reporters: console
+          upload-sarif: false
+          ignore: >-
+            **/.git/**,
+            **/node_modules/**,
+            **/.venv/**,
+            **/vendor/**,
+            **/dist/**,
+            **/build/**,
+            **/coverage/**,
+            **/generated/**
