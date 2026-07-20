@@ -7,6 +7,7 @@ version = project.mod_version
 group = project.maven_group
 
 def commonDir = [
+	"../../common/minecraft",
 	"../Common/minecraft",
 	"../Dissolver Enhanced (Common)/minecraft",
 	"Common/minecraft"
@@ -136,10 +137,6 @@ tasks.register("translateCommonResources") {
 		}
 
 		commonRecipeAdvancementsDir.eachFileMatch(~/.*\.json/) { File advancementFile ->
-			if (advancementFile.name == "dissolver_block.json") {
-				return
-			}
-
 			writeJson(
 				new File(outputDir, "data/dissolver_enhanced/advancement/recipes/misc/${advancementFile.name}"),
 				jsonSlurper.parse(advancementFile)

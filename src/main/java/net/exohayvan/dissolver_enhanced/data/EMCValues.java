@@ -812,10 +812,7 @@ public class EMCValues {
         int resultCount,
         BigInteger extraEMC
     ) {
-        List<String> sourceDetails = new ArrayList<>();
-        if (RECIPE_ITEM_SOURCE_DETAILS.containsKey(resultId)) {
-            sourceDetails = RECIPE_ITEM_SOURCE_DETAILS.get(resultId);
-        }
+        List<String> sourceDetails = RECIPE_ITEM_SOURCE_DETAILS.computeIfAbsent(resultId, ignored -> new ArrayList<>());
 
         String sourceDetail = formatRecipeSourceDetail(recipeKey, resultId, resultCount, ingredients, emcValue, extraEMC);
         if (!sourceDetails.contains(sourceDetail)) {
