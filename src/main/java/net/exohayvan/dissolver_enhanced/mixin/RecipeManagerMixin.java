@@ -29,6 +29,8 @@ import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.MinecraftVersionCompat;
 import net.exohayvan.dissolver_enhanced.helpers.RecipeGenerator;
+import net.exohayvan.dissolver_enhanced.internal.RecipeJsonResult;
+import net.exohayvan.dissolver_enhanced.internal.RecipeLoadCoordinator;
 
 @Mixin(RecipeManager.class)
 public class RecipeManagerMixin {
@@ -465,14 +467,14 @@ public class RecipeManagerMixin {
         if (!recipeObject.has("result")) return false;
 
         String type = recipeObject.has("type") ? recipeObject.get("type").getAsString() : "";
-        JsonResult result = getJsonResult(recipeObject.get("result"));
-        if (result == null || result.itemId.contains("minecraft:air") || result.itemId.contains("firework")) {
+        RecipeJsonResult result = getJsonResult(recipeObject.get("result"));
+        if (result == null || result.itemId().contains("minecraft:air") || result.itemId().contains("firework")) {
             return false;
         }
 
         boolean isCooking = type.contains("smelting") || type.contains("blasting") || type.contains("smoking") ||
             type.contains("campfire_cooking");
-        if (isCooking && result.itemId.contains("nugget")) return false;
+        if (isCooking && result.itemId().contains("nugget")) return false;
 
         List<String> ingredients = new ArrayList<>();
         HashMap<String, List<String>> replaceIngredients = new HashMap<>();
@@ -512,13 +514,13 @@ public class RecipeManagerMixin {
         boolean isOre = listSearch(ingredients, "ore");
         boolean isStone = listSearch(ingredients, "stone");
         addRecipe(
-            result.itemId + "__" + result.count,
+            result.itemId() + "__" + result.count(),
             isCooking && !isOre && !isStone ? 10 : 0,
             ingredients,
             entry.getKey().toString(),
             entry.getValue()
         );
-        addReplacementRecipes(result.itemId, result.count, replaceIngredients, ingredients, entry.getKey().toString(), entry.getValue());
+        addReplacementRecipes(result.itemId(), result.count(), replaceIngredients, ingredients, entry.getKey().toString(), entry.getValue());
 
         return true;
     }
@@ -622,9 +624,9 @@ public class RecipeManagerMixin {
         }
     }
 
-    private static JsonResult getJsonResult(JsonElement resultJson) {
+    private static RecipeJsonResult getJsonResult(JsonElement resultJson) {
         if (resultJson.isJsonPrimitive()) {
-            return new JsonResult(resultJson.getAsString(), 1);
+            return new RecipeJsonResult(resultJson.getAsString(), 1);
         }
 
         if (!resultJson.isJsonObject()) return null;
@@ -636,17 +638,7 @@ public class RecipeManagerMixin {
         if (itemId == null) return null;
 
         int count = resultObject.has("count") ? resultObject.get("count").getAsInt() : 1;
-        return new JsonResult(itemId, count);
-    }
-
-    private static class JsonResult {
-        private final String itemId;
-        private final int count;
-
-        private JsonResult(String itemId, int count) {
-            this.itemId = itemId;
-            this.count = count;
-        }
+        return new RecipeJsonResult(itemId, count);
     }
 
     static private boolean listSearch(List<String> INGREDIENTS, String keyId) {

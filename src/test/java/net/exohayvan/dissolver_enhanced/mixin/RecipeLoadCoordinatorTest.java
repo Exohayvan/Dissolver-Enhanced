@@ -2,6 +2,9 @@ package net.exohayvan.dissolver_enhanced.mixin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import net.exohayvan.dissolver_enhanced.internal.RecipeJsonResult;
+import net.exohayvan.dissolver_enhanced.internal.RecipeLoadCoordinator;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -9,6 +12,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class RecipeLoadCoordinatorTest {
+    @Test
+    void runtimeHelpersLiveOutsideMixinOwnedPackage() {
+        assertThat(RecipeLoadCoordinator.class.getPackageName()).doesNotStartWith("net.exohayvan.dissolver_enhanced.mixin");
+        assertThat(RecipeJsonResult.class.getPackageName()).doesNotStartWith("net.exohayvan.dissolver_enhanced.mixin");
+    }
+
     @Test
     void serializesOverlappingRecipeLoads() throws Exception {
         RecipeLoadCoordinator coordinator = new RecipeLoadCoordinator();
