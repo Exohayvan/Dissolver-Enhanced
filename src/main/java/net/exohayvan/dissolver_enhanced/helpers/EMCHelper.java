@@ -99,6 +99,9 @@ public class EMCHelper {
         GET, ADD;
     }
 
+    private record ValidatedItem(String itemId, BigInteger emcValue) {
+    }
+
     private static final long MISSING_ITEM_REPORT_COOLDOWN_MS = 30_000;
     private static final String MISSING_ITEM_TEMPLATE_URL = "https://github.com/ExoHayvan/Dissolver-Enhanced/issues/new?template=missing_item.yml";
     private static final int REPORT_FIELD_MAX_LENGTH = 1_500;
@@ -159,16 +162,19 @@ public class EMCHelper {
     }
 
     public static boolean canAddItem(ItemStack itemStack, PlayerEntity player) {
+        return validateItemForPlayer(itemStack, player) != null;
+    }
+
+    private static ValidatedItem validateItemForPlayer(ItemStack itemStack, PlayerEntity player) {
         String itemId = EMCKey.fromStack(itemStack);
         BigInteger emcValue = EMCValues.getBig(itemId);
-
-        if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
-            captureDissolverItemRejected(itemId, rejectionReason(itemId));
-            reportMissingItemValue(player, itemStack, itemId);
-            return false;
+        if (checkValidEMC(emcValue, itemId, Action.ADD)) {
+            return new ValidatedItem(itemId, emcValue);
         }
 
-        return true;
+        captureDissolverItemRejected(itemId, rejectionReason(itemId));
+        reportMissingItemValue(player, itemStack, itemId);
+        return null;
     }
 
     // ADD
@@ -195,14 +201,11 @@ public class EMCHelper {
     }
 
     public static boolean addItem(ItemStack itemStack, PlayerEntity player, DissolverScreenHandler handler) {
-        String itemId = EMCKey.fromStack(itemStack);
-        BigInteger emcValue = EMCValues.getBig(itemId);
+        ValidatedItem item = validateItemForPlayer(itemStack, player);
+        if (item == null) return false;
 
-        if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
-            captureDissolverItemRejected(itemId, rejectionReason(itemId));
-            reportMissingItemValue(player, itemStack, itemId);
-            return false;
-        }
+        String itemId = item.itemId();
+        BigInteger emcValue = item.emcValue();
 
         // calculated new EMC (from DissolverInventoryInput)
         int itemCount = itemStack.getCount();
