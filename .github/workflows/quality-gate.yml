@@ -30,16 +30,7 @@ jobs:
           ignore-pattern: '(?m)^(?:package|import)\s+[^;\r\n]+;\s*(?:\r?\n|$)'
           reporters: console
           upload-sarif: false
-          ignore: >-
-            **/.git/**,
-            **/node_modules/**,
-            **/.venv/**,
-            **/vendor/**,
-            **/dist/**,
-            **/build/**,
-            **/coverage/**,
-            **/generated/**,
-            **/src/main/resources/assets/**/lang/**
+          ignore: '**/.git/**,**/node_modules/**,**/.venv/**,**/vendor/**,**/dist/**,**/build/**,**/coverage/**,**/generated/**,**/src/main/resources/assets/**/lang/**'
       - name: Enforce duplicate-code threshold
         if: ${{ always() && steps.duplicate-scan.outputs.exit-code != '0' }}
         run: |
