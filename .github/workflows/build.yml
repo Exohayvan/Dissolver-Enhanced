@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  COMMON_BRANCH: main
+  COMMON_BRANCH: common
   COMMON_DIR: Dissolver Enhanced (Common)
   TARGET_DIR: Dissolver Enhanced (Target)
 
@@ -165,17 +165,16 @@ jobs:
         if: ${{ startsWith(matrix.branch, 'stardewvalley/') }}
         working-directory: ${{ env.TARGET_DIR }}
         run: |
-          dotnet build --configuration Release -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj"
+          dotnet build --configuration Release \
+            -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" \
+            -p:CommonAssetsPath="../${{ env.COMMON_DIR }}/stardewvalley/assets"
           common_version="$(grep -m1 '<Version>' "../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
           mod_version="$(grep -m1 '<Version>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
           game_version="$(grep -m1 '<GameVersion>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<GameVersion>([^<]+)</GameVersion>.*#\1#')"
-          loader_name="$(basename "${{ matrix.branch }}" | cut -d- -f1)"
+          loader_name="smapi"
           archive_name="dissolver-enhanced-${mod_version}-${loader_name}-sv${game_version}-c${common_version}"
-          rm -rf package
-          mkdir -p "package/DissolverEnhanced"
-          cp build/*.dll build/manifest.json "package/DissolverEnhanced/"
-          cd package
-          zip -r "../${archive_name}.zip" DissolverEnhanced -x '*.pdb' '*.deps.json' 'ref/*'
+          python3 scripts/package_smapi.py --build-dir build --archive "${archive_name}.zip"
+          dotnet run --project tests/SmapiTextureSmoke/SmapiTextureSmoke.csproj --configuration Release -- "${archive_name}.zip"
 
       - name: Upload Stardew Valley ${{ matrix.branch }} artifacts
         if: ${{ startsWith(matrix.branch, 'stardewvalley/') }}
@@ -301,29 +300,28 @@ jobs:
           path: ${{ env.TARGET_DIR }}/build/libs/
 
       - name: Setup .NET 6
-        if: ${{ startsWith(github.ref_name, 'stardewvalley/') }}
+        if: ${{ startsWith(github.ref_name, 'stardewvalley/') || startsWith(github.ref_name, 'fix/stardew') }}
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 6.0.x
 
       - name: Build current Stardew Valley branch
-        if: ${{ startsWith(github.ref_name, 'stardewvalley/') }}
+        if: ${{ startsWith(github.ref_name, 'stardewvalley/') || startsWith(github.ref_name, 'fix/stardew') }}
         working-directory: ${{ env.TARGET_DIR }}
         run: |
-          dotnet build --configuration Release -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj"
+          dotnet build --configuration Release \
+            -p:CommonProjectPath="../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" \
+            -p:CommonAssetsPath="../${{ env.COMMON_DIR }}/stardewvalley/assets"
           common_version="$(grep -m1 '<Version>' "../${{ env.COMMON_DIR }}/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj" | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
           mod_version="$(grep -m1 '<Version>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<Version>([^<]+)</Version>.*#\1#')"
           game_version="$(grep -m1 '<GameVersion>' DissolverEnhanced.StardewValley.Smapi.csproj | sed -E 's#.*<GameVersion>([^<]+)</GameVersion>.*#\1#')"
-          loader_name="$(basename "${{ github.ref_name }}" | cut -d- -f1)"
+          loader_name="smapi"
           archive_name="dissolver-enhanced-${mod_version}-${loader_name}-sv${game_version}-c${common_version}"
-          rm -rf package
-          mkdir -p "package/DissolverEnhanced"
-          cp build/*.dll build/manifest.json "package/DissolverEnhanced/"
-          cd package
-          zip -r "../${archive_name}.zip" DissolverEnhanced -x '*.pdb' '*.deps.json' 'ref/*'
+          python3 scripts/package_smapi.py --build-dir build --archive "${archive_name}.zip"
+          dotnet run --project tests/SmapiTextureSmoke/SmapiTextureSmoke.csproj --configuration Release -- "${archive_name}.zip"
 
       - name: Upload current Stardew Valley branch artifacts
-        if: ${{ startsWith(github.ref_name, 'stardewvalley/') }}
+        if: ${{ startsWith(github.ref_name, 'stardewvalley/') || startsWith(github.ref_name, 'fix/stardew') }}
         uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ steps.current-artifact.outputs.name }}-${{ github.sha }}
