@@ -384,6 +384,44 @@ class PullRequestPublishingTests(unittest.TestCase):
         self.assertTrue(any(command[:4] == ["gh", "pr", "edit", "45"] for command in calls))
 
 
+class SetupWorkerLifecycleTests(unittest.TestCase):
+    def test_keyboard_interrupt_during_submission_cancels_started_workers(self):
+        shutdown_calls = []
+
+        class InterruptingExecutor:
+            def __init__(self, max_workers):
+                self.max_workers = max_workers
+                self.submissions = 0
+
+            def submit(self, *_args):
+                self.submissions += 1
+                if self.submissions == 2:
+                    raise KeyboardInterrupt
+                return object()
+
+            def shutdown(self, **kwargs):
+                shutdown_calls.append(kwargs)
+
+        executor = InterruptingExecutor(max_workers=1)
+        with mock.patch.object(
+            curseforge_testing.concurrent.futures,
+            "ThreadPoolExecutor",
+            return_value=executor,
+        ):
+            with self.assertRaises(KeyboardInterrupt):
+                curseforge_testing._start_setup_workers(
+                    [{"index": 0}, {"index": 1}],
+                    lambda *_args: None,
+                    object(),
+                )
+
+        self.assertEqual(executor.max_workers, 1)
+        self.assertEqual(
+            shutdown_calls,
+            [{"wait": False, "cancel_futures": True}],
+        )
+
+
 class BranchTestResultTests(unittest.TestCase):
     def test_cached_instances_count_toward_the_completed_branch_result(self):
         first = {"de_game_version": "1.21.1"}

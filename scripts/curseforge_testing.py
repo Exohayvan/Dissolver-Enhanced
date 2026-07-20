@@ -3868,6 +3868,25 @@ def launch_instance(instance, apply, automate_menus=False, ocr_debug=False, verb
     return not automate_menus
 
 
+def _start_setup_workers(setup_plans, setup_branch, progress_events):
+    # Every loader includes the same Common composite build. Keep Gradle
+    # builds serialized so the shared source tree is never read or cached
+    # concurrently, especially from iCloud-backed workspaces.
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    future_to_plan = {}
+    try:
+        for plan in setup_plans:
+            future = executor.submit(setup_branch, plan, progress_events)
+            future_to_plan[future] = plan
+    except KeyboardInterrupt:
+        executor.shutdown(wait=False, cancel_futures=True)
+        raise
+    except BaseException:
+        executor.shutdown(wait=True)
+        raise
+    return executor, future_to_plan, set(future_to_plan)
+
+
 def run_testing_phase(instances, build_branches, apply, selection_text=None, gradle_task="assemble", install_loader_api=True, automate_menus=False, ocr_debug=False, debug=False):
     verbose_setup = debug or not apply
     selected_branches = prompt_for_build_branches(build_branches, selection_text, verbose=verbose_setup)
@@ -3913,17 +3932,6 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
 
     launch_plans = []
 
-    def start_setup_workers(progress_events):
-        # Every loader includes the same Common composite build. Keep Gradle
-        # builds serialized so the shared source tree is never read or cached
-        # concurrently, especially from iCloud-backed workspaces.
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-        future_to_plan = {
-            executor.submit(setup_branch, plan, progress_events): plan
-            for plan in setup_plans
-        }
-        return executor, future_to_plan, set(future_to_plan)
-
     def run_apply_setups_with_rich():
         try:
             from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn, TimeRemainingColumn
@@ -3946,7 +3954,7 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
                     status="building",
             )
             progress_events = queue.Queue()
-            executor, future_to_plan, pending = start_setup_workers(progress_events)
+            executor, future_to_plan, pending = _start_setup_workers(setup_plans, setup_branch, progress_events)
             try:
                 while pending:
                     try:
@@ -4083,7 +4091,7 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
         if not run_apply_setups_with_rich():
             progress_events = queue.Queue()
             progress_display = BranchProgressDisplay(setup_plans)
-            executor, future_to_plan, pending = start_setup_workers(progress_events)
+            executor, future_to_plan, pending = _start_setup_workers(setup_plans, setup_branch, progress_events)
             try:
                 while pending:
                     try:
