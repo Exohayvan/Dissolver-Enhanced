@@ -23,9 +23,8 @@ jobs:
         with:
           skip-install: true
           path: .
-          # The repository's non-language baseline is currently 0.97%.
-          # Fail when new duplication pushes it above the established 1% budget.
-          threshold: 1
+          # Locale JSON files are translation data, not duplicated implementation.
+          threshold: 0
           min-lines: 8
           min-tokens: 60
           ignore-pattern: '(?m)^(?:package|import)\s+[^;\r\n]+;\s*(?:\r?\n|$)'

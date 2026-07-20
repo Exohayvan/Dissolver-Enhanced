@@ -2,8 +2,6 @@ package net.exohayvan.dissolver_enhanced.common.analytics;
 
 import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -66,34 +64,19 @@ public final class PostHogCaptureClient implements AutoCloseable {
     }
 
     private CompletableFuture<Void> send(URI requestEndpoint, Map<String, Object> body) {
-        HttpRequest request = HttpRequest.newBuilder(requestEndpoint)
-            .timeout(REQUEST_TIMEOUT)
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(PostHogJson.toJson(body)))
-            .build();
-
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding())
-            .thenAccept(response -> {
-                int statusCode = response.statusCode();
-                if (statusCode < 200 || statusCode >= 300) {
-                    logWarning("PostHog capture failed with HTTP " + statusCode + ".", null);
-                }
-            })
-            .exceptionally(exception -> {
-                logWarning("PostHog capture failed.", exception);
-                return null;
-            });
+        return PostHogHttp.postJson(
+            httpClient,
+            requestEndpoint,
+            REQUEST_TIMEOUT,
+            body,
+            "PostHog capture",
+            warningLogger
+        );
     }
 
     @Override
     public void close() {
         executor.shutdown();
-    }
-
-    private void logWarning(String message, Throwable throwable) {
-        if (warningLogger != null) {
-            warningLogger.accept(message, throwable);
-        }
     }
 
 }

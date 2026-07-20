@@ -101,6 +101,44 @@ class PullRequestCommentTests(unittest.TestCase):
 
 
 class PullRequestPublishingTests(unittest.TestCase):
+    def _publish(self, result, runner):
+        with contextlib.redirect_stdout(io.StringIO()):
+            published = curseforge_testing.publish_pull_request_test_result(
+                result,
+                Path("/repo"),
+                runner=runner,
+            )
+        self.assertTrue(published)
+
+    def _publish_cached_pass(self, labels):
+        calls = []
+
+        def runner(command, **kwargs):
+            calls.append((command, kwargs))
+            if command[1:3] == ["pr", "list"]:
+                return subprocess.CompletedProcess(
+                    command,
+                    0,
+                    stdout=json.dumps([{"number": 42, "labels": labels}]) + "\n",
+                    stderr="",
+                )
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+        result = {
+            "branch": {
+                "name": "minecraft-fabric-1.21.x-fix-null-guard",
+                "loader": "fabric",
+                "version": "1.21.x",
+            },
+            "passed": True,
+            "cached": True,
+            "passed_tests": 37,
+            "tested_instances": 2,
+            "logs": [],
+        }
+        self._publish(result, runner)
+        return calls
+
     def test_pass_result_comments_and_adds_passed_label(self):
         calls = []
 
@@ -126,14 +164,7 @@ class PullRequestPublishingTests(unittest.TestCase):
             "logs": [],
         }
 
-        with contextlib.redirect_stdout(io.StringIO()):
-            published = curseforge_testing.publish_pull_request_test_result(
-                result,
-                Path("/repo"),
-                runner=runner,
-            )
-
-        self.assertTrue(published)
+        self._publish(result, runner)
         commands = [call[0] for call in calls]
         self.assertIn(
             [
@@ -180,14 +211,8 @@ class PullRequestPublishingTests(unittest.TestCase):
                 "tested_instances": 1,
                 "logs": [log_path],
             }
-            with contextlib.redirect_stdout(io.StringIO()):
-                published = curseforge_testing.publish_pull_request_test_result(
-                    result,
-                    Path("/repo"),
-                    runner=runner,
-                )
+            self._publish(result, runner)
 
-        self.assertTrue(published)
         commands = [call[0] for call in calls]
         self.assertIn(
             [
@@ -200,40 +225,7 @@ class PullRequestPublishingTests(unittest.TestCase):
         self.assertIn("```text\nMinecraft test failed\n```", comment_call[1]["input"])
 
     def test_cached_pass_with_present_label_does_not_post_duplicate_update(self):
-        calls = []
-
-        def runner(command, **kwargs):
-            calls.append((command, kwargs))
-            if command[1:3] == ["pr", "list"]:
-                return subprocess.CompletedProcess(
-                    command,
-                    0,
-                    stdout='[{"number": 42, "labels": [{"name": "testing:passed"}]}]\n',
-                    stderr="",
-                )
-            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
-
-        result = {
-            "branch": {
-                "name": "minecraft-fabric-1.21.x-fix-null-guard",
-                "loader": "fabric",
-                "version": "1.21.x",
-            },
-            "passed": True,
-            "cached": True,
-            "passed_tests": 37,
-            "tested_instances": 2,
-            "logs": [],
-        }
-
-        with contextlib.redirect_stdout(io.StringIO()):
-            published = curseforge_testing.publish_pull_request_test_result(
-                result,
-                Path("/repo"),
-                runner=runner,
-            )
-
-        self.assertTrue(published)
+        calls = self._publish_cached_pass([{"name": "testing:passed"}])
         mutation_calls = [
             command for command, _kwargs in calls
             if command[:3] in (
@@ -245,40 +237,7 @@ class PullRequestPublishingTests(unittest.TestCase):
         self.assertEqual(mutation_calls, [])
 
     def test_cached_pass_restores_missing_pass_label_without_commenting(self):
-        calls = []
-
-        def runner(command, **kwargs):
-            calls.append((command, kwargs))
-            if command[1:3] == ["pr", "list"]:
-                return subprocess.CompletedProcess(
-                    command,
-                    0,
-                    stdout='[{"number": 42, "labels": []}]\n',
-                    stderr="",
-                )
-            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
-
-        result = {
-            "branch": {
-                "name": "minecraft-fabric-1.21.x-fix-null-guard",
-                "loader": "fabric",
-                "version": "1.21.x",
-            },
-            "passed": True,
-            "cached": True,
-            "passed_tests": 37,
-            "tested_instances": 2,
-            "logs": [],
-        }
-
-        with contextlib.redirect_stdout(io.StringIO()):
-            published = curseforge_testing.publish_pull_request_test_result(
-                result,
-                Path("/repo"),
-                runner=runner,
-            )
-
-        self.assertTrue(published)
+        calls = self._publish_cached_pass([])
         commands = [command for command, _kwargs in calls]
         self.assertIn(
             ["gh", "pr", "edit", "42", "--add-label", "testing:passed"],
@@ -353,14 +312,7 @@ class PullRequestPublishingTests(unittest.TestCase):
             "logs": [],
         }
 
-        with contextlib.redirect_stdout(io.StringIO()):
-            published = curseforge_testing.publish_pull_request_test_result(
-                result,
-                Path("/repo"),
-                runner=runner,
-            )
-
-        self.assertTrue(published)
+        self._publish(result, runner)
         commands = [call[0] for call in calls]
         self.assertIn(
             [

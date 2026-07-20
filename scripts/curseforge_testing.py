@@ -3913,6 +3913,17 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
 
     launch_plans = []
 
+    def start_setup_workers(progress_events):
+        # Every loader includes the same Common composite build. Keep Gradle
+        # builds serialized so the shared source tree is never read or cached
+        # concurrently, especially from iCloud-backed workspaces.
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        future_to_plan = {
+            executor.submit(setup_branch, plan, progress_events): plan
+            for plan in setup_plans
+        }
+        return executor, future_to_plan, set(future_to_plan)
+
     def run_apply_setups_with_rich():
         try:
             from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn, TimeRemainingColumn
@@ -3935,14 +3946,8 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
                     status="building",
             )
             progress_events = queue.Queue()
-            # Every loader includes the same Common composite build. Keep Gradle
-            # builds serialized so the shared source tree is never read or cached
-            # concurrently, especially from iCloud-backed workspaces.
-            setup_workers = 1
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=setup_workers)
+            executor, future_to_plan, pending = start_setup_workers(progress_events)
             try:
-                future_to_plan = {executor.submit(setup_branch, plan, progress_events): plan for plan in setup_plans}
-                pending = set(future_to_plan)
                 while pending:
                     try:
                         while True:
@@ -4078,14 +4083,8 @@ def run_testing_phase(instances, build_branches, apply, selection_text=None, gra
         if not run_apply_setups_with_rich():
             progress_events = queue.Queue()
             progress_display = BranchProgressDisplay(setup_plans)
-            # Every loader includes the same Common composite build. Keep Gradle
-            # builds serialized so the shared source tree is never read or cached
-            # concurrently, especially from iCloud-backed workspaces.
-            setup_workers = 1
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=setup_workers)
+            executor, future_to_plan, pending = start_setup_workers(progress_events)
             try:
-                future_to_plan = {executor.submit(setup_branch, plan, progress_events): plan for plan in setup_plans}
-                pending = set(future_to_plan)
                 while pending:
                     try:
                         while True:

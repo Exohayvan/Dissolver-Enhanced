@@ -4,8 +4,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -91,23 +89,14 @@ public final class PostHogErrorReporter implements AutoCloseable {
         body.put("properties", properties);
         body.put("timestamp", Instant.now().toString());
 
-        HttpRequest request = HttpRequest.newBuilder(endpoint)
-            .timeout(REQUEST_TIMEOUT)
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(PostHogJson.toJson(body)))
-            .build();
-
-        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding())
-            .thenAccept(response -> {
-                int statusCode = response.statusCode();
-                if (statusCode < 200 || statusCode >= 300) {
-                    logWarning("PostHog exception capture failed with HTTP " + statusCode + ".", null);
-                }
-            })
-            .exceptionally(exception -> {
-                logWarning("PostHog exception capture failed.", exception);
-                return null;
-            });
+        return PostHogHttp.postJson(
+            httpClient,
+            endpoint,
+            REQUEST_TIMEOUT,
+            body,
+            "PostHog exception capture",
+            warningLogger
+        );
     }
 
     @Override
@@ -226,9 +215,4 @@ public final class PostHogErrorReporter implements AutoCloseable {
         }
     }
 
-    private void logWarning(String message, Throwable throwable) {
-        if (warningLogger != null) {
-            warningLogger.accept(message, throwable);
-        }
-    }
 }
