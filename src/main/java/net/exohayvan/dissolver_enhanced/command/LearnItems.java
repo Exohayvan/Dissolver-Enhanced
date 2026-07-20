@@ -9,6 +9,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 
+import java.util.function.BiFunction;
+
 public class LearnItems {
     public static int everything(CommandContext<CommandSourceStack> context, String command) {
         Player player = context.getSource().getPlayer();
@@ -53,13 +55,13 @@ public class LearnItems {
     }
 
     public static int add(CommandContext<CommandSourceStack> context, String command) {
-        Player player = context.getSource().getPlayer();
-        boolean learned = EMCHelper.learnItem(player, getItemId(context));
-
-        if (learned) ModCommands.feedback(context, Component.translatable("command.feedback.memory.add", getItemName(context)).getString());
-        else ModCommands.feedback(context, Component.translatable("command.feedback.memory.add.fail").getString());
-
-        return 1;
+        return modifyItem(
+            context,
+            context.getSource().getPlayer(),
+            EMCHelper::learnItem,
+            "command.feedback.memory.add",
+            "command.feedback.memory.add.fail"
+        );
     }
 
     public static int addPlayer(CommandContext<CommandSourceStack> context, String command, Player player) {
@@ -68,22 +70,23 @@ public class LearnItems {
             return 1;
         }
 
-        boolean learned = EMCHelper.learnItem(player, getItemId(context));
-
-        if (learned) ModCommands.feedback(context, Component.translatable("command.feedback.memory.add", getItemName(context)).getString());
-        else ModCommands.feedback(context, Component.translatable("command.feedback.memory.add.fail").getString());
-
-        return 1;
+        return modifyItem(
+            context,
+            player,
+            EMCHelper::learnItem,
+            "command.feedback.memory.add",
+            "command.feedback.memory.add.fail"
+        );
     }
 
     public static int remove(CommandContext<CommandSourceStack> context, String command) {
-        Player player = context.getSource().getPlayer();
-        boolean removed = EMCHelper.forgetItem(player, getItemId(context));
-
-        if (removed) ModCommands.feedback(context, Component.translatable("command.feedback.memory.remove", getItemName(context)).getString());
-        else ModCommands.feedback(context, Component.translatable("command.feedback.memory.remove.fail").getString());
-
-        return 1;
+        return modifyItem(
+            context,
+            context.getSource().getPlayer(),
+            EMCHelper::forgetItem,
+            "command.feedback.memory.remove",
+            "command.feedback.memory.remove.fail"
+        );
     }
 
     public static int removePlayer(CommandContext<CommandSourceStack> context, String command, Player player) {
@@ -92,15 +95,31 @@ public class LearnItems {
             return 1;
         }
 
-        boolean removed = EMCHelper.forgetItem(player, getItemId(context));
-        
-        if (removed) ModCommands.feedback(context, Component.translatable("command.feedback.memory.remove", getItemName(context)).getString());
-        else ModCommands.feedback(context, Component.translatable("command.feedback.memory.remove.fail").getString());
-
-        return 1;
+        return modifyItem(
+            context,
+            player,
+            EMCHelper::forgetItem,
+            "command.feedback.memory.remove",
+            "command.feedback.memory.remove.fail"
+        );
     }
 
     // HELPERS
+
+    private static int modifyItem(
+        CommandContext<CommandSourceStack> context,
+        Player player,
+        BiFunction<Player, String, Boolean> operation,
+        String successTranslation,
+        String failureTranslation
+    ) {
+        boolean changed = operation.apply(player, getItemId(context));
+        String feedback = changed
+            ? Component.translatable(successTranslation, getItemName(context)).getString()
+            : Component.translatable(failureTranslation).getString();
+        ModCommands.feedback(context, feedback);
+        return 1;
+    }
 
     private static String getItemId(CommandContext<CommandSourceStack> context) {
         final Item item = ItemArgument.getItem(context, "item").item().value();
