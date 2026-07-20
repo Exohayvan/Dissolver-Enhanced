@@ -2,20 +2,20 @@
 
 Generated deterministically from tracked text/source files in the local worktrees.
 
-- Nodes: **1913**
-- Links: **4956**
-- Files: **835**
-- Symbols: **869**
+- Nodes: **1970**
+- Links: **5036**
+- Files: **843**
+- Symbols: **912**
 
 ## Relationship counts
 
 - `AMBIGUOUS_IMPORT`: **3**
-- `CONTAINS`: **849**
-- `DECLARES`: **1384**
-- `EXTERNAL_IMPORT`: **1090**
-- `IMPORTS`: **1298**
-- `LOADER_EQUIVALENT_EXACT`: **103**
-- `LOADER_EQUIVALENT_VARIANT`: **223**
+- `CONTAINS`: **857**
+- `DECLARES`: **1432**
+- `EXTERNAL_IMPORT`: **1110**
+- `IMPORTS`: **1302**
+- `LOADER_EQUIVALENT_EXACT`: **102**
+- `LOADER_EQUIVALENT_VARIANT`: **224**
 - `USES_COMMON`: **6**
 
 ## Model

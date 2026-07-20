@@ -111,11 +111,25 @@
       "package": "easyocr"
     },
     {
+      "id": "external:errno",
+      "label": "errno",
+      "kind": "external",
+      "color": "#f0bd65",
+      "package": "errno"
+    },
+    {
       "id": "external:hashlib",
       "label": "hashlib",
       "kind": "external",
       "color": "#f0bd65",
       "package": "hashlib"
+    },
+    {
+      "id": "external:importlib.util",
+      "label": "importlib.util",
+      "kind": "external",
+      "color": "#f0bd65",
+      "package": "importlib.util"
     },
     {
       "id": "external:io",
@@ -279,6 +293,13 @@
       "package": "pyautogui"
     },
     {
+      "id": "external:pyperclip",
+      "label": "pyperclip",
+      "kind": "external",
+      "color": "#f0bd65",
+      "package": "pyperclip"
+    },
+    {
       "id": "external:pytesseract",
       "label": "pytesseract",
       "kind": "external",
@@ -349,6 +370,13 @@
       "package": "sys"
     },
     {
+      "id": "external:tempfile",
+      "label": "tempfile",
+      "kind": "external",
+      "color": "#f0bd65",
+      "package": "tempfile"
+    },
+    {
       "id": "external:threading",
       "label": "threading",
       "kind": "external",
@@ -361,6 +389,13 @@
       "kind": "external",
       "color": "#f0bd65",
       "package": "time"
+    },
+    {
+      "id": "external:unittest",
+      "label": "unittest",
+      "kind": "external",
+      "color": "#f0bd65",
+      "package": "unittest"
     },
     {
       "id": "external:urllib.error",
@@ -2460,6 +2495,14 @@
       "scope": "Common"
     },
     {
+      "id": "file:Common:minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValueUpdateMonitorTest.java",
+      "label": "DefaultEmcValueUpdateMonitorTest.java",
+      "kind": "file",
+      "color": "#b5c2db",
+      "path": "Common/minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValueUpdateMonitorTest.java",
+      "scope": "Common"
+    },
+    {
       "id": "file:Common:minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValuesTest.java",
       "label": "DefaultEmcValuesTest.java",
       "kind": "file",
@@ -2577,6 +2620,14 @@
       "kind": "file",
       "color": "#b5c2db",
       "path": "Common/stardewvalley/src/GameInstallPaths.cs",
+      "scope": "Common"
+    },
+    {
+      "id": "file:Common:tests/test_curseforge_testing.py",
+      "label": "test_curseforge_testing.py",
+      "kind": "file",
+      "color": "#b5c2db",
+      "path": "Common/tests/test_curseforge_testing.py",
       "scope": "Common"
     },
     {
@@ -3140,6 +3191,22 @@
       "scope": "minecraft/fabric-1.21.x"
     },
     {
+      "id": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeJsonResult.java",
+      "label": "RecipeJsonResult.java",
+      "kind": "file",
+      "color": "#b5c2db",
+      "path": "minecraft/fabric-1.21.x/src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeJsonResult.java",
+      "scope": "minecraft/fabric-1.21.x"
+    },
+    {
+      "id": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeLoadCoordinator.java",
+      "label": "RecipeLoadCoordinator.java",
+      "kind": "file",
+      "color": "#b5c2db",
+      "path": "minecraft/fabric-1.21.x/src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeLoadCoordinator.java",
+      "scope": "minecraft/fabric-1.21.x"
+    },
+    {
       "id": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/inventory/CondenserCoreSlot.java",
       "label": "CondenserCoreSlot.java",
       "kind": "file",
@@ -3457,6 +3524,14 @@
       "kind": "file",
       "color": "#b5c2db",
       "path": "minecraft/fabric-1.21.x/src/test/java/net/exohayvan/dissolver_enhanced/data/EMCValuesTest.java",
+      "scope": "minecraft/fabric-1.21.x"
+    },
+    {
+      "id": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java",
+      "label": "RecipeLoadCoordinatorTest.java",
+      "kind": "file",
+      "color": "#b5c2db",
+      "path": "minecraft/fabric-1.21.x/src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java",
       "scope": "minecraft/fabric-1.21.x"
     },
     {
@@ -4273,6 +4348,14 @@
       "kind": "file",
       "color": "#b5c2db",
       "path": "minecraft/fabric-26.1.x/src/main/resources/fabric.mod.json",
+      "scope": "minecraft/fabric-26.1.x"
+    },
+    {
+      "id": "file:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java",
+      "label": "FabricModMetadataTest.java",
+      "kind": "file",
+      "color": "#b5c2db",
+      "path": "minecraft/fabric-26.1.x/src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java",
       "scope": "minecraft/fabric-26.1.x"
     },
     {
@@ -7036,6 +7119,22 @@
       "scope": "minecraft/quilt-1.21.x"
     },
     {
+      "id": "file:stardewvalley/smapi-1.6.15:.github/workflows/build.yml",
+      "label": "build.yml",
+      "kind": "file",
+      "color": "#b5c2db",
+      "path": "stardewvalley/smapi-1.6.15/.github/workflows/build.yml",
+      "scope": "stardewvalley/smapi-1.6.15"
+    },
+    {
+      "id": "file:stardewvalley/smapi-1.6.15:README.md",
+      "label": "README.md",
+      "kind": "file",
+      "color": "#b5c2db",
+      "path": "stardewvalley/smapi-1.6.15/README.md",
+      "scope": "stardewvalley/smapi-1.6.15"
+    },
+    {
       "id": "file:stardewvalley/smapi-1.6.15:global.json",
       "label": "global.json",
       "kind": "file",
@@ -7283,6 +7382,13 @@
     {
       "id": "namespace:minecraft/fabric-1.21.x:net.exohayvan.dissolver_enhanced.helpers",
       "label": "net.exohayvan.dissolver_enhanced.helpers",
+      "kind": "namespace",
+      "color": "#aa8cff",
+      "scope": "minecraft/fabric-1.21.x"
+    },
+    {
+      "id": "namespace:minecraft/fabric-1.21.x:net.exohayvan.dissolver_enhanced.internal",
+      "label": "net.exohayvan.dissolver_enhanced.internal",
       "kind": "namespace",
       "color": "#aa8cff",
       "scope": "minecraft/fabric-1.21.x"
@@ -8280,6 +8386,15 @@
       "qualified": "net.exohayvan.dissolver_enhanced.common.values.Section"
     },
     {
+      "id": "symbol:Common:minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValueUpdateMonitorTest.java:net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValueUpdateMonitorTest",
+      "label": "DefaultEmcValueUpdateMonitorTest",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValueUpdateMonitorTest.java",
+      "scope": "Common",
+      "qualified": "net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValueUpdateMonitorTest"
+    },
+    {
       "id": "symbol:Common:minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValuesTest.java:net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValuesTest",
       "label": "DefaultEmcValuesTest",
       "kind": "symbol",
@@ -8325,6 +8440,15 @@
       "qualified": "SingleProgressDisplay"
     },
     {
+      "id": "symbol:Common:scripts/curseforge_testing.py:StepTimingTracker",
+      "label": "StepTimingTracker",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "StepTimingTracker"
+    },
+    {
       "id": "symbol:Common:scripts/curseforge_testing.py:all_ocr_lines",
       "label": "all_ocr_lines",
       "kind": "symbol",
@@ -8341,6 +8465,15 @@
       "path": "Common/scripts/curseforge_testing.py",
       "scope": "Common",
       "qualified": "append_test_result"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:artifact_sha256",
+      "label": "artifact_sha256",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "artifact_sha256"
     },
     {
       "id": "symbol:Common:scripts/curseforge_testing.py:attach_worktree_paths",
@@ -8370,6 +8503,24 @@
       "qualified": "automation_install_help"
     },
     {
+      "id": "symbol:Common:scripts/curseforge_testing.py:branch_cache_display",
+      "label": "branch_cache_display",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "branch_cache_display"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:branch_cache_key",
+      "label": "branch_cache_key",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "branch_cache_key"
+    },
+    {
       "id": "symbol:Common:scripts/curseforge_testing.py:branch_loader_display",
       "label": "branch_loader_display",
       "kind": "symbol",
@@ -8377,6 +8528,15 @@
       "path": "Common/scripts/curseforge_testing.py",
       "scope": "Common",
       "qualified": "branch_loader_display"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:branch_test_count",
+      "label": "branch_test_count",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "branch_test_count"
     },
     {
       "id": "symbol:Common:scripts/curseforge_testing.py:build_branch_artifact",
@@ -8397,6 +8557,15 @@
       "qualified": "cached_control_clicks"
     },
     {
+      "id": "symbol:Common:scripts/curseforge_testing.py:cached_instance_pass",
+      "label": "cached_instance_pass",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "cached_instance_pass"
+    },
+    {
       "id": "symbol:Common:scripts/curseforge_testing.py:cached_menu_sequence_available",
       "label": "cached_menu_sequence_available",
       "kind": "symbol",
@@ -8404,6 +8573,15 @@
       "path": "Common/scripts/curseforge_testing.py",
       "scope": "Common",
       "qualified": "cached_menu_sequence_available"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:cached_pass_result",
+      "label": "cached_pass_result",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "cached_pass_result"
     },
     {
       "id": "symbol:Common:scripts/curseforge_testing.py:cached_relative_click",
@@ -8604,6 +8782,15 @@
       "qualified": "click_world_type_control"
     },
     {
+      "id": "symbol:Common:scripts/curseforge_testing.py:complete_branch_test_results",
+      "label": "complete_branch_test_results",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "complete_branch_test_results"
+    },
+    {
       "id": "symbol:Common:scripts/curseforge_testing.py:copy_instance_logs_for_failure",
       "label": "copy_instance_logs_for_failure",
       "kind": "symbol",
@@ -8658,6 +8845,24 @@
       "qualified": "easyocr_screen"
     },
     {
+      "id": "symbol:Common:scripts/curseforge_testing.py:emit_branch_test_result",
+      "label": "emit_branch_test_result",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "emit_branch_test_result"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:empty_timing_history",
+      "label": "empty_timing_history",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "empty_timing_history"
+    },
+    {
       "id": "symbol:Common:scripts/curseforge_testing.py:ensure_child_group",
       "label": "ensure_child_group",
       "kind": "symbol",
@@ -8692,6 +8897,15 @@
       "path": "Common/scripts/curseforge_testing.py",
       "scope": "Common",
       "qualified": "estimated_instance_steps"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:finalize_branch_test_result",
+      "label": "finalize_branch_test_result",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "finalize_branch_test_result"
     },
     {
       "id": "symbol:Common:scripts/curseforge_testing.py:find_branch_artifact",
@@ -8820,6 +9034,15 @@
       "qualified": "has_relative_location"
     },
     {
+      "id": "symbol:Common:scripts/curseforge_testing.py:initialize_branch_test_results",
+      "label": "initialize_branch_test_results",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "initialize_branch_test_results"
+    },
+    {
       "id": "symbol:Common:scripts/curseforge_testing.py:install_artifact_into_instance",
       "label": "install_artifact_into_instance",
       "kind": "symbol",
@@ -8845,6 +9068,15 @@
       "path": "Common/scripts/curseforge_testing.py",
       "scope": "Common",
       "qualified": "install_loader_dependencies"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:instance_cache_key",
+      "label": "instance_cache_key",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "instance_cache_key"
     },
     {
       "id": "symbol:Common:scripts/curseforge_testing.py:instance_matches_branch",
@@ -8899,6 +9131,15 @@
       "path": "Common/scripts/curseforge_testing.py",
       "scope": "Common",
       "qualified": "is_preserved_dissolver_config_file"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:is_pull_request_branch",
+      "label": "is_pull_request_branch",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "is_pull_request_branch"
     },
     {
       "id": "symbol:Common:scripts/curseforge_testing.py:kill_minecraft_processes_for_instance",
@@ -8991,6 +9232,24 @@
       "qualified": "load_relative_locations"
     },
     {
+      "id": "symbol:Common:scripts/curseforge_testing.py:load_test_cache",
+      "label": "load_test_cache",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "load_test_cache"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:load_timing_history",
+      "label": "load_timing_history",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "load_timing_history"
+    },
+    {
       "id": "symbol:Common:scripts/curseforge_testing.py:loader_dependency_steps",
       "label": "loader_dependency_steps",
       "kind": "symbol",
@@ -9079,6 +9338,15 @@
       "path": "Common/scripts/curseforge_testing.py",
       "scope": "Common",
       "qualified": "main"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:minecraft_instance_is_running",
+      "label": "minecraft_instance_is_running",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "minecraft_instance_is_running"
     },
     {
       "id": "symbol:Common:scripts/curseforge_testing.py:minecraft_ocr_variants",
@@ -9234,6 +9502,15 @@
       "qualified": "parse_yaml_style_config"
     },
     {
+      "id": "symbol:Common:scripts/curseforge_testing.py:partition_cached_instances",
+      "label": "partition_cached_instances",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "partition_cached_instances"
+    },
+    {
       "id": "symbol:Common:scripts/curseforge_testing.py:pause_unpause_to_save",
       "label": "pause_unpause_to_save",
       "kind": "symbol",
@@ -9288,6 +9565,15 @@
       "qualified": "print_section"
     },
     {
+      "id": "symbol:Common:scripts/curseforge_testing.py:print_speed_report",
+      "label": "print_speed_report",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "print_speed_report"
+    },
+    {
       "id": "symbol:Common:scripts/curseforge_testing.py:print_step_bar",
       "label": "print_step_bar",
       "kind": "symbol",
@@ -9322,6 +9608,24 @@
       "path": "Common/scripts/curseforge_testing.py",
       "scope": "Common",
       "qualified": "prompt_for_build_branches"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:publish_pull_request_test_result",
+      "label": "publish_pull_request_test_result",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "publish_pull_request_test_result"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:pull_request_test_comment",
+      "label": "pull_request_test_comment",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "pull_request_test_comment"
     },
     {
       "id": "symbol:Common:scripts/curseforge_testing.py:pyautogui_focus_minecraft_window",
@@ -9403,6 +9707,42 @@
       "path": "Common/scripts/curseforge_testing.py",
       "scope": "Common",
       "qualified": "recipe_command_count"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:record_branch_instance_result",
+      "label": "record_branch_instance_result",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "record_branch_instance_result"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:record_cached_instance_pass",
+      "label": "record_cached_instance_pass",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "record_cached_instance_pass"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:record_cached_pass",
+      "label": "record_cached_pass",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "record_cached_pass"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:record_instance_timing",
+      "label": "record_instance_timing",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "record_instance_timing"
     },
     {
       "id": "symbol:Common:scripts/curseforge_testing.py:region_point",
@@ -9495,6 +9835,15 @@
       "qualified": "remove_path"
     },
     {
+      "id": "symbol:Common:scripts/curseforge_testing.py:repair_unreadable_tracked_files",
+      "label": "repair_unreadable_tracked_files",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "repair_unreadable_tracked_files"
+    },
+    {
       "id": "symbol:Common:scripts/curseforge_testing.py:report_instances",
       "label": "report_instances",
       "kind": "symbol",
@@ -9585,6 +9934,24 @@
       "qualified": "save_relative_locations"
     },
     {
+      "id": "symbol:Common:scripts/curseforge_testing.py:save_test_cache",
+      "label": "save_test_cache",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "save_test_cache"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:save_timing_history",
+      "label": "save_timing_history",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "save_timing_history"
+    },
+    {
       "id": "symbol:Common:scripts/curseforge_testing.py:scan_expected_controls_parallel",
       "label": "scan_expected_controls_parallel",
       "kind": "symbol",
@@ -9655,6 +10022,15 @@
       "path": "Common/scripts/curseforge_testing.py",
       "scope": "Common",
       "qualified": "smoke_test_command_count"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:speed_report_text",
+      "label": "speed_report_text",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "speed_report_text"
     },
     {
       "id": "symbol:Common:scripts/curseforge_testing.py:step_bar_text",
@@ -9826,6 +10202,15 @@
       "path": "Common/scripts/curseforge_testing.py",
       "scope": "Common",
       "qualified": "write_profile_from_template"
+    },
+    {
+      "id": "symbol:Common:scripts/curseforge_testing.py:write_test_failure_log",
+      "label": "write_test_failure_log",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/scripts/curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "write_test_failure_log"
     },
     {
       "id": "symbol:Common:scripts/package_release_target.py:capture",
@@ -10267,6 +10652,87 @@
       "path": "Common/stardewvalley/src/GameInstallPaths.cs",
       "scope": "Common",
       "qualified": "DissolverEnhanced.StardewValley.Common.GameInstallPaths"
+    },
+    {
+      "id": "symbol:Common:tests/test_curseforge_testing.py:BranchTestResultTests",
+      "label": "BranchTestResultTests",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/tests/test_curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "BranchTestResultTests"
+    },
+    {
+      "id": "symbol:Common:tests/test_curseforge_testing.py:BuildTestCacheTests",
+      "label": "BuildTestCacheTests",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/tests/test_curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "BuildTestCacheTests"
+    },
+    {
+      "id": "symbol:Common:tests/test_curseforge_testing.py:ChatInputTests",
+      "label": "ChatInputTests",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/tests/test_curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "ChatInputTests"
+    },
+    {
+      "id": "symbol:Common:tests/test_curseforge_testing.py:PullRequestBranchTests",
+      "label": "PullRequestBranchTests",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/tests/test_curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "PullRequestBranchTests"
+    },
+    {
+      "id": "symbol:Common:tests/test_curseforge_testing.py:PullRequestCommentTests",
+      "label": "PullRequestCommentTests",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/tests/test_curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "PullRequestCommentTests"
+    },
+    {
+      "id": "symbol:Common:tests/test_curseforge_testing.py:PullRequestPublishingTests",
+      "label": "PullRequestPublishingTests",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/tests/test_curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "PullRequestPublishingTests"
+    },
+    {
+      "id": "symbol:Common:tests/test_curseforge_testing.py:RecipeAdvancementDiscoveryTests",
+      "label": "RecipeAdvancementDiscoveryTests",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/tests/test_curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "RecipeAdvancementDiscoveryTests"
+    },
+    {
+      "id": "symbol:Common:tests/test_curseforge_testing.py:RecipeResultGatingTests",
+      "label": "RecipeResultGatingTests",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/tests/test_curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "RecipeResultGatingTests"
+    },
+    {
+      "id": "symbol:Common:tests/test_curseforge_testing.py:StepTimingHistoryTests",
+      "label": "StepTimingHistoryTests",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "Common/tests/test_curseforge_testing.py",
+      "scope": "Common",
+      "qualified": "StepTimingHistoryTests"
     },
     {
       "id": "symbol:minecraft/fabric-1.21.x:src/client/java/net/exohayvan/dissolver_enhanced/DissolverEnhancedClient.java:net.exohayvan.dissolver_enhanced.DissolverEnhancedClient",
@@ -10980,6 +11446,24 @@
       "qualified": "net.exohayvan.dissolver_enhanced.helpers.WorldCompat"
     },
     {
+      "id": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeJsonResult.java:net.exohayvan.dissolver_enhanced.internal.RecipeJsonResult",
+      "label": "RecipeJsonResult",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "minecraft/fabric-1.21.x/src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeJsonResult.java",
+      "scope": "minecraft/fabric-1.21.x",
+      "qualified": "net.exohayvan.dissolver_enhanced.internal.RecipeJsonResult"
+    },
+    {
+      "id": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeLoadCoordinator.java:net.exohayvan.dissolver_enhanced.internal.RecipeLoadCoordinator",
+      "label": "RecipeLoadCoordinator",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "minecraft/fabric-1.21.x/src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeLoadCoordinator.java",
+      "scope": "minecraft/fabric-1.21.x",
+      "qualified": "net.exohayvan.dissolver_enhanced.internal.RecipeLoadCoordinator"
+    },
+    {
       "id": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/inventory/CondenserCoreSlot.java:net.exohayvan.dissolver_enhanced.inventory.CondenserCoreSlot",
       "label": "CondenserCoreSlot",
       "kind": "symbol",
@@ -11158,15 +11642,6 @@
       "path": "minecraft/fabric-1.21.x/src/main/java/net/exohayvan/dissolver_enhanced/mixin/ItemStackTooltipMixin.java",
       "scope": "minecraft/fabric-1.21.x",
       "qualified": "net.exohayvan.dissolver_enhanced.mixin.ItemStackTooltipMixin"
-    },
-    {
-      "id": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/mixin/RecipeManagerMixin.java:net.exohayvan.dissolver_enhanced.mixin.JsonResult",
-      "label": "JsonResult",
-      "kind": "symbol",
-      "color": "#7c8cff",
-      "path": "minecraft/fabric-1.21.x/src/main/java/net/exohayvan/dissolver_enhanced/mixin/RecipeManagerMixin.java",
-      "scope": "minecraft/fabric-1.21.x",
-      "qualified": "net.exohayvan.dissolver_enhanced.mixin.JsonResult"
     },
     {
       "id": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/mixin/RecipeManagerMixin.java:net.exohayvan.dissolver_enhanced.mixin.RecipeManagerMixin",
@@ -11392,6 +11867,15 @@
       "path": "minecraft/fabric-1.21.x/src/test/java/net/exohayvan/dissolver_enhanced/data/EMCValuesTest.java",
       "scope": "minecraft/fabric-1.21.x",
       "qualified": "net.exohayvan.dissolver_enhanced.data.VisibilityModifier"
+    },
+    {
+      "id": "symbol:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java:net.exohayvan.dissolver_enhanced.mixin.RecipeLoadCoordinatorTest",
+      "label": "RecipeLoadCoordinatorTest",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "minecraft/fabric-1.21.x/src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java",
+      "scope": "minecraft/fabric-1.21.x",
+      "qualified": "net.exohayvan.dissolver_enhanced.mixin.RecipeLoadCoordinatorTest"
     },
     {
       "id": "symbol:minecraft/fabric-26.1.x:src/client/java/net/exohayvan/dissolver_enhanced/DissolverEnhancedClient.java:net.exohayvan.dissolver_enhanced.DissolverEnhancedClient",
@@ -12310,6 +12794,15 @@
       "path": "minecraft/fabric-26.1.x/src/main/java/net/exohayvan/dissolver_enhanced/screen/ModScreenHandlers.java",
       "scope": "minecraft/fabric-26.1.x",
       "qualified": "net.exohayvan.dissolver_enhanced.screen.ModScreenHandlers"
+    },
+    {
+      "id": "symbol:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java:net.exohayvan.dissolver_enhanced.FabricModMetadataTest",
+      "label": "FabricModMetadataTest",
+      "kind": "symbol",
+      "color": "#7c8cff",
+      "path": "minecraft/fabric-26.1.x/src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java",
+      "scope": "minecraft/fabric-26.1.x",
+      "qualified": "net.exohayvan.dissolver_enhanced.FabricModMetadataTest"
     },
     {
       "id": "symbol:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/TestConstants.java:net.exohayvan.dissolver_enhanced.Configs",
@@ -17252,6 +17745,11 @@
     },
     {
       "source": "common:Common",
+      "target": "file:Common:minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValueUpdateMonitorTest.java",
+      "relation": "CONTAINS"
+    },
+    {
+      "source": "common:Common",
       "target": "file:Common:minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValuesTest.java",
       "relation": "CONTAINS"
     },
@@ -17323,6 +17821,11 @@
     {
       "source": "common:Common",
       "target": "file:Common:stardewvalley/src/GameInstallPaths.cs",
+      "relation": "CONTAINS"
+    },
+    {
+      "source": "common:Common",
+      "target": "file:Common:tests/test_curseforge_testing.py",
       "relation": "CONTAINS"
     },
     {
@@ -17641,6 +18144,23 @@
       "relation": "DECLARES"
     },
     {
+      "source": "file:Common:minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValueUpdateMonitorTest.java",
+      "target": "external:org.junit",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "org.junit.jupiter.api.Assertions.assertEquals",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValueUpdateMonitorTest.java",
+      "target": "namespace:Common:net.exohayvan.dissolver_enhanced.common.values",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValueUpdateMonitorTest.java",
+      "target": "symbol:Common:minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValueUpdateMonitorTest.java:net.exohayvan.dissolver_enhanced.common.values.DefaultEmcValueUpdateMonitorTest",
+      "relation": "DECLARES"
+    },
+    {
       "source": "file:Common:minecraft/src/test/java/net/exohayvan/dissolver_enhanced/common/values/DefaultEmcValuesTest.java",
       "target": "external:java",
       "relation": "EXTERNAL_IMPORT",
@@ -17746,6 +18266,20 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "external:errno",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "errno",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "external:hashlib",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "hashlib",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "external:io",
       "relation": "EXTERNAL_IMPORT",
       "import_value": "io",
@@ -17791,6 +18325,13 @@
       "target": "external:pyautogui",
       "relation": "EXTERNAL_IMPORT",
       "import_value": "pyautogui",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "external:pyperclip",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "pyperclip",
       "confidence": "external"
     },
     {
@@ -17915,12 +18456,22 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:StepTimingTracker",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:all_ocr_lines",
       "relation": "DECLARES"
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:append_test_result",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:artifact_sha256",
       "relation": "DECLARES"
     },
     {
@@ -17940,7 +18491,22 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:branch_cache_display",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:branch_cache_key",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:branch_loader_display",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:branch_test_count",
       "relation": "DECLARES"
     },
     {
@@ -17955,7 +18521,17 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:cached_instance_pass",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:cached_menu_sequence_available",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:cached_pass_result",
       "relation": "DECLARES"
     },
     {
@@ -18070,6 +18646,11 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:complete_branch_test_results",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:copy_instance_logs_for_failure",
       "relation": "DECLARES"
     },
@@ -18100,6 +18681,16 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:emit_branch_test_result",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:empty_timing_history",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:ensure_child_group",
       "relation": "DECLARES"
     },
@@ -18116,6 +18707,11 @@
     {
       "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:estimated_instance_steps",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:finalize_branch_test_result",
       "relation": "DECLARES"
     },
     {
@@ -18190,6 +18786,11 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:initialize_branch_test_results",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:install_artifact_into_instance",
       "relation": "DECLARES"
     },
@@ -18201,6 +18802,11 @@
     {
       "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:install_loader_dependencies",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:instance_cache_key",
       "relation": "DECLARES"
     },
     {
@@ -18231,6 +18837,11 @@
     {
       "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:is_preserved_dissolver_config_file",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:is_pull_request_branch",
       "relation": "DECLARES"
     },
     {
@@ -18285,6 +18896,16 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:load_test_cache",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:load_timing_history",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:loader_dependency_steps",
       "relation": "DECLARES"
     },
@@ -18331,6 +18952,11 @@
     {
       "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:main",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:minecraft_instance_is_running",
       "relation": "DECLARES"
     },
     {
@@ -18420,6 +19046,11 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:partition_cached_instances",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:pause_unpause_to_save",
       "relation": "DECLARES"
     },
@@ -18450,6 +19081,11 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:print_speed_report",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:print_step_bar",
       "relation": "DECLARES"
     },
@@ -18466,6 +19102,16 @@
     {
       "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:prompt_for_build_branches",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:publish_pull_request_test_result",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:pull_request_test_comment",
       "relation": "DECLARES"
     },
     {
@@ -18511,6 +19157,26 @@
     {
       "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:recipe_command_count",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:record_branch_instance_result",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:record_cached_instance_pass",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:record_cached_pass",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:record_instance_timing",
       "relation": "DECLARES"
     },
     {
@@ -18565,6 +19231,11 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:repair_unreadable_tracked_files",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:report_instances",
       "relation": "DECLARES"
     },
@@ -18615,6 +19286,16 @@
     },
     {
       "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:save_test_cache",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:save_timing_history",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:scan_expected_controls_parallel",
       "relation": "DECLARES"
     },
@@ -18651,6 +19332,11 @@
     {
       "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:smoke_test_command_count",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:speed_report_text",
       "relation": "DECLARES"
     },
     {
@@ -18746,6 +19432,11 @@
     {
       "source": "file:Common:scripts/curseforge_testing.py",
       "target": "symbol:Common:scripts/curseforge_testing.py:write_profile_from_template",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:scripts/curseforge_testing.py",
+      "target": "symbol:Common:scripts/curseforge_testing.py:write_test_failure_log",
       "relation": "DECLARES"
     },
     {
@@ -19231,6 +19922,107 @@
     {
       "source": "file:Common:stardewvalley/src/GameInstallPaths.cs",
       "target": "symbol:Common:stardewvalley/src/GameInstallPaths.cs:DissolverEnhanced.StardewValley.Common.GameInstallPaths",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "external:contextlib",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "contextlib",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "external:importlib.util",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "importlib.util",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "external:io",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "io",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "external:json",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "json",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "external:pathlib",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "pathlib",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "external:subprocess",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "subprocess",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "external:tempfile",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "tempfile",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "external:unittest",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "unittest",
+      "confidence": "external"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "symbol:Common:tests/test_curseforge_testing.py:BranchTestResultTests",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "symbol:Common:tests/test_curseforge_testing.py:BuildTestCacheTests",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "symbol:Common:tests/test_curseforge_testing.py:ChatInputTests",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "symbol:Common:tests/test_curseforge_testing.py:PullRequestBranchTests",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "symbol:Common:tests/test_curseforge_testing.py:PullRequestCommentTests",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "symbol:Common:tests/test_curseforge_testing.py:PullRequestPublishingTests",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "symbol:Common:tests/test_curseforge_testing.py:RecipeAdvancementDiscoveryTests",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "symbol:Common:tests/test_curseforge_testing.py:RecipeResultGatingTests",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:Common:tests/test_curseforge_testing.py",
+      "target": "symbol:Common:tests/test_curseforge_testing.py:StepTimingHistoryTests",
       "relation": "DECLARES"
     },
     {
@@ -22030,6 +22822,26 @@
       "relation": "DECLARES"
     },
     {
+      "source": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeJsonResult.java",
+      "target": "namespace:minecraft/fabric-1.21.x:net.exohayvan.dissolver_enhanced.internal",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeJsonResult.java",
+      "target": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeJsonResult.java:net.exohayvan.dissolver_enhanced.internal.RecipeJsonResult",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeLoadCoordinator.java",
+      "target": "namespace:minecraft/fabric-1.21.x:net.exohayvan.dissolver_enhanced.internal",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeLoadCoordinator.java",
+      "target": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeLoadCoordinator.java:net.exohayvan.dissolver_enhanced.internal.RecipeLoadCoordinator",
+      "relation": "DECLARES"
+    },
+    {
       "source": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/inventory/CondenserCoreSlot.java",
       "target": "external:net.minecraft",
       "relation": "EXTERNAL_IMPORT",
@@ -22756,8 +23568,15 @@
     },
     {
       "source": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/mixin/RecipeManagerMixin.java",
-      "target": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/mixin/RecipeManagerMixin.java:net.exohayvan.dissolver_enhanced.mixin.JsonResult",
-      "relation": "DECLARES"
+      "target": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeJsonResult.java:net.exohayvan.dissolver_enhanced.internal.RecipeJsonResult",
+      "relation": "IMPORTS",
+      "confidence": "exact"
+    },
+    {
+      "source": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/mixin/RecipeManagerMixin.java",
+      "target": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeLoadCoordinator.java:net.exohayvan.dissolver_enhanced.internal.RecipeLoadCoordinator",
+      "relation": "IMPORTS",
+      "confidence": "exact"
     },
     {
       "source": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/mixin/RecipeManagerMixin.java",
@@ -23527,7 +24346,7 @@
       "source": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/data/EMCValuesTest.java",
       "target": "external:java",
       "relation": "EXTERNAL_IMPORT",
-      "import_value": "java.math.BigInteger",
+      "import_value": "java.lang.reflect.Field",
       "confidence": "external"
     },
     {
@@ -23593,6 +24412,49 @@
     {
       "source": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/data/EMCValuesTest.java",
       "target": "symbol:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/data/EMCValuesTest.java:net.exohayvan.dissolver_enhanced.data.VisibilityModifier",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java",
+      "target": "external:java",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "java.util.concurrent.CountDownLatch",
+      "confidence": "external"
+    },
+    {
+      "source": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java",
+      "target": "external:org.assertj",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "org.assertj.core.api.Assertions.assertThat",
+      "confidence": "external"
+    },
+    {
+      "source": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java",
+      "target": "external:org.junit",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "org.junit.jupiter.api.Test",
+      "confidence": "external"
+    },
+    {
+      "source": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java",
+      "target": "namespace:minecraft/fabric-1.21.x:net.exohayvan.dissolver_enhanced.mixin",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java",
+      "target": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeJsonResult.java:net.exohayvan.dissolver_enhanced.internal.RecipeJsonResult",
+      "relation": "IMPORTS",
+      "confidence": "exact"
+    },
+    {
+      "source": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java",
+      "target": "symbol:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeLoadCoordinator.java:net.exohayvan.dissolver_enhanced.internal.RecipeLoadCoordinator",
+      "relation": "IMPORTS",
+      "confidence": "exact"
+    },
+    {
+      "source": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java",
+      "target": "symbol:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java:net.exohayvan.dissolver_enhanced.mixin.RecipeLoadCoordinatorTest",
       "relation": "DECLARES"
     },
     {
@@ -26558,14 +27420,14 @@
       "source": "file:minecraft/fabric-26.1.x:src/main/java/net/exohayvan/dissolver_enhanced/mixin/RecipeManagerMixin.java",
       "target": "external:net.minecraft",
       "relation": "EXTERNAL_IMPORT",
-      "import_value": "net.minecraft.resources.FileToIdConverter",
+      "import_value": "net.minecraft.core.HolderLookup",
       "confidence": "external"
     },
     {
       "source": "file:minecraft/fabric-26.1.x:src/main/java/net/exohayvan/dissolver_enhanced/mixin/RecipeManagerMixin.java",
       "target": "external:org.spongepowered",
       "relation": "EXTERNAL_IMPORT",
-      "import_value": "org.spongepowered.asm.mixin.Mixin",
+      "import_value": "org.spongepowered.asm.mixin.Final",
       "confidence": "external"
     },
     {
@@ -27133,6 +27995,51 @@
       "relation": "DECLARES"
     },
     {
+      "source": "file:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java",
+      "target": "external:com.google",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "com.google.gson.JsonObject",
+      "confidence": "external"
+    },
+    {
+      "source": "file:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java",
+      "target": "external:java",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "java.io.IOException",
+      "confidence": "external"
+    },
+    {
+      "source": "file:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java",
+      "target": "external:net.fabricmc",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "net.fabricmc.loader.api.Version",
+      "confidence": "external"
+    },
+    {
+      "source": "file:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java",
+      "target": "external:org.assertj",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "org.assertj.core.api.Assertions.assertThat",
+      "confidence": "external"
+    },
+    {
+      "source": "file:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java",
+      "target": "external:org.junit",
+      "relation": "EXTERNAL_IMPORT",
+      "import_value": "org.junit.jupiter.api.Test",
+      "confidence": "external"
+    },
+    {
+      "source": "file:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java",
+      "target": "namespace:minecraft/fabric-26.1.x:net.exohayvan.dissolver_enhanced",
+      "relation": "DECLARES"
+    },
+    {
+      "source": "file:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java",
+      "target": "symbol:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java:net.exohayvan.dissolver_enhanced.FabricModMetadataTest",
+      "relation": "DECLARES"
+    },
+    {
       "source": "file:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/TestConstants.java",
       "target": "external:java",
       "relation": "EXTERNAL_IMPORT",
@@ -27307,7 +28214,7 @@
       "source": "file:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/data/EMCValuesTest.java",
       "target": "external:java",
       "relation": "EXTERNAL_IMPORT",
-      "import_value": "java.math.BigInteger",
+      "import_value": "java.lang.reflect.Field",
       "confidence": "external"
     },
     {
@@ -28311,7 +29218,7 @@
       "source": "file:minecraft/forge-1.20.x:src/main/java/net/exohayvan/dissolver_enhanced/advancement/ModCriteria.java",
       "target": "external:net.minecraft",
       "relation": "EXTERNAL_IMPORT",
-      "import_value": "net.minecraft.advancements.CriteriaTriggers",
+      "import_value": "net.minecraft.server.level.ServerPlayer",
       "confidence": "external"
     },
     {
@@ -31756,7 +32663,7 @@
       "source": "file:minecraft/forge-1.20.x:src/test/java/net/exohayvan/dissolver_enhanced/data/EMCValuesTest.java",
       "target": "external:java",
       "relation": "EXTERNAL_IMPORT",
-      "import_value": "java.math.BigInteger",
+      "import_value": "java.lang.reflect.Field",
       "confidence": "external"
     },
     {
@@ -36693,7 +37600,7 @@
       "source": "file:minecraft/neoforge-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/data/EMCValuesTest.java",
       "target": "external:java",
       "relation": "EXTERNAL_IMPORT",
-      "import_value": "java.math.BigInteger",
+      "import_value": "java.lang.reflect.Field",
       "confidence": "external"
     },
     {
@@ -36836,7 +37743,7 @@
     {
       "source": "file:minecraft/quilt-1.21.x:settings.gradle",
       "target": "file:minecraft/fabric-1.21.x:settings.gradle",
-      "relation": "LOADER_EQUIVALENT_EXACT",
+      "relation": "LOADER_EQUIVALENT_VARIANT",
       "relative_path": "settings.gradle"
     },
     {
@@ -41273,7 +42180,7 @@
       "source": "file:minecraft/quilt-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/data/EMCValuesTest.java",
       "target": "external:java",
       "relation": "EXTERNAL_IMPORT",
-      "import_value": "java.math.BigInteger",
+      "import_value": "java.lang.reflect.Field",
       "confidence": "external"
     },
     {
@@ -42049,6 +42956,16 @@
     },
     {
       "source": "version:minecraft:fabric:1.21.x",
+      "target": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeJsonResult.java",
+      "relation": "CONTAINS"
+    },
+    {
+      "source": "version:minecraft:fabric:1.21.x",
+      "target": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/internal/RecipeLoadCoordinator.java",
+      "relation": "CONTAINS"
+    },
+    {
+      "source": "version:minecraft:fabric:1.21.x",
       "target": "file:minecraft/fabric-1.21.x:src/main/java/net/exohayvan/dissolver_enhanced/inventory/CondenserCoreSlot.java",
       "relation": "CONTAINS"
     },
@@ -42245,6 +43162,11 @@
     {
       "source": "version:minecraft:fabric:1.21.x",
       "target": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/data/EMCValuesTest.java",
+      "relation": "CONTAINS"
+    },
+    {
+      "source": "version:minecraft:fabric:1.21.x",
+      "target": "file:minecraft/fabric-1.21.x:src/test/java/net/exohayvan/dissolver_enhanced/mixin/RecipeLoadCoordinatorTest.java",
       "relation": "CONTAINS"
     },
     {
@@ -42760,6 +43682,11 @@
     {
       "source": "version:minecraft:fabric:26.1.x",
       "target": "file:minecraft/fabric-26.1.x:src/main/resources/fabric.mod.json",
+      "relation": "CONTAINS"
+    },
+    {
+      "source": "version:minecraft:fabric:26.1.x",
+      "target": "file:minecraft/fabric-26.1.x:src/test/java/net/exohayvan/dissolver_enhanced/FabricModMetadataTest.java",
       "relation": "CONTAINS"
     },
     {
@@ -44506,6 +45433,16 @@
       "source": "version:stardewvalley:smapi:1.6.15",
       "target": "common:Common",
       "relation": "USES_COMMON"
+    },
+    {
+      "source": "version:stardewvalley:smapi:1.6.15",
+      "target": "file:stardewvalley/smapi-1.6.15:.github/workflows/build.yml",
+      "relation": "CONTAINS"
+    },
+    {
+      "source": "version:stardewvalley:smapi:1.6.15",
+      "target": "file:stardewvalley/smapi-1.6.15:README.md",
+      "relation": "CONTAINS"
     },
     {
       "source": "version:stardewvalley:smapi:1.6.15",
