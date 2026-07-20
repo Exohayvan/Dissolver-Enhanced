@@ -14,8 +14,9 @@
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <GameVersion>1.6.15</GameVersion>
     <LoaderVersion>4.5.2</LoaderVersion>
-    <CommonProjectPath Condition="'$(CommonProjectPath)' == ''">../Common/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj</CommonProjectPath>
-    <CommonAssetsPath Condition="'$(CommonAssetsPath)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Common/stardewvalley/assets'))</CommonAssetsPath>
+    <CommonProjectPath Condition="'$(CommonProjectPath)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../common/stardewvalley/src/DissolverEnhanced.StardewValley.Common.csproj'))</CommonProjectPath>
+    <CommonAssetsPath Condition="'$(CommonAssetsPath)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../common/stardewvalley/assets'))</CommonAssetsPath>
+    <RequiredBigCraftablesTexture>$(CommonAssetsPath)/big-craftables.png</RequiredBigCraftablesTexture>
     <StardewValleyGamePath Condition="'$(StardewValleyGamePath)' == ''">/Volumes/Steam Drive/SteamLibrary/steamapps/common/Stardew Valley/Contents/MacOS</StardewValleyGamePath>
     <UseInstalledStardewReferences Condition="'$(UseInstalledStardewReferences)' == '' and Exists('$(StardewValleyGamePath)/StardewModdingAPI.dll')">true</UseInstalledStardewReferences>
     <SmapiReferenceProjectPath Condition="'$(SmapiReferenceProjectPath)' == ''">references/StardewModdingAPI.Stubs/StardewModdingAPI.Stubs.csproj</SmapiReferenceProjectPath>
@@ -40,7 +41,13 @@
     <None Include="manifest.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(CommonAssetsPath)/**/*" Link="assets/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Compile Remove="references/**/*.cs" />
+    <Compile Remove="tests/**/*.cs" />
   </ItemGroup>
+
+  <Target Name="ValidateCommonBuildInputs" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(CommonProjectPath)')" Text="Common project not found at '$(CommonProjectPath)'. Override CommonProjectPath when using a different worktree layout." />
+    <Error Condition="!Exists('$(RequiredBigCraftablesTexture)')" Text="Required SMAPI texture not found at '$(RequiredBigCraftablesTexture)'. Override CommonAssetsPath when using a different worktree layout." />
+  </Target>
 
   <Target Name="RemoveCompileOnlyReferences" AfterTargets="Build">
     <Delete Files="$(OutputPath)StardewModdingAPI.dll;$(OutputPath)StardewModdingAPI.pdb;$(OutputPath)Stardew Valley.dll;$(OutputPath)Stardew Valley.pdb;$(OutputPath)StardewValley.GameData.dll;$(OutputPath)StardewValley.GameData.pdb;$(OutputPath)MonoGame.Framework.dll;$(OutputPath)xTile.dll" />
