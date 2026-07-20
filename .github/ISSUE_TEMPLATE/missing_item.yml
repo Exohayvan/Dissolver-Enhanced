@@ -1,7 +1,7 @@
 name: Missing Item Value
 description: Auto-generated report for an item the Dissolver could not assign an EMC value to.
 title: "[Missing Item]: "
-labels: ["missing item", "emc value"]
+labels: ["report:missing-emc-value", "area:emc"]
 body:
   - type: markdown
     attributes:
