@@ -7,6 +7,8 @@ import net.exohayvan.dissolver_enhanced.data.model.EMCRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -236,6 +238,30 @@ class EMCValuesTest {
 
     }
 
+
+    @Test
+    void recipeSourceDetailReplacesNullList() throws Exception {
+        Field detailsField = EMCValues.class.getDeclaredField("RECIPE_ITEM_SOURCE_DETAILS");
+        detailsField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<String, List<String>> details = (Map<String, List<String>>) detailsField.get(null);
+        details.clear();
+        details.put("test:result", null);
+
+        Method addSourceDetail = EMCValues.class.getDeclaredMethod(
+            "addRecipeSourceDetail",
+            String.class,
+            String.class,
+            BigInteger.class,
+            List.class,
+            int.class,
+            BigInteger.class
+        );
+        addSourceDetail.setAccessible(true);
+        addSourceDetail.invoke(null, "test:result", "test:recipe__1__0__1", BigInteger.ONE, List.of("minecraft:dirt"), 1, BigInteger.ZERO);
+
+        assertThat(details.get("test:result")).contains("Recipe test:recipe__1__0__1: 1x minecraft:dirt -> 1x test:result = 1 EMC");
+    }
 
     private void validateEMCValues(List<EMCRecord> expected) {
         Set<String> set = EMCValues.getList();
