@@ -152,4 +152,10 @@ public abstract class CustomBlockEntity extends BlockEntity implements WorldlyCo
     public int[] getSlotsForFace(Direction side) {
         return new int[0];
     }
+
+    protected static int[] slotsForFace(Direction side, int[] top, int[] bottom, int[] sides) {
+        if (side == Direction.UP) return top;
+        if (side == Direction.DOWN) return bottom;
+        return sides;
+    }
 }

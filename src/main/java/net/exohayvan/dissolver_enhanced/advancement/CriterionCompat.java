@@ -1,11 +1,12 @@
 package net.exohayvan.dissolver_enhanced.advancement;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+
+import net.exohayvan.dissolver_enhanced.helpers.ReflectionCompat;
 
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.advancements.CriterionTrigger;
@@ -54,7 +55,7 @@ public final class CriterionCompat {
         arguments[0] = player;
         System.arraycopy(values, 0, arguments, 1, values.length);
 
-        Method method = findCompatibleMethod(criterion.getClass(), "trigger", arguments);
+        Method method = ReflectionCompat.findCompatibleMethod(criterion.getClass(), "trigger", arguments);
         if (method == null) {
             throw new IllegalStateException("Criterion " + criterion.getClass().getName() + " has no compatible trigger method.");
         }
@@ -122,54 +123,12 @@ public final class CriterionCompat {
         return null;
     }
 
-    private static Method findCompatibleMethod(Class<?> type, String name, Object[] arguments) {
-        for (Method method : type.getMethods()) {
-            if (!method.getName().equals(name) || method.getParameterCount() != arguments.length) {
-                continue;
-            }
-            Class<?>[] parameters = method.getParameterTypes();
-            boolean compatible = true;
-            for (int index = 0; index < parameters.length; index++) {
-                if (!isCompatible(parameters[index], arguments[index])) {
-                    compatible = false;
-                    break;
-                }
-            }
-            if (compatible) {
-                return method;
-            }
-        }
-        return null;
-    }
-
-    private static boolean isCompatible(Class<?> parameter, Object argument) {
-        if (argument == null) {
-            return !parameter.isPrimitive();
-        }
-        if (!parameter.isPrimitive()) {
-            return parameter.isInstance(argument);
-        }
-        return (parameter == int.class && argument instanceof Integer) ||
-            (parameter == boolean.class && argument instanceof Boolean);
-    }
-
     private static ResourceLocation resourceLocation(String namespace, String path) {
-        try {
-            Constructor<ResourceLocation> constructor = ResourceLocation.class.getDeclaredConstructor(String.class, String.class);
-            constructor.setAccessible(true);
-            return constructor.newInstance(namespace, path);
-        } catch (ReflectiveOperationException ignored) {
-            for (Method method : ResourceLocation.class.getDeclaredMethods()) {
-                if (!Modifier.isStatic(method.getModifiers()) || method.getReturnType() != ResourceLocation.class) {
-                    continue;
-                }
-                Class<?>[] parameters = method.getParameterTypes();
-                if (parameters.length == 2 && parameters[0] == String.class && parameters[1] == String.class) {
-                    return (ResourceLocation) invoke(method, null, namespace, path);
-                }
-            }
-            throw new IllegalStateException("Could not construct a ResourceLocation.");
-        }
+        return ReflectionCompat.resourceLocation(
+            namespace,
+            path,
+            method -> (ResourceLocation) invoke(method, null, namespace, path)
+        );
     }
 
     @SuppressWarnings("unchecked")

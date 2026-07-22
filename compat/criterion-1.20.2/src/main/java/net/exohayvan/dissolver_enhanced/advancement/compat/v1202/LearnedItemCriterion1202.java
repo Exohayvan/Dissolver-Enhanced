@@ -1,6 +1,7 @@
 package net.exohayvan.dissolver_enhanced.advancement.compat.v1202;
 
 import com.google.gson.JsonObject;
+import net.exohayvan.dissolver_enhanced.advancement.compat.CriterionValues;
 import java.util.Optional;
 import net.minecraft.advancements.critereon.AbstractCriterionTriggerInstance;
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
@@ -14,14 +15,11 @@ public class LearnedItemCriterion1202 extends SimpleCriterionTrigger<LearnedItem
 
     @Override
     protected Conditions createInstance(JsonObject jsonObject, Optional<ContextAwarePredicate> player, DeserializationContext context) {
-        String item = jsonObject.has("item") ? jsonObject.get("item").getAsString() : null;
-        boolean hasExternalNamespace = jsonObject.has("external_namespace");
-        Boolean externalNamespace = hasExternalNamespace ? jsonObject.get("external_namespace").getAsBoolean() : null;
-        return new Conditions(player, item, externalNamespace);
+        return new Conditions(player, CriterionValues.optionalItem(jsonObject), CriterionValues.optionalExternalNamespace(jsonObject));
     }
 
     public void trigger(ServerPlayer player, String itemId) {
-        String baseItemId = CriterionValueCompat.baseItemId(itemId);
+        String baseItemId = CriterionValues.baseItemId(itemId);
         trigger(player, conditions -> conditions.matches(baseItemId));
     }
 
@@ -36,20 +34,7 @@ public class LearnedItemCriterion1202 extends SimpleCriterionTrigger<LearnedItem
         }
 
         public boolean matches(String itemId) {
-            if (item != null && !item.equals(itemId)) {
-                return false;
-            }
-
-            if (externalNamespace != null && externalNamespace != isExternalNamespace(itemId)) {
-                return false;
-            }
-
-            return true;
-        }
-
-        private static boolean isExternalNamespace(String itemId) {
-            int namespaceEnd = itemId.indexOf(":");
-            return namespaceEnd > 0 && !"minecraft".equals(itemId.substring(0, namespaceEnd));
+            return CriterionValues.matchesLearnedItem(item, externalNamespace, itemId);
         }
     }
 }

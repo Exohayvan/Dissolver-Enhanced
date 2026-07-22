@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.exohayvan.dissolver_enhanced.advancement.compat.CriterionValues;
 
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
 import net.minecraft.advancements.critereon.EntityPredicate;
@@ -17,7 +18,7 @@ public class LearnedItemCriterion1203 extends SimpleCriterionTrigger<LearnedItem
     }
 
     public void trigger(ServerPlayer player, String itemId) {
-        String baseItemId = CriterionValueCompat.baseItemId(itemId);
+        String baseItemId = CriterionValues.baseItemId(itemId);
         trigger(player, conditions -> conditions.matches(baseItemId));
     }
 

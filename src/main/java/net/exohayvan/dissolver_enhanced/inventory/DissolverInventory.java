@@ -10,10 +10,10 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 
 public class DissolverInventory implements Container {
-    private final NonNullList<ItemStack> stacks;
+    protected final NonNullList<ItemStack> stacks;
     private final int width;
     private final int height;
-    private final AbstractContainerMenu handler;
+    protected final AbstractContainerMenu handler;
 
     public DissolverInventory(AbstractContainerMenu handler, int width, int height) {
         this(handler, width, height, NonNullList.withSize(width * height, ItemStack.EMPTY));

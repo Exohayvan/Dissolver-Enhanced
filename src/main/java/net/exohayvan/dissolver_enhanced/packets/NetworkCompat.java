@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.exohayvan.dissolver_enhanced.helpers.ReflectionCompat;
 
 public final class NetworkCompat {
     private static final String PROTOCOL_VERSION = "1";
@@ -48,7 +49,7 @@ public final class NetworkCompat {
         BiConsumer<M, Object> handler,
         String direction
     ) {
-        Method legacy = findCompatibleMethod(
+        Method legacy = ReflectionCompat.findCompatibleMethod(
             channel.getClass(),
             "registerMessage",
             id,
@@ -89,7 +90,7 @@ public final class NetworkCompat {
     }
 
     public static void sendToServer(Object channel, Object payload) {
-        Method legacy = findCompatibleMethod(channel.getClass(), "sendToServer", payload);
+        Method legacy = ReflectionCompat.findCompatibleMethod(channel.getClass(), "sendToServer", payload);
         if (legacy != null) {
             invokeMethod(legacy, channel, payload);
             return;
@@ -126,19 +127,19 @@ public final class NetworkCompat {
             Object distributor = field.get(null);
 
             if (directArgument != null) {
-                Method direct = findCompatibleMethod(distributor.getClass(), "with", directArgument);
+                Method direct = ReflectionCompat.findCompatibleMethod(distributor.getClass(), "with", directArgument);
                 if (direct != null) {
                     return invokeMethod(direct, distributor, directArgument);
                 }
             }
             if (legacyArgument != null) {
-                Method legacy = findCompatibleMethod(distributor.getClass(), "with", legacyArgument);
+                Method legacy = ReflectionCompat.findCompatibleMethod(distributor.getClass(), "with", legacyArgument);
                 if (legacy != null) {
                     return invokeMethod(legacy, distributor, legacyArgument);
                 }
             }
 
-            Method noArg = findCompatibleMethod(distributor.getClass(), "noArg");
+            Method noArg = ReflectionCompat.findCompatibleMethod(distributor.getClass(), "noArg");
             if (noArg != null) {
                 return invokeMethod(noArg, distributor);
             }
@@ -149,12 +150,12 @@ public final class NetworkCompat {
     }
 
     private static void invokeEitherOrder(Object target, String methodName, Object first, Object second) {
-        Method method = findCompatibleMethod(target.getClass(), methodName, first, second);
+        Method method = ReflectionCompat.findCompatibleMethod(target.getClass(), methodName, first, second);
         if (method != null) {
             invokeMethod(method, target, first, second);
             return;
         }
-        method = findCompatibleMethod(target.getClass(), methodName, second, first);
+        method = ReflectionCompat.findCompatibleMethod(target.getClass(), methodName, second, first);
         if (method != null) {
             invokeMethod(method, target, second, first);
             return;
@@ -163,7 +164,7 @@ public final class NetworkCompat {
     }
 
     private static Object invokeStatic(Class<?> type, String methodName, Object... arguments) {
-        Method method = findCompatibleMethod(type, methodName, arguments);
+        Method method = ReflectionCompat.findCompatibleMethod(type, methodName, arguments);
         if (method == null || !Modifier.isStatic(method.getModifiers())) {
             throw new IllegalStateException(type.getName() + " has no compatible static " + methodName + " method.");
         }
@@ -171,7 +172,7 @@ public final class NetworkCompat {
     }
 
     private static Object invoke(Object target, String methodName, Object... arguments) {
-        Method method = findCompatibleMethod(target.getClass(), methodName, arguments);
+        Method method = ReflectionCompat.findCompatibleMethod(target.getClass(), methodName, arguments);
         if (method == null) {
             throw new IllegalStateException(target.getClass().getName() + " has no compatible " + methodName + " method.");
         }
@@ -187,34 +188,4 @@ public final class NetworkCompat {
         }
     }
 
-    private static Method findCompatibleMethod(Class<?> type, String methodName, Object... arguments) {
-        for (Method method : type.getMethods()) {
-            if (!method.getName().equals(methodName) || method.getParameterCount() != arguments.length) {
-                continue;
-            }
-            Class<?>[] parameters = method.getParameterTypes();
-            boolean compatible = true;
-            for (int index = 0; index < parameters.length; index++) {
-                if (!isCompatible(parameters[index], arguments[index])) {
-                    compatible = false;
-                    break;
-                }
-            }
-            if (compatible) {
-                return method;
-            }
-        }
-        return null;
-    }
-
-    private static boolean isCompatible(Class<?> parameter, Object argument) {
-        if (argument == null) {
-            return !parameter.isPrimitive();
-        }
-        if (!parameter.isPrimitive()) {
-            return parameter.isInstance(argument);
-        }
-        return (parameter == int.class && argument instanceof Integer) ||
-            (parameter == boolean.class && argument instanceof Boolean);
-    }
 }

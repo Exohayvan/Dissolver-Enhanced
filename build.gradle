@@ -71,6 +71,7 @@ sourceSets {
 	main {
 		java {
 			srcDirs += ['src/client/java']
+			srcDirs += ['compat/criterion-shared/src/main/java']
 			srcDirs += ["${commonDir}/src/main/java"]
 		}
 		resources {

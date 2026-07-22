@@ -5,24 +5,23 @@ import java.math.BigInteger;
 import org.jetbrains.annotations.Nullable;
 
 
-import net.exohayvan.dissolver_enhanced.analytics.ModAnalytics;
+
 import net.exohayvan.dissolver_enhanced.block.entity.MaterializerBlockEntity;
 import net.exohayvan.dissolver_enhanced.block.entity.ModBlockEntities;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
-import net.minecraft.world.level.block.RenderShape;
+
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.Containers;
-import net.minecraft.world.phys.BlockHitResult;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 
-public class MaterializerBlock extends BaseEntityBlock {
+public class MaterializerBlock extends InteractiveMachineBlock {
         public MaterializerBlock(Properties settings) {
         super(settings);
     }
@@ -32,22 +31,13 @@ public class MaterializerBlock extends BaseEntityBlock {
         return new MaterializerBlockEntity(pos, state);
     }
 
-    @Override
-    public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+    protected MenuProvider menuProvider(BlockEntity blockEntity) {
+        return blockEntity instanceof MaterializerBlockEntity entity ? entity : null;
     }
 
     @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
-        if (world.isClientSide()) return InteractionResult.SUCCESS;
-
-        BlockEntity blockEntity = world.getBlockEntity(pos);
-        if (blockEntity instanceof MaterializerBlockEntity materializerBlockEntity) {
-            ModAnalytics.captureBlockUse("materializer_block");
-            player.openMenu(materializerBlockEntity);
-        }
-
-        return InteractionResult.CONSUME;
+    protected String analyticsId() {
+        return "materializer_block";
     }
 
     @Override

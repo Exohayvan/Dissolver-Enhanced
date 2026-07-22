@@ -1,6 +1,8 @@
 package net.exohayvan.dissolver_enhanced.advancement.compat.v1203;
 
 import java.math.BigInteger;
+
+import net.exohayvan.dissolver_enhanced.advancement.compat.CriterionValues;
 import java.util.Optional;
 
 import com.mojang.serialization.Codec;
@@ -28,7 +30,7 @@ public class EmcBalanceCriterion1203 extends SimpleCriterionTrigger<EmcBalanceCr
         ).apply(instance, Conditions::new));
 
         public boolean matches(BigInteger emc) {
-            return CriterionValueCompat.nonNegative(emc).compareTo(CriterionValueCompat.parse(minEmc)) >= 0;
+            return CriterionValues.meetsMinimum(emc, minEmc);
         }
     }
 }

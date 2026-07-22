@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.helpers.EMCKey;
 import net.exohayvan.dissolver_enhanced.helpers.ItemHelper;
+import net.exohayvan.dissolver_enhanced.helpers.MachineRate;
 import net.exohayvan.dissolver_enhanced.item.EMCOrbItem;
 import net.exohayvan.dissolver_enhanced.item.EmcCoreItem;
 import net.exohayvan.dissolver_enhanced.screen.MaterializerScreenHandler;
@@ -153,19 +154,13 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
     }
 
     private int getConversionTime() {
-        return ticksForRate(getInputValue(), getEmcPerSecond());
+        return MachineRate.ticksForRate(getInputValue(), getEmcPerSecond(), CONVERSION_TICKS_PER_EMC);
     }
 
     private int getEmcPerSecond() {
         return EmcCoreItem.getEmcPerSecond(this.stacks.get(CORE_SLOT));
     }
 
-    private int ticksForRate(int emc, int emcPerSecond) {
-        if (emc <= 0) return CONVERSION_TICKS_PER_EMC;
-
-        long ticks = ((long) emc * MachineTiming.TICKS_PER_SECOND + Math.max(1, emcPerSecond) - 1L) / Math.max(1, emcPerSecond);
-        return (int) Math.max(1L, Math.min(Integer.MAX_VALUE, ticks));
-    }
 
     private int stackValue(ItemStack stack, boolean allowOrb) {
         if (stack.isEmpty()) return 0;
@@ -238,9 +233,7 @@ public class MaterializerBlockEntity extends CustomBlockEntity {
 
     @Override
     public int[] getSlotsForFace(Direction side) {
-        if (side == Direction.UP) return TOP_SLOTS;
-        if (side == Direction.DOWN) return BOTTOM_SLOTS;
-        return SIDE_SLOTS;
+        return slotsForFace(side, TOP_SLOTS, BOTTOM_SLOTS, SIDE_SLOTS);
     }
 
     @Override

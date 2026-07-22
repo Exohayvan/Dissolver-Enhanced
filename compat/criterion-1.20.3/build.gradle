@@ -9,6 +9,9 @@ java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
 }
 
+sourceSets.main.java.srcDir '../criterion-shared/src/main/java'
+sourceSets.test.java.srcDir '../criterion-shared/src/test/java'
+
 minecraft {
     mappings channel: 'official', version: '1.20.3'
 }

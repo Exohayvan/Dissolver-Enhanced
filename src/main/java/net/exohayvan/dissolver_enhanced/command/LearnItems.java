@@ -54,13 +54,7 @@ public class LearnItems {
     }
 
     public static int add(CommandContext<CommandSourceStack> context, String command) {
-        Player player = context.getSource().getPlayer();
-        boolean learned = EMCHelper.learnItem(player, getItemId(context));
-
-        if (learned) ModCommands.feedback(context, Component.translatable("command.feedback.memory.add", getItemName(context)).getString());
-        else ModCommands.feedback(context, Component.translatable("command.feedback.memory.add.fail").getString());
-
-        return 1;
+        return changeItem(context, context.getSource().getPlayer(), true);
     }
 
     public static int addPlayer(CommandContext<CommandSourceStack> context, String command, Player player) {
@@ -69,22 +63,11 @@ public class LearnItems {
             return 1;
         }
 
-        boolean learned = EMCHelper.learnItem(player, getItemId(context));
-
-        if (learned) ModCommands.feedback(context, Component.translatable("command.feedback.memory.add", getItemName(context)).getString());
-        else ModCommands.feedback(context, Component.translatable("command.feedback.memory.add.fail").getString());
-
-        return 1;
+        return changeItem(context, player, true);
     }
 
     public static int remove(CommandContext<CommandSourceStack> context, String command) {
-        Player player = context.getSource().getPlayer();
-        boolean removed = EMCHelper.forgetItem(player, getItemId(context));
-
-        if (removed) ModCommands.feedback(context, Component.translatable("command.feedback.memory.remove", getItemName(context)).getString());
-        else ModCommands.feedback(context, Component.translatable("command.feedback.memory.remove.fail").getString());
-
-        return 1;
+        return changeItem(context, context.getSource().getPlayer(), false);
     }
 
     public static int removePlayer(CommandContext<CommandSourceStack> context, String command, Player player) {
@@ -93,15 +76,22 @@ public class LearnItems {
             return 1;
         }
 
-        boolean removed = EMCHelper.forgetItem(player, getItemId(context));
-        
-        if (removed) ModCommands.feedback(context, Component.translatable("command.feedback.memory.remove", getItemName(context)).getString());
-        else ModCommands.feedback(context, Component.translatable("command.feedback.memory.remove.fail").getString());
-
-        return 1;
+        return changeItem(context, player, false);
     }
 
     // HELPERS
+
+    private static int changeItem(CommandContext<CommandSourceStack> context, Player player, boolean add) {
+        boolean changed = add
+            ? EMCHelper.learnItem(player, getItemId(context))
+            : EMCHelper.forgetItem(player, getItemId(context));
+        String action = add ? "add" : "remove";
+        Component feedback = changed
+            ? Component.translatable("command.feedback.memory." + action, getItemName(context))
+            : Component.translatable("command.feedback.memory." + action + ".fail");
+        ModCommands.feedback(context, feedback.getString());
+        return 1;
+    }
 
     private static String getItemId(CommandContext<CommandSourceStack> context) {
         final Item item = ItemArgument.getItem(context, "item").getItem();

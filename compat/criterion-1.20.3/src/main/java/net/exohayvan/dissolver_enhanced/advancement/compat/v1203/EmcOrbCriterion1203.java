@@ -1,6 +1,8 @@
 package net.exohayvan.dissolver_enhanced.advancement.compat.v1203;
 
 import java.math.BigInteger;
+
+import net.exohayvan.dissolver_enhanced.advancement.compat.CriterionValues;
 import java.util.Optional;
 
 import com.mojang.serialization.Codec;
@@ -33,8 +35,7 @@ public class EmcOrbCriterion1203 extends SimpleCriterionTrigger<EmcOrbCriterion1
         ).apply(instance, Conditions::new));
 
         public boolean matches(BigInteger emc, String currentAction) {
-            if (CriterionValueCompat.nonNegative(emc).compareTo(CriterionValueCompat.parse(minEmc)) < 0) return false;
-            return action.isEmpty() || action.get().equals(currentAction);
+            return CriterionValues.meetsMinimum(emc, minEmc) && (action.isEmpty() || action.get().equals(currentAction));
         }
     }
 }

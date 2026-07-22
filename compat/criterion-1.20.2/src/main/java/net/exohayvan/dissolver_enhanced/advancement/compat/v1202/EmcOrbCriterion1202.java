@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import net.exohayvan.dissolver_enhanced.advancement.compat.CriterionValues;
+
 import net.minecraft.advancements.critereon.AbstractCriterionTriggerInstance;
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
 import net.minecraft.advancements.critereon.DeserializationContext;
@@ -17,9 +19,8 @@ public class EmcOrbCriterion1202 extends SimpleCriterionTrigger<EmcOrbCriterion1
 
     @Override
     protected Conditions createInstance(JsonObject jsonObject, Optional<ContextAwarePredicate> player, DeserializationContext context) {
-        String minEmc = jsonObject.has("min_emc") ? jsonObject.get("min_emc").getAsString() : "0";
         String action = jsonObject.has("action") ? jsonObject.get("action").getAsString() : null;
-        return new Conditions(player, minEmc, action);
+        return new Conditions(player, CriterionValues.minimumEmc(jsonObject), action);
     }
 
     public void trigger(ServerPlayer player, BigInteger emc, String action) {
@@ -37,8 +38,7 @@ public class EmcOrbCriterion1202 extends SimpleCriterionTrigger<EmcOrbCriterion1
         }
 
         public boolean matches(BigInteger emc, String currentAction) {
-            if (CriterionValueCompat.nonNegative(emc).compareTo(CriterionValueCompat.parse(minEmc)) < 0) return false;
-            return action == null || action.equals(currentAction);
+            return CriterionValues.meetsMinimum(emc, minEmc) && (action == null || action.equals(currentAction));
         }
     }
 }

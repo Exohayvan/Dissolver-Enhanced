@@ -1,6 +1,5 @@
 package net.exohayvan.dissolver_enhanced.helpers;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -27,20 +26,11 @@ public final class RegistryKeyCompat {
     }
 
     private static ResourceLocation resourceLocation(String namespace, String path) {
-        try {
-            Constructor<ResourceLocation> constructor = ResourceLocation.class.getDeclaredConstructor(String.class, String.class);
-            constructor.setAccessible(true);
-            return constructor.newInstance(namespace, path);
-        } catch (ReflectiveOperationException ignored) {
-            for (Method method : ResourceLocation.class.getDeclaredMethods()) {
-                if (Modifier.isStatic(method.getModifiers()) && method.getReturnType() == ResourceLocation.class &&
-                    method.getParameterCount() == 2 && method.getParameterTypes()[0] == String.class &&
-                    method.getParameterTypes()[1] == String.class) {
-                    return (ResourceLocation) invoke(method, null, namespace, path);
-                }
-            }
-            throw new IllegalStateException("Could not construct a ResourceLocation.");
-        }
+        return ReflectionCompat.resourceLocation(
+            namespace,
+            path,
+            method -> (ResourceLocation) invoke(method, null, namespace, path)
+        );
     }
 
     private static Object invoke(Method method, Object target, Object... arguments) {

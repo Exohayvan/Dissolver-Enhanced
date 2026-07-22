@@ -3,6 +3,7 @@ package net.exohayvan.dissolver_enhanced.advancement;
 import com.google.gson.JsonObject;
 
 import java.math.BigInteger;
+import java.util.function.Predicate;
 
 import net.minecraft.advancements.critereon.AbstractCriterionTriggerInstance;
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
@@ -11,6 +12,7 @@ import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.exohayvan.dissolver_enhanced.common.values.EmcNumber;
+import net.exohayvan.dissolver_enhanced.advancement.compat.CriterionValues;
 
 public class EmcBalanceCriterion extends SimpleCriterionTrigger<EmcBalanceCriterion.Conditions> {
     public static final ResourceLocation ID = new ResourceLocation("dissolver_enhanced", "emc_balance");
@@ -22,8 +24,7 @@ public class EmcBalanceCriterion extends SimpleCriterionTrigger<EmcBalanceCriter
 
     @Override
     protected Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate player, DeserializationContext context) {
-        String minEmc = jsonObject.has("min_emc") ? jsonObject.get("min_emc").getAsString() : "0";
-        return new Conditions(player, minEmc);
+        return new Conditions(player, CriterionValues.minimumEmc(jsonObject));
     }
 
     public void trigger(ServerPlayer player, BigInteger emc) {
@@ -31,15 +32,15 @@ public class EmcBalanceCriterion extends SimpleCriterionTrigger<EmcBalanceCriter
     }
 
     public static class Conditions extends AbstractCriterionTriggerInstance {
-        private final String minEmc;
+        private final Predicate<BigInteger> matchesMinimum;
 
         public Conditions(ContextAwarePredicate player, String minEmc) {
             super(ID, player);
-            this.minEmc = minEmc;
+            this.matchesMinimum = emc -> CriterionValues.meetsMinimum(emc, minEmc);
         }
 
         public boolean matches(BigInteger emc) {
-            return EmcNumber.nonNegative(emc).compareTo(EmcNumber.parse(minEmc)) >= 0;
+            return matchesMinimum.test(emc);
         }
     }
 }
