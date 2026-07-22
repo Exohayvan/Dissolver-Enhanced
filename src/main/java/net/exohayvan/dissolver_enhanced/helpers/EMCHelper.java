@@ -157,9 +157,7 @@ public class EMCHelper {
         BigInteger emcValue = EMCValues.getBig(itemId);
 
         if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
-            captureDissolverItemRejected(itemId, rejectionReason(itemId));
-            reportMissingItemValue(player, itemStack, itemId);
-            return false;
+            return rejectItem(itemId, () -> reportMissingItemValue(player, itemStack, itemId));
         }
 
         return true;
@@ -173,8 +171,7 @@ public class EMCHelper {
         BigInteger emcValue = EMCValues.getBig(itemId);
 
         if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
-            captureDissolverItemRejected(itemId, rejectionReason(itemId));
-            return false;
+            return rejectItem(itemId, null);
         }
 
         int itemCount = itemStack.getCount();
@@ -193,9 +190,7 @@ public class EMCHelper {
         BigInteger emcValue = EMCValues.getBig(itemId);
 
         if (!checkValidEMC(emcValue, itemId, Action.ADD)) {
-            captureDissolverItemRejected(itemId, rejectionReason(itemId));
-            reportMissingItemValue(player, itemStack, itemId);
-            return false;
+            return rejectItem(itemId, () -> reportMissingItemValue(player, itemStack, itemId));
         }
 
         // calculated new EMC (from DissolverInventoryInput)
@@ -455,7 +450,7 @@ public class EMCHelper {
         );
     }
 
-    private static boolean isCreativeItem(String itemId) {
+    public static boolean isCreativeItem(String itemId) {
         String baseItemId = EMCKey.baseItemId(itemId);
         return baseItemId.contains("spawn_egg")
             || baseItemId.contains("command_block")
@@ -470,7 +465,13 @@ public class EMCHelper {
             || baseItemId.contains("reinforced_deepslate");
     }
 
-    private static String rejectionReason(String itemId) {
+    private static boolean rejectItem(String itemId, Runnable missingValueReporter) {
+        captureDissolverItemRejected(itemId, rejectionReason(itemId));
+        if (missingValueReporter != null) missingValueReporter.run();
+        return false;
+    }
+
+    public static String rejectionReason(String itemId) {
         if (isCreativeItem(itemId) && !ModConfig.CREATIVE_ITEMS) {
             return "creative_disabled";
         }

@@ -107,12 +107,8 @@ public class RecipeManagerMixin {
                 String itemId = ItemHelper.getId(Item.byId(rawId));
                 index++;
 
-                if (index == 0) {
-                    INGREDIENTS.add(itemId);
-                } else if (recipe.getType() == RecipeType.STONECUTTING) {
-                    List<String> INGREDIENT = new ArrayList<>();
-                    INGREDIENT.add(itemId);
-                    addRecipe(resultId + "__" + 1, 0, INGREDIENT, recipeId, entry.getValue());
+                if (addDirectIngredient(index, itemId, recipe.getType(), INGREDIENTS, resultId, recipeId, entry.getValue())) {
+                    continue;
                 } else if (resultId.contains("bed") || resultId.contains("glass")) {
                     // don't do anything
                     // bed: bed colors
@@ -136,13 +132,7 @@ public class RecipeManagerMixin {
 
                 for (String itemId : jsonIngredientIds) {
                     index++;
-                    if (index == 0) {
-                        INGREDIENTS.add(itemId);
-                    } else if (recipe.getType() == RecipeType.STONECUTTING) {
-                        List<String> INGREDIENT = new ArrayList<>();
-                        INGREDIENT.add(itemId);
-                        addRecipe(resultId + "__" + 1, 0, INGREDIENT, recipeId, entry.getValue());
-                    } else {
+                    if (!addDirectIngredient(index, itemId, recipe.getType(), INGREDIENTS, resultId, recipeId, entry.getValue())) {
                         String rootItemId = getJsonIngredientItemIds(entry.getValue(), ingredientIndex).get(0);
                         List<String> REPLACE = new ArrayList<>();
                         if (REPLACE_INGREDIENTS.containsKey(rootItemId)) REPLACE = REPLACE_INGREDIENTS.get(rootItemId);
@@ -252,6 +242,24 @@ public class RecipeManagerMixin {
         }
 
         return itemIds;
+    }
+
+    private static boolean addDirectIngredient(
+        int index,
+        String itemId,
+        RecipeType<?> recipeType,
+        List<String> ingredients,
+        String resultId,
+        String recipeId,
+        JsonElement recipeJson
+    ) {
+        if (index == 0) {
+            ingredients.add(itemId);
+            return true;
+        }
+        if (recipeType != RecipeType.STONECUTTING) return false;
+        addRecipe(resultId + "__1", 0, new ArrayList<>(List.of(itemId)), recipeId, recipeJson);
+        return true;
     }
 
     private static boolean getJsonRecipe(Map.Entry<ResourceLocation, JsonElement> entry) {

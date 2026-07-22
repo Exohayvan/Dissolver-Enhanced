@@ -9,6 +9,7 @@ import net.exohayvan.dissolver_enhanced.config.ModConfig;
 import net.exohayvan.dissolver_enhanced.config.SimpleConfig;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.data.StateSaverAndLoader;
+import net.exohayvan.dissolver_enhanced.helpers.MinecraftServerCompat;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
@@ -143,16 +144,7 @@ public final class ModAnalytics {
         BigInteger totalValue,
         boolean creativeItem
     ) {
-        if (!enabled()) {
-            return;
-        }
-
-        Map<String, Object> properties = itemProperties(namespace, item, itemId);
-        properties.put("stack_count", stackCount);
-        properties.put("single_value", singleValue.toString());
-        properties.put("total_value", totalValue.toString());
-        properties.put("creative_item", creativeItem);
-        client.capture(ITEM_LEARNED_EVENT, distinctId, properties);
+        captureDissolverItem(ITEM_LEARNED_EVENT, namespace, item, itemId, stackCount, singleValue, totalValue, creativeItem);
     }
 
     public static void captureDissolverItemDissolved(
@@ -164,16 +156,7 @@ public final class ModAnalytics {
         BigInteger totalValue,
         boolean creativeItem
     ) {
-        if (!enabled()) {
-            return;
-        }
-
-        Map<String, Object> properties = itemProperties(namespace, item, itemId);
-        properties.put("stack_count", stackCount);
-        properties.put("single_value", singleValue.toString());
-        properties.put("total_value", totalValue.toString());
-        properties.put("creative_item", creativeItem);
-        client.capture(ITEM_DISSOLVED_EVENT, distinctId, properties);
+        captureDissolverItem(ITEM_DISSOLVED_EVENT, namespace, item, itemId, stackCount, singleValue, totalValue, creativeItem);
     }
 
     public static void captureDissolverItemExtracted(
@@ -185,16 +168,20 @@ public final class ModAnalytics {
         BigInteger totalValue,
         boolean creativeItem
     ) {
-        if (!enabled()) {
-            return;
-        }
+        captureDissolverItem(ITEM_EXTRACTED_EVENT, namespace, item, itemId, stackCount, singleValue, totalValue, creativeItem);
+    }
+
+    private static void captureDissolverItem(String event, String namespace, String item, String itemId,
+                                             int stackCount, BigInteger singleValue, BigInteger totalValue,
+                                             boolean creativeItem) {
+        if (!enabled()) return;
 
         Map<String, Object> properties = itemProperties(namespace, item, itemId);
         properties.put("stack_count", stackCount);
         properties.put("single_value", singleValue.toString());
         properties.put("total_value", totalValue.toString());
         properties.put("creative_item", creativeItem);
-        client.capture(ITEM_EXTRACTED_EVENT, distinctId, properties);
+        client.capture(event, distinctId, properties);
     }
 
     public static void captureDissolverItemRejected(String namespace, String item, String itemId, String reason) {
@@ -266,7 +253,7 @@ public final class ModAnalytics {
         properties.put("world_info", "server");
         properties.put("game_mode", "server");
         properties.put("session_location", "server");
-        int connectedPlayers = server.getPlayerCount();
+        int connectedPlayers = MinecraftServerCompat.connectedPlayerCount(server);
         properties.put("player_count", connectedPlayers);
         properties.put("connected_players", connectedPlayers);
         properties.put("emc_storage_mode", ModConfig.PRIVATE_EMC ? "private_total" : "shared");

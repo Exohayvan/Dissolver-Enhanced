@@ -7,6 +7,7 @@ version = project.mod_version
 group = project.maven_group
 
 def commonDir = [
+	"../../common/minecraft",
 	"../Common/minecraft",
 	"../Dissolver Enhanced (Common)/minecraft",
 	"Common/minecraft"
@@ -70,6 +71,7 @@ sourceSets {
 	main {
 		java {
 			srcDirs += ['src/client/java']
+			srcDirs += ['compat/criterion-shared/src/main/java']
 			srcDirs += ["${commonDir}/src/main/java"]
 		}
 		resources {
@@ -154,6 +156,15 @@ test {
 }
 
 jar {
+	dependsOn ':criterion-compat-1.20.2:reobfJar', ':criterion-compat-1.20.3:reobfJar'
+
+	from({ zipTree(project(':criterion-compat-1.20.2').tasks.named('jar').get().archiveFile.get().asFile) }) {
+		include 'net/exohayvan/dissolver_enhanced/advancement/compat/v1202/**'
+	}
+	from({ zipTree(project(':criterion-compat-1.20.3').tasks.named('jar').get().archiveFile.get().asFile) }) {
+		include 'net/exohayvan/dissolver_enhanced/advancement/compat/v1203/**'
+	}
+
 	manifest {
 		attributes([
 			"Specification-Title": project.archives_base_name,

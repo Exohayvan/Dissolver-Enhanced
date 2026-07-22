@@ -37,26 +37,12 @@ public class DebugItem {
             .toList();
 
         int totalItems = items.size();
-        int itemsWithEMC = 0;
-        int itemsWithoutEMC = 0;
+        int itemsWithEMC = (int) items.stream().filter(DebugItem::hasEmc).count();
+        int itemsWithoutEMC = totalItems - itemsWithEMC;
         HashMap<String, Integer> missingTagCounts = new HashMap<>();
 
         for (Item item : items) {
-            String itemId = ItemHelper.getId(item);
-            int emc = EMCValues.get(itemId);
-
-            if (emc > 0) {
-                itemsWithEMC++;
-                continue;
-            }
-
-            itemsWithoutEMC++;
-            item.getDefaultInstance()
-                .getTags()
-                .map(TagKey::location)
-                .map(ResourceLocation::toString)
-                .filter(tagId -> !EMCValues.EMC_TAG_VALUES.containsKey(tagId))
-                .forEach(tagId -> missingTagCounts.put(tagId, missingTagCounts.getOrDefault(tagId, 0) + 1));
+            if (!hasEmc(item)) countMissingTags(item, missingTagCounts);
         }
 
         List<Map.Entry<String, Integer>> tagsWithoutValues = missingTagCounts
@@ -157,12 +143,7 @@ public class DebugItem {
             missingItems.add(itemId);
             missingItemsByNamespace.put(itemNamespace, missingItems);
 
-            item.getDefaultInstance()
-                .getTags()
-                .map(TagKey::location)
-                .map(ResourceLocation::toString)
-                .filter(tagId -> !EMCValues.EMC_TAG_VALUES.containsKey(tagId))
-                .forEach(tagId -> missingTagCounts.put(tagId, missingTagCounts.getOrDefault(tagId, 0) + 1));
+            countMissingTags(item, missingTagCounts);
         }
 
         List<Map.Entry<String, Integer>> namespacesWithMissingItems = missingNamespaceCounts
@@ -234,17 +215,8 @@ public class DebugItem {
     }
 
     public static int item(CommandContext<CommandSourceStack> context, String command) {
-        ServerPlayer player = context.getSource().getPlayer();
-        if (player == null) {
-            ModCommands.feedback(context, "This command must be run by a player.");
-            return 0;
-        }
-
-        ItemStack stack = player.getMainHandItem();
-        if (stack.isEmpty()) {
-            ModCommands.feedback(context, "Hold an item to debug it.");
-            return 0;
-        }
+        ItemStack stack = heldItem(context, "Hold an item to debug it.");
+        if (stack == null) return 0;
 
         String itemId = EMCKey.fromStack(stack);
         String emcKey = EMCKey.fromStack(stack);
@@ -284,17 +256,8 @@ public class DebugItem {
     }
 
     public static int recipe(CommandContext<CommandSourceStack> context, String command) {
-        ServerPlayer player = context.getSource().getPlayer();
-        if (player == null) {
-            ModCommands.feedback(context, "This command must be run by a player.");
-            return 0;
-        }
-
-        ItemStack stack = player.getMainHandItem();
-        if (stack.isEmpty()) {
-            ModCommands.feedback(context, "Hold an item to debug its recipes.");
-            return 0;
-        }
+        ItemStack stack = heldItem(context, "Hold an item to debug its recipes.");
+        if (stack == null) return 0;
 
         String itemId = EMCKey.fromStack(stack);
         List<String> recipeLines = EMCValues.getRecipeDebugLines(itemId);
@@ -342,6 +305,32 @@ public class DebugItem {
         return String.format("%.2f%%", value);
     }
 
+    private static void countMissingTags(Item item, Map<String, Integer> counts) {
+        item.getDefaultInstance().getTags()
+            .map(TagKey::location)
+            .map(ResourceLocation::toString)
+            .filter(tagId -> !EMCValues.EMC_TAG_VALUES.containsKey(tagId))
+            .forEach(tagId -> counts.merge(tagId, 1, Integer::sum));
+    }
+
+    private static boolean hasEmc(Item item) {
+        return EMCValues.get(ItemHelper.getId(item)) > 0;
+    }
+
+    private static ItemStack heldItem(CommandContext<CommandSourceStack> context, String emptyMessage) {
+        ServerPlayer player = context.getSource().getPlayer();
+        if (player == null) {
+            ModCommands.feedback(context, "This command must be run by a player.");
+            return null;
+        }
+        ItemStack stack = player.getMainHandItem();
+        if (stack.isEmpty()) {
+            ModCommands.feedback(context, emptyMessage);
+            return null;
+        }
+        return stack;
+    }
+
     private static Path writeReport(
         List<String> lines,
         List<Map.Entry<String, Integer>> tagsWithoutValues,
@@ -352,28 +341,8 @@ public class DebugItem {
         String fileName = "dissolver-debug-report-" + LocalDateTime.now().format(REPORT_DATE_FORMAT);
         Path reportPath = reportDir.resolve(fileName);
         List<String> reportLines = new ArrayList<>(lines);
-        reportLines.add("");
-        reportLines.add("All tags without values:");
-
-        if (tagsWithoutValues.isEmpty()) {
-            reportLines.add("None");
-        } else {
-            for (Map.Entry<String, Integer> tag : tagsWithoutValues) {
-                double percentOfMissingItems = itemsWithoutEMC == 0 ? 0 : (tag.getValue() * 100.0) / itemsWithoutEMC;
-                reportLines.add("#" + tag.getKey() + " - " + formatPercent(percentOfMissingItems));
-            }
-        }
-
-        reportLines.add("");
-        reportLines.add("All missing recipe ingredients:");
-
-        if (recipeUnlockItems.isEmpty()) {
-            reportLines.add("None");
-        } else {
-            for (Map.Entry<String, EMCValues.RecipeUnlockInfo> item : recipeUnlockItems) {
-                reportLines.add(formatRecipeUnlockItem(item, itemsWithoutEMC));
-            }
-        }
+        appendTagReport(reportLines, tagsWithoutValues, itemsWithoutEMC);
+        appendRecipeReport(reportLines, recipeUnlockItems, itemsWithoutEMC);
 
         try {
             Files.createDirectories(reportDir);
@@ -434,26 +403,8 @@ public class DebugItem {
         }
 
         if (namespace != null) {
-            reportLines.add("");
-            reportLines.add("All tags without values:");
-            if (tagsWithoutValues.isEmpty()) {
-                reportLines.add("None");
-            } else {
-                for (Map.Entry<String, Integer> tag : tagsWithoutValues) {
-                    double percentOfMissingItems = itemsWithoutEMC == 0 ? 0 : (tag.getValue() * 100.0) / itemsWithoutEMC;
-                    reportLines.add("#" + tag.getKey() + " - " + formatPercent(percentOfMissingItems));
-                }
-            }
-
-            reportLines.add("");
-            reportLines.add("All missing recipe ingredients:");
-            if (recipeUnlockItems.isEmpty()) {
-                reportLines.add("None");
-            } else {
-                for (Map.Entry<String, EMCValues.RecipeUnlockInfo> item : recipeUnlockItems) {
-                    reportLines.add(formatRecipeUnlockItem(item, itemsWithoutEMC));
-                }
-            }
+            appendTagReport(reportLines, tagsWithoutValues, itemsWithoutEMC);
+            appendRecipeReport(reportLines, recipeUnlockItems, itemsWithoutEMC);
         }
 
         try {
@@ -487,6 +438,35 @@ public class DebugItem {
             .stream()
             .filter(line -> line.startsWith("Recipe: "))
             .count();
+    }
+
+    private static void appendTagReport(List<String> lines, List<Map.Entry<String, Integer>> tags, int missingItems) {
+        lines.add("");
+        lines.add("All tags without values:");
+        if (tags.isEmpty()) {
+            lines.add("None");
+            return;
+        }
+        for (Map.Entry<String, Integer> tag : tags) {
+            double percent = missingItems == 0 ? 0 : (tag.getValue() * 100.0) / missingItems;
+            lines.add("#" + tag.getKey() + " - " + formatPercent(percent));
+        }
+    }
+
+    private static void appendRecipeReport(
+        List<String> lines,
+        List<Map.Entry<String, EMCValues.RecipeUnlockInfo>> recipes,
+        int missingItems
+    ) {
+        lines.add("");
+        lines.add("All missing recipe ingredients:");
+        if (recipes.isEmpty()) {
+            lines.add("None");
+            return;
+        }
+        for (Map.Entry<String, EMCValues.RecipeUnlockInfo> item : recipes) {
+            lines.add(formatRecipeUnlockItem(item, missingItems));
+        }
     }
 
     private static String formatRecipeUnlockItem(Map.Entry<String, EMCValues.RecipeUnlockInfo> item, int itemsWithoutEMC) {

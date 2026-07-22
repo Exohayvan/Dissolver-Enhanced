@@ -3,6 +3,7 @@ package net.exohayvan.dissolver_enhanced.block;
 import java.util.function.ToIntFunction;
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
 import net.exohayvan.dissolver_enhanced.item.DissolverBlockItem;
+import net.exohayvan.dissolver_enhanced.helpers.BlockPropertiesCompat;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
@@ -32,15 +33,15 @@ public class ModBlocks {
     // HELPERS
 
     private static Block createDissolverBlock() {
-        return new DissolverBlock(BlockBehaviour.Properties.copy(Blocks.NETHERITE_BLOCK).sound(SoundType.AMETHYST).lightLevel(getLuminance(12)).noOcclusion());
+        return new DissolverBlock(BlockPropertiesCompat.copy(Blocks.NETHERITE_BLOCK).sound(SoundType.AMETHYST).lightLevel(getLuminance(12)).noOcclusion());
     }
 
     private static Block createCondenserBlock() {
-        return new CondenserBlock(BlockBehaviour.Properties.copy(Blocks.NETHERITE_BLOCK).sound(SoundType.AMETHYST).lightLevel(getLuminance(8)).noOcclusion());
+        return new CondenserBlock(BlockPropertiesCompat.copy(Blocks.NETHERITE_BLOCK).sound(SoundType.AMETHYST).lightLevel(getLuminance(8)).noOcclusion());
     }
 
     private static Block createMaterializerBlock() {
-        return new MaterializerBlock(BlockBehaviour.Properties.copy(Blocks.NETHERITE_BLOCK).sound(SoundType.AMETHYST).lightLevel(getLuminance(8)).noOcclusion());
+        return new MaterializerBlock(BlockPropertiesCompat.copy(Blocks.NETHERITE_BLOCK).sound(SoundType.AMETHYST).lightLevel(getLuminance(8)).noOcclusion());
     }
     
     private static ToIntFunction<BlockState> getLuminance(int luminance) {

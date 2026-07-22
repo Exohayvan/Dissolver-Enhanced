@@ -15,32 +15,21 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.AbstractContainerMenu;
+
 import net.minecraft.world.inventory.Slot;
 import java.math.BigInteger;
 
-public class CondenserScreenHandler extends AbstractContainerMenu {
+public class CondenserScreenHandler extends MachineScreenHandler {
     public static final int INPUT_SLOT = 0;
     public static final int CORE_SLOT = 1;
     public static final int OUTPUT_SLOT = 2;
-    private static final int INVENTORY_START = 3;
-    private static final int INVENTORY_END = INVENTORY_START + 27;
-    private static final int HOTBAR_START = INVENTORY_END;
-    private static final int HOTBAR_END = HOTBAR_START + 9;
-
-    private final Container inventory;
-    private final ContainerData propertyDelegate;
 
     public CondenserScreenHandler(int syncId, Inventory playerInventory) {
         this(syncId, playerInventory, new SimpleContainer(3), new SimpleContainerData(2));
     }
 
     public CondenserScreenHandler(int syncId, Inventory playerInventory, Container inventory, ContainerData propertyDelegate) {
-        super(ModScreenHandlers.CONDENSER_SCREEN_HANDLER_TYPE.get(), syncId);
-        checkContainerSize(inventory, 3);
-        this.inventory = inventory;
-        this.propertyDelegate = propertyDelegate;
-        inventory.startOpen(playerInventory.player);
+        super(ModScreenHandlers.CONDENSER_SCREEN_HANDLER_TYPE.get(), syncId, playerInventory, inventory, propertyDelegate, 3);
 
         this.addSlot(new CondenserInputSlot(inventory, INPUT_SLOT, 56, 17));
         this.addSlot(new CondenserCoreSlot(inventory, CORE_SLOT, 56, 53));
@@ -52,9 +41,7 @@ public class CondenserScreenHandler extends AbstractContainerMenu {
             }
         });
 
-        addInventory(playerInventory);
-        addPlayerHotbar(playerInventory);
-        addDataSlots(propertyDelegate);
+        finishSetup(playerInventory);
     }
 
     public int getScaledProgress() {
@@ -77,51 +64,20 @@ public class CondenserScreenHandler extends AbstractContainerMenu {
         return EMCOrbItem.isEMCOrb(output) ? EMCOrbItem.getEmcBig(output) : BigInteger.ZERO;
     }
 
-    @Override
-    public ItemStack quickMoveStack(Player player, int invSlot) {
-        ItemStack newStack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(invSlot);
-        if (slot == null || !slot.hasItem()) return newStack;
-
-        ItemStack originalStack = slot.getItem();
-        newStack = originalStack.copy();
-
-        if (invSlot == OUTPUT_SLOT) {
-            triggerOrbAdvancement(player, originalStack);
-            if (!this.moveItemStackTo(originalStack, INVENTORY_START, HOTBAR_END, true)) return ItemStack.EMPTY;
-            slot.onQuickCraft(originalStack, newStack);
-        } else if (invSlot >= INVENTORY_START && invSlot < HOTBAR_END) {
-            if (EmcCoreItem.isEmcCore(originalStack)) {
-                if (!this.moveItemStackTo(originalStack, CORE_SLOT, CORE_SLOT + 1, false)) return ItemStack.EMPTY;
-            } else if (isCondensable(originalStack)) {
-                if (!this.moveItemStackTo(originalStack, INPUT_SLOT, INPUT_SLOT + 1, false)) return ItemStack.EMPTY;
-            } else if (invSlot < INVENTORY_END) {
-                if (!this.moveItemStackTo(originalStack, HOTBAR_START, HOTBAR_END, false)) return ItemStack.EMPTY;
-            } else if (!this.moveItemStackTo(originalStack, INVENTORY_START, INVENTORY_END, false)) {
-                return ItemStack.EMPTY;
-            }
-        } else if (!this.moveItemStackTo(originalStack, INVENTORY_START, HOTBAR_END, false)) {
-            return ItemStack.EMPTY;
-        }
-
-        if (originalStack.isEmpty()) {
-            slot.setByPlayer(ItemStack.EMPTY);
-        } else {
-            slot.setChanged();
-        }
-
-        return newStack;
+    protected int outputSlot() {
+        return OUTPUT_SLOT;
     }
 
     @Override
-    public boolean stillValid(Player player) {
-        return this.inventory.stillValid(player);
+    protected void beforeOutputQuickMove(Player player, ItemStack stack) {
+        triggerOrbAdvancement(player, stack);
     }
 
     @Override
-    public void removed(Player player) {
-        super.removed(player);
-        this.inventory.stopOpen(player);
+    protected boolean movePlayerStack(ItemStack stack, int slotIndex) {
+        if (EmcCoreItem.isEmcCore(stack)) return moveItemStackTo(stack, CORE_SLOT, CORE_SLOT + 1, false);
+        if (isCondensable(stack)) return moveItemStackTo(stack, INPUT_SLOT, INPUT_SLOT + 1, false);
+        return moveBetweenPlayerInventoryAndHotbar(stack, slotIndex);
     }
 
     private boolean isCondensable(ItemStack stack) {
@@ -142,17 +98,4 @@ public class CondenserScreenHandler extends AbstractContainerMenu {
         }
     }
 
-    private void addInventory(Inventory playerInventory) {
-        for (int i = 0; i < 3; ++i) {
-            for (int l = 0; l < 9; ++l) {
-                this.addSlot(new Slot(playerInventory, l + i * 9 + 9, 8 + l * 18, 84 + i * 18));
-            }
-        }
-    }
-
-    private void addPlayerHotbar(Inventory playerInventory) {
-        for (int i = 0; i < 9; ++i) {
-            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
-        }
-    }
 }

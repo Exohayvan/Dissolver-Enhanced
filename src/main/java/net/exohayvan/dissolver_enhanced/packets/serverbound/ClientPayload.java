@@ -1,12 +1,10 @@
 package net.exohayvan.dissolver_enhanced.packets.serverbound;
 
-import java.util.function.Supplier;
-
 import net.exohayvan.dissolver_enhanced.DissolverEnhanced;
+import net.exohayvan.dissolver_enhanced.packets.NetworkCompat;
 import net.exohayvan.dissolver_enhanced.screen.ModScreenHandlers;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.network.NetworkEvent;
 
 public record ClientPayload(String messageId, String data) {
 	public static void encode(ClientPayload payload, FriendlyByteBuf buffer) {
@@ -18,10 +16,9 @@ public record ClientPayload(String messageId, String data) {
 		return new ClientPayload(buffer.readUtf(), buffer.readUtf());
 	}
 
-	public static void handle(ClientPayload payload, Supplier<NetworkEvent.Context> contextSupplier) {
-		NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> receivedData(context.getSender(), payload.messageId(), payload.data()));
-		context.setPacketHandled(true);
+	public static void handle(ClientPayload payload, Object context) {
+		NetworkCompat.enqueueWork(context, () -> receivedData(NetworkCompat.sender(context), payload.messageId(), payload.data()));
+		NetworkCompat.setPacketHandled(context);
 	}
 
 	private static void receivedData(Player player, String messageId, String data) {

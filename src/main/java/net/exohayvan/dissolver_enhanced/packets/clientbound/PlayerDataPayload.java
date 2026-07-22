@@ -2,11 +2,10 @@ package net.exohayvan.dissolver_enhanced.packets.clientbound;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 import net.exohayvan.dissolver_enhanced.data.PlayerDataClient;
+import net.exohayvan.dissolver_enhanced.packets.NetworkCompat;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
 
 public record PlayerDataPayload(String emc, int learnedItemsSize, int learnedItemsTotalSize, String message, List<String> learnedItems) {
 	public static void encode(PlayerDataPayload payload, FriendlyByteBuf buffer) {
@@ -27,15 +26,14 @@ public record PlayerDataPayload(String emc, int learnedItemsSize, int learnedIte
 		);
 	}
 
-	public static void handle(PlayerDataPayload payload, Supplier<NetworkEvent.Context> contextSupplier) {
-		NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
+	public static void handle(PlayerDataPayload payload, Object context) {
+		NetworkCompat.enqueueWork(context, () -> {
 			PlayerDataClient.EMC = net.exohayvan.dissolver_enhanced.common.values.EmcNumber.parse(payload.emc());
 			PlayerDataClient.LEARNED_ITEMS_SIZE = payload.learnedItemsSize();
 			PlayerDataClient.LEARNED_ITEMS_TOTAL_SIZE = payload.learnedItemsTotalSize();
 			PlayerDataClient.MESSAGE = payload.message();
 			PlayerDataClient.LEARNED_ITEMS = payload.learnedItems();
 		});
-		context.setPacketHandled(true);
+		NetworkCompat.setPacketHandled(context);
 	}
 }

@@ -10,3 +10,8 @@ pluginManagement {
 }
 
 rootProject.name = 'dissolver-enhanced-forge-1.20.1'
+
+include 'criterion-compat-1.20.2'
+include 'criterion-compat-1.20.3'
+project(':criterion-compat-1.20.2').projectDir = file('compat/criterion-1.20.2')
+project(':criterion-compat-1.20.3').projectDir = file('compat/criterion-1.20.3')

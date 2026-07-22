@@ -11,7 +11,6 @@ import net.exohayvan.dissolver_enhanced.data.EMCValues;
 import net.exohayvan.dissolver_enhanced.data.PlayerData;
 import net.exohayvan.dissolver_enhanced.packets.clientbound.EMCValuesPayload;
 import net.exohayvan.dissolver_enhanced.packets.clientbound.PlayerDataPayload;
-import net.minecraftforge.network.PacketDistributor;
 
 public class DataSender {
     private static final Map<UUID, Integer> EMC_SYNC_VERSIONS = new HashMap<>();
@@ -27,9 +26,9 @@ public class DataSender {
 
         server.execute(() -> {
             if (emcValuesToSend != null) {
-                Packets.CHANNEL.send(PacketDistributor.PLAYER.with(() -> playerEntity), emcValuesToSend);
+                Packets.sendToPlayer(playerEntity, emcValuesToSend);
             }
-            Packets.CHANNEL.send(PacketDistributor.PLAYER.with(() -> playerEntity), dataToSend);
+            Packets.sendToPlayer(playerEntity, dataToSend);
         });
     }
 
