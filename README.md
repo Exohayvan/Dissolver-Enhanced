@@ -6,15 +6,17 @@ Dissolver Enhanced is a standalone EMC-style transmutation mod inspired by Proje
 
 The mod is built around keeping the core experience simple: collect resources, teach them to the Dissolver, and turn unwanted items into something useful later.
 
+**Telemetry Notice**: This mod collects player telemetry data by default to help identify bugs and troubleshoot issues. Telemetry collection can be disabled at any time through the mod’s settings or configuration file. _For more infomation as to what is tracked and why visit here: [https://github.com/Exohayvan/Dissolver-Enhanced/wiki/Telemetry-Notice](https://github.com/Exohayvan/Dissolver-Enhanced/wiki/Telemetry-Notice)_ 
+
 ## Features
 
-- Dissolver block for learning items, storing EMC, and recreating learned items.
-- Optional global or per-player EMC storage.
-- EMC values from defaults, tags, recipes, and server overrides.
-- EMC tooltips so item values are easy to check.
-- Crystal Frame item for crafting and remote Dissolver access.
-- WTHIT support where available.
-- Work-in-progress Condenser and Materializer machines for more advanced EMC workflows.
+*   Dissolver block for learning items, storing EMC, and recreating learned items.
+*   Optional global or per-player EMC storage.
+*   EMC values from defaults, tags, recipes, and server overrides.
+*   EMC tooltips so item values are easy to check.
+*   Crystal Frame item for crafting and remote Dissolver access.
+*   WTHIT support where available.
+*   Work-in-progress Condenser and Materializer machines for more advanced EMC workflows.
 
 ## How It Works
 
@@ -26,7 +28,7 @@ For example, if dirt is worth `1` EMC and a diamond is worth `4200` EMC, you can
 
 Config files are created in:
 
-```text
+```
 config/dissolver-enhanced/
 ```
 
@@ -38,19 +40,19 @@ Admin and utility commands are included for managing player EMC, learned items, 
 
 Common commands include:
 
-- `/emc`
-- `/emc give`
-- `/emc take`
-- `/emc set`
-- `/emcmemory add`
-- `/emcmemory remove`
-- `/opendissolver`
+*   `/emc`
+*   `/emc give`
+*   `/emc take`
+*   `/emc set`
+*   `/emcmemory add`
+*   `/emcmemory remove`
+*   `/opendissolver`
 
 ## Supported Versions
 
 Supported Minecraft versions and launchers are listed on the wiki:
 
-https://github.com/Exohayvan/Dissolver-Enhanced/wiki/Supported-Versions-Launchers
+[https://github.com/Exohayvan/Dissolver-Enhanced/wiki/Supported-Versions-Launchers](https://github.com/Exohayvan/Dissolver-Enhanced/wiki/Supported-Versions-Launchers)
 
 ## Future Plans
 
@@ -60,14 +62,13 @@ For Minecraft, planned improvements include better modded item values, more reci
 
 ## Screenshots
 
-![Dissolver screenshot](https://i.imgur.com/H9Ug8rE.png)
-![Dissolver screenshot](https://i.imgur.com/277hqs7.png)
+![Dissolver screenshot](https://i.imgur.com/H9Ug8rE.png) ![Dissolver screenshot](https://i.imgur.com/277hqs7.png)
 
 ## Crafting
 
 Crafting recipes can be found on the wiki:
 
-https://github.com/Exohayvan/Dissolver-Enhanced/wiki/Crafting
+[https://github.com/Exohayvan/Dissolver-Enhanced/wiki/Crafting](https://github.com/Exohayvan/Dissolver-Enhanced/wiki/Crafting)
 
 ## Modpacks
 
