@@ -1,9 +1,6 @@
 # Dissolver Enhanced
 
-[![Active Sessions](https://img.shields.io/endpoint?url=https%3A%2F%2Fposthog-active-sessions-badge.18trevor3695.workers.dev&style=for-the-badge&cacheSeconds=300)](https://us.posthog.com/project/423460/endpoints/active-sessions)
-
-![Modrinth Downloads](https://img.shields.io/modrinth/dt/yEX3Y3na?style=for-the-badge&label=Modrinth%20Downloads)
-![CurseForge Downloads](https://img.shields.io/curseforge/dt/1533227?style=for-the-badge&label=CurseForge%20Downloads)
+![Dissolver Enhanced Community Telemetry](https://posthog-active-sessions-badge.18trevor3695.workers.dev/telemetry.svg?v=1)
 
 Dissolver Enhanced is a standalone EMC-style transmutation mod inspired by ProjectE and Equivalent Exchange. Learn items, dissolve extras into EMC, then spend that stored value to recreate items you have already unlocked.
 
