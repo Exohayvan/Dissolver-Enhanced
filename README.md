@@ -1,5 +1,7 @@
 # Dissolver Enhanced
 
+[![Active Sessions](https://img.shields.io/endpoint?url=https%3A%2F%2Fposthog-active-sessions-badge.18trevor3695.workers.dev&style=for-the-badge&cacheSeconds=300)](https://us.posthog.com/project/423460/endpoints/active-sessions)
+
 ![Modrinth Downloads](https://img.shields.io/modrinth/dt/yEX3Y3na?style=for-the-badge&label=Modrinth%20Downloads)
 ![CurseForge Downloads](https://img.shields.io/curseforge/dt/1533227?style=for-the-badge&label=CurseForge%20Downloads)
 
